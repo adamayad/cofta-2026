@@ -487,6 +487,14 @@ function render() {
     : `<i></i>${state.error ? 'Reconnecting' : stale ? 'Stale' : 'Live'}`;
   $('pip').className = `pip ${q || stale ? 'stale' : ''}`;
 
+  // Never repaint over someone mid-type. The 5-second poll was replacing the
+  // whole view, which wiped the sign-in form as it was being filled in. While
+  // any input, select or textarea inside the view has focus, only the status
+  // pip updates; the repaint resumes the moment focus leaves the field.
+  const a = document.activeElement;
+  if (a && a.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)
+      && $('body') && $('body').contains && $('body').contains(a)) return;
+
   const navFor = state.view === 'match' ? state.from : state.view;
   ['fixtures', 'live', 'tables', 'awards', 'admin'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
