@@ -19,7 +19,7 @@ const POLL_MS = 5000;
 const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [],
   picker: null,        // { type, side } while an organiser chooses a player
-  view: 'fixtures', day: 1, matchId: null,
+  view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
   admin: false, lastFetch: 0, error: null, busy: false, pens: null,
 };
 
@@ -88,23 +88,25 @@ function clubBlock(id, cls = '') {
 }
 
 /* ── fixtures ────────────────────────────────────────────── */
+function fixtureRow(m) {
+  let score, sub;
+  if (!M.hasStarted(m) && !m.ff) {
+    score = '<span class="pend">v</span>';
+    sub = `<span class="st">${esc(m.kickoff)}</span>`;
+  } else {
+    score = `${m.hs}\u2013${m.as}`;
+    const live = M.isLive(m);
+    sub = `<span class="st ${live ? 'live' : ''}">${esc(M.statusLabel(m))}</span>`;
+  }
+  return `<button class="fx" data-match="${m.id}">
+    <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}</span>
+    <span class="n">${clubBlock(m.home)}${clubBlock(m.away)}</span>
+    <span class="r tnum">${score}${sub}</span></button>`;
+}
+
 function viewFixtures() {
   const all = resolvedMatches().filter(m => m.day === state.day);
-  const rows = all.map(m => {
-    let score, sub;
-    if (!M.hasStarted(m) && !m.ff) {
-      score = '<span class="pend">v</span>';
-      sub = `<span class="st">${esc(m.kickoff)}</span>`;
-    } else {
-      score = `${m.hs}\u2013${m.as}`;
-      const live = M.isLive(m);
-      sub = `<span class="st ${live ? 'live' : ''}">${esc(M.statusLabel(m))}</span>`;
-    }
-    return `<button class="fx" data-match="${m.id}">
-      <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}</span>
-      <span class="n">${clubBlock(m.home)}${clubBlock(m.away)}</span>
-      <span class="r tnum">${score}${sub}</span></button>`;
-  }).join('');
+  const rows = all.map(fixtureRow).join('');
 
   return `<div class="daysel">
       <button data-day="1" class="${state.day === 1 ? 'on' : ''}">Sat 12 Sept</button>
@@ -114,6 +116,19 @@ function viewFixtures() {
     <p class="note">${state.day === 1
       ? 'Twelve group matches across two pitches. Each carries its own clock, so several run live at once.'
       : 'Semi-finalists fill in automatically once the group tables are final.'}</p>`;
+}
+
+/* ── live now ────────────────────────────────────────────── */
+function viewLive() {
+  const inPlay = resolvedMatches().filter(m =>
+    M.isLive(m) || m.status === 'half_time');
+  if (!inPlay.length) return `<div class="sect">Live now</div>
+    <p class="empty">No matches in play right now. Everything kicks off from the
+      Fixtures tab \u2014 live games appear here the moment a clock starts.</p>`;
+  return `<div class="sect">Live now</div>
+    ${inPlay.map(fixtureRow).join('')}
+    <p class="note">Scores update every few seconds. Tap a match for the clock
+      and the full report.</p>`;
 }
 
 /* ── match ───────────────────────────────────────────────── */
@@ -161,7 +176,7 @@ function viewMatch() {
       </li>`).join('')
     : '<div class="empty">Nothing to report yet.</div>';
 
-  return `<button class="back" data-view="fixtures">&larr; All fixtures</button>
+  return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
     <div class="stack">${side(m.home, hs, as)}${side(m.away, as, hs)}</div>
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
@@ -471,14 +486,16 @@ function render() {
     : `<i></i>${state.error ? 'Reconnecting' : stale ? 'Stale' : 'Live'}`;
   $('pip').className = `pip ${q || stale ? 'stale' : ''}`;
 
-  ['fixtures', 'match', 'tables', 'awards', 'admin'].forEach(v =>
-    $('nav-' + v)?.classList.toggle('on', state.view === v));
+  const navFor = state.view === 'match' ? state.from : state.view;
+  ['fixtures', 'live', 'tables', 'awards', 'admin'].forEach(v =>
+    $('nav-' + v)?.classList.toggle('on', navFor === v));
 
   const body =
     state.view === 'fixtures' ? viewFixtures() :
+    state.view === 'live'     ? viewLive()     :
     state.view === 'match'    ? viewMatch()    :
     state.view === 'tables'   ? viewTables()   :
-    state.view === 'awards'   ? viewAwards()  : viewAdmin();
+    state.view === 'awards'   ? viewAwards()   : viewAdmin();
 
   $('body').innerHTML = body +
     (state.error ? `<div class="banner warn">Could not reach the server: ${esc(state.error)}.
@@ -514,7 +531,11 @@ document.addEventListener('click', async (ev) => {
 
   if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
   if (t.dataset.day) { state.day = +t.dataset.day; render(); return; }
-  if (t.dataset.match) { state.matchId = t.dataset.match; state.view = 'match'; state.pens = null; render(); return; }
+  if (t.dataset.match) {
+    state.from = (state.view === 'live') ? 'live' : 'fixtures';
+    state.matchId = t.dataset.match; state.view = 'match';
+    state.pens = null; render(); return;
+  }
 
   const m = currentMatch();
 
