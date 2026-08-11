@@ -245,46 +245,69 @@ export function awards(teams, matches, events, players = {}) {
  *   - a yellow in the group stage and a yellow in the semi-final do NOT
  *     combine, so yellows are counted per phase, not across the tournament
  *
- * Needs player attribution on card events; without it, cards are recorded
- * but nobody can be suspended.
+ * A ban applies to the player's OWN CLUB's next fixture, not simply the next
+ * match in the timetable — those are rarely the same thing when two pitches
+ * are running.
+ *
+ * Needs player attribution on card events. Without it cards are still
+ * recorded, but nobody can be suspended.
  */
 export function suspensions(matches, events, players = {}) {
-  const order = [...matches]
+  const chrono = [...matches]
     .filter(hasStarted)
     .sort((a, b) => a.day - b.day || a.kickoff.localeCompare(b.kickoff));
-  const indexOf = Object.fromEntries(order.map((m, i) => [m.id, i]));
+
+  // every match a club is involved in, in order — including ones not yet played
+  const fixturesFor = (teamId) => [...matches]
+    .filter(m => m.home === teamId || m.away === teamId)
+    .sort((a, b) => a.day - b.day || a.kickoff.localeCompare(b.kickoff));
+
   const phaseOf = (m) => (isKnockout(m) ? 'knockout' : 'group');
+  const out = {};
+  const yellows = {};
 
-  const out = {};   // playerId -> { reason, fromIndex }
-  const yellows = {};  // playerId -> { group: [matchIds], knockout: [...] }
-
-  for (const m of order) {
+  for (const m of chrono) {
     const phase = phaseOf(m);
     for (const e of events.filter(x => x.m === m.id && !x.voided)) {
       if (!e.p) continue;                       // no player attributed
-      if (e.t === 'red') {
-        out[e.p] = { player: players[e.p]?.name ?? e.p, reason: 'Red card',
-                     fromIndex: indexOf[m.id] + 1 };
-      }
+      const teamId = players[e.p]?.team
+        ?? (e.s === 'home' ? m.home : e.s === 'away' ? m.away : null);
+
+      const ban = (reason) => {
+        if (out[e.p]) return;                   // already banned, do not stack
+        const fx = fixturesFor(teamId);
+        const here = fx.findIndex(x => x.id === m.id);
+        out[e.p] = {
+          player: players[e.p]?.name ?? e.p,
+          team: teamId,
+          reason,
+          misses: here >= 0 ? (fx[here + 1] ?? null) : null,
+        };
+      };
+
+      if (e.t === 'red') ban('Red card');
+
       if (e.t === 'yellow') {
         yellows[e.p] ??= { group: new Set(), knockout: new Set() };
         yellows[e.p][phase].add(m.id);
-        if (yellows[e.p][phase].size >= 2 && !out[e.p]) {
-          out[e.p] = { player: players[e.p]?.name ?? e.p,
-                       reason: 'Two yellow cards', fromIndex: indexOf[m.id] + 1 };
-        }
+        if (yellows[e.p][phase].size >= 2) ban('Two yellow cards');
       }
     }
-  }
-
-  // turn "from this point" into the specific match missed
-  for (const [pid, s] of Object.entries(out)) {
-    s.misses = order[s.fromIndex] ?? null;
   }
   return out;
 }
 
-/** Who fills each knockout slot: an override if set, else the table. */
+/** Players unavailable for one specific match. */
+export function suspendedFor(matchId, matches, events, players = {}) {
+  return Object.entries(suspensions(matches, events, players))
+    .filter(([, s]) => s.misses?.id === matchId)
+    .map(([id, s]) => ({ id, ...s }));
+}
+
+/* ── knockout slots ──────────────────────────────────────── */
+/** Who fills each knockout slot: a manual override if one is set, else the
+ *  group tables. Overrides exist because disqualifications and unresolved
+ *  ties are settled by people, not by the app. */
 export function resolveSlots(teams, matches, overrides = {}) {
   const live = (r) => !r.team.disqualified;
   const A = standings(teams, matches, 'A').filter(live);
