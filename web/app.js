@@ -17,10 +17,10 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
 const POLL_MS = 5000;
 
 const state = {
-  snap: null, teams: {}, matches: [], events: [], slots: {}, players: [],
+  snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
-  admin: false, lastFetch: 0, error: null, busy: false, pens: null,
+  admin: false, role: null, lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
 };
 
@@ -45,6 +45,7 @@ async function poll() {
     state.events = snap.events || [];
     state.players = snap.players || [];
     state.slots = snap.slots || {};
+    state.ties = snap.ties || [];
     state.lastFetch = Date.now();
     state.error = null;
   } catch (e) {
@@ -66,7 +67,7 @@ function resolvedMatches() {
   const list = state.matches.map(m => ({ ...m }));
   const teamsArr = Object.values(state.teams);
   if (!teamsArr.length) return list;
-  const slots = M.resolveSlots(teamsArr, list, state.slots);
+  const slots = M.resolveSlots(teamsArr, list, state.slots, state.ties);
   const put = (stage, h, a) => {
     const m = list.find(x => x.stage === stage);
     if (m && !M.hasStarted(m)) { m.home = m.home || h; m.away = m.away || a; }
@@ -338,11 +339,11 @@ function viewTables() {
   const ms = resolvedMatches();
   if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
 
-  const tbl = (g) => M.standings(teamsArr, ms, g).map((r, i) => `
+  const tbl = (g) => M.standings(teamsArr, ms, g, state.ties).map((r, i) => `
       <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''} ${r.unresolved ? 'unres' : ''}">
         <td class="nm"><span class="in"><span class="rk">${i + 1}</span>
           <span class="tile" style="--c:${r.team.colour}"><img src="${crest(r.team.id)}" alt=""></span>
-          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.unresolved ? '<span class="tag lvl">Level</span>' : ''}</b>
+          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.unresolved ? '<span class="tag lvl">Level</span>' : ''}${r.tie === 'W' ? '<span class="tag so">Shoot-out</span>' : ''}</b>
           <i>${esc(r.team.city)}</i></span></span></td>
         <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
         <td>${r.p ? (r.gd > 0 ? '+' : r.gd < 0 ? '\u2212' : '') + Math.abs(r.gd) : '\u2013'}</td>
@@ -352,7 +353,7 @@ function viewTables() {
     <th>L</th><th>GD</th><th>Pts</th></tr></thead>`;
 
   const slot = (id, fb) => id ? esc(cityOf(id)) : fb;
-  const s = M.resolveSlots(teamsArr, ms, state.slots);
+  const s = M.resolveSlots(teamsArr, ms, state.slots, state.ties);
 
   return `<div class="sect">Group A</div><table>${head}<tbody>${tbl('A')}</tbody></table>
     <div class="sect">Group B</div><table>${head}<tbody>${tbl('B')}</tbody></table>
@@ -373,8 +374,7 @@ function viewTables() {
  *  once the group is actually finished — a mid-group tie is just noise. */
 function unresolvedNotice(teamsArr, ms) {
   const pairs = ['A', 'B'].flatMap(g =>
-    M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })))
-    .filter(p => p.i <= 1);   // 3rd v 4th decides nothing, so say nothing
+    M.unresolvedPairs(teamsArr, ms, g, state.ties).map(p => ({ g, ...p })));
   if (!pairs.length) return '';
   const names = pairs.map(p =>
     `${cityOf(p.a.team.id)} and ${cityOf(p.b.team.id)}`).join('; ');
@@ -383,37 +383,25 @@ function unresolvedNotice(teamsArr, ms) {
     settled by a one-off penalty shoot-out.</div>`;
 }
 
-/** Which semi-final slots a level pair decides. Pair i is rows i and i+1:
- *  the top pair decides both qualifying slots; the 2nd/3rd pair decides only
- *  who takes the runner-up slot; 3rd/4th decides nothing. */
-function tieSlots(g, i) {
-  if (i === 0) return {
-    winner: g === 'A' ? 'sf1_home' : 'sf2_home',
-    loser:  g === 'A' ? 'sf2_away' : 'sf1_away',
-  };
-  if (i === 1) return { winner: g === 'A' ? 'sf2_away' : 'sf1_away', loser: null };
-  return null;
-}
-
-/** The organiser's prompt: enter the one-off shoot-out result and the Sunday
- *  line-up fills in from it. Whoever is running that group's pitch does it —
- *  both admin accounts see the same panel, so either can. */
+/** The organiser's prompt: enter the one-off shoot-out result. It is stored
+ *  as a real record, becomes the final tie-break, and both the table and the
+ *  Sunday line-up follow from it. Both admin accounts see the same panel, so
+ *  whoever ran that group's pitch enters it. */
 function tieShootoutPanels(teamsArr, ms) {
   const pairs = ['A', 'B'].flatMap(g =>
-    M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })));
-  if (!pairs.length) return '';
+    M.unresolvedPairs(teamsArr, ms, g, state.ties).map(p => ({ g, ...p })));
 
-  return pairs.map(p => {
-    const slots = tieSlots(p.g, p.i);
-    if (!slots) return '';
+  const settled = state.ties.map(t => {
+    const w = t.sa > t.sb ? t.a : t.b, l = t.sa > t.sb ? t.b : t.a;
+    const ws = Math.max(t.sa, t.sb), ls = Math.min(t.sa, t.sb);
+    return `<div class="banner">${esc(cityOf(w))} beat ${esc(cityOf(l))}
+      ${ws}\u2013${ls} in the one-off shoot-out; the table and Sunday line-up
+      reflect it.</div>`;
+  }).join('');
+
+  const panels = pairs.map(p => {
     const key = p.g + p.i;
     const sc = state.tiePens[key] ?? { a: 0, b: 0 };
-    const settled = slots.winner && state.slots[slots.winner];
-
-    if (settled) return `<div class="banner">${esc(cityOf(p.a.team.id))} and
-      ${esc(cityOf(p.b.team.id))} finished level; the one-off shoot-out result
-      has been entered and the Sunday line-up reflects it.</div>`;
-
     const row = (side, teamId, v) => `<div class="pr" style="--c:${colOf(teamId)}">
         <span class="bd"><img src="${crest(teamId)}" alt=""></span>
         <span class="nx">${esc(nameOf(teamId))}</span>
@@ -425,14 +413,16 @@ function tieShootoutPanels(teamsArr, ms) {
       <div class="pens">
         <p class="note" style="padding-top:0">${esc(cityOf(p.a.team.id))} and
           ${esc(cityOf(p.b.team.id))} finished level on every tie-breaker, so the
-          rules go to a one-off penalty shoot-out. Enter the result and the
-          Sunday line-up fills in from it.</p>
+          rules go to a one-off penalty shoot-out. Enter the result \u2014 the
+          table and the Sunday line-up follow from it.</p>
         ${row('a', p.a.team.id, sc.a)}${row('b', p.b.team.id, sc.b)}
         <div class="two" style="grid-template-columns:1fr">
           <button class="act" data-tieconfirm="${key}" ${sc.a === sc.b ? 'disabled' : ''}>
             Confirm shoot-out result</button></div>
       </div>`;
   }).join('');
+
+  return settled + panels;
 }
 
 function adminQualification(teamsArr, s) {
@@ -519,10 +509,18 @@ function viewAwards() {
 /* ── admin sign in ───────────────────────────────────────── */
 function viewAdmin() {
   if (state.admin) {
+    const resetSection = state.role === 'organiser' ? `
+      <div class="sect">Testing</div>
+      <p class="note" style="padding-top:0">Wipes every score, event, card, shoot-out and override,
+        and returns all fixtures to scheduled. Clubs and squads are kept. Organiser accounts only.</p>
+      <button class="act ghost" data-reset="1" style="color:var(--acc);
+        box-shadow:inset 0 0 0 1px var(--acc)">Reset tournament data</button>` : '';
     return `<div class="sect">Signed in</div>
-      <p class="note" style="padding-top:0">You have write access. Open any match to run its clock
-        and log events. Controls appear inline.</p>
-      <button class="act ghost" id="signout">Sign out</button>`;
+      <p class="note" style="padding-top:0">${state.role === 'organiser'
+        ? 'Organiser account: full access, including the tools below.'
+        : 'Pitch account: run matches, log events, enter shoot-outs.'}
+        Open any match and the controls appear inline.</p>
+      <button class="act ghost" id="signout">Sign out</button>${resetSection}`;
   }
   return `<div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
@@ -595,7 +593,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) { state.view = t.dataset.view; state.picker = null; render(); return; }
@@ -609,7 +607,9 @@ document.addEventListener('click', async (ev) => {
   const m = currentMatch();
 
   if (t.dataset.clock && m) return guard(() =>
-    api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS));
+    api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS,
+      t.dataset.clock === 'start' ? m.home : null,
+      t.dataset.clock === 'start' ? m.away : null));
 
   // Goal for a side: log it immediately, then ask who scored. The score
   // must move on the first tap — attribution is a bonus, never a gate.
@@ -713,19 +713,20 @@ document.addEventListener('click', async (ev) => {
     const teamsArr = Object.values(state.teams);
     const ms = resolvedMatches();
     const pair = ['A', 'B'].flatMap(g =>
-      M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })))
+      M.unresolvedPairs(teamsArr, ms, g, state.ties).map(p => ({ g, ...p })))
       .find(p => p.g + p.i === key);
     const sc = state.tiePens[key];
     if (!pair || !sc || sc.a === sc.b) return;
-    const slots = tieSlots(pair.g, pair.i);
-    if (!slots) return;
-    const winner = sc.a > sc.b ? pair.a.team.id : pair.b.team.id;
-    const loser  = sc.a > sc.b ? pair.b.team.id : pair.a.team.id;
     return guard(async () => {
-      if (slots.winner) await api.setSlot(slots.winner, winner);
-      if (slots.loser)  await api.setSlot(slots.loser, loser);
+      await api.setTieShootout(pair.g, pair.a.team.id, pair.b.team.id, sc.a, sc.b);
       delete state.tiePens[key];
     });
+  }
+
+  if (t.dataset.reset) {
+    const word = prompt('This wipes every score, event, card, shoot-out and override, and returns all fixtures to scheduled. Clubs and squads are kept.\n\nType RESET to confirm.');
+    if (word !== 'RESET') return;
+    return guard(() => api.resetTournament());
   }
 
   if (t.dataset.dq) {
@@ -740,6 +741,7 @@ document.addEventListener('click', async (ev) => {
     try {
       await api.signIn(email, pw);
       state.admin = !!(await api.amAdmin());
+      state.role = state.admin ? await api.myRole().catch(() => null) : null;
       if (!state.admin) { $('autherr').textContent = 'Signed in, but this account is not an organiser.'; }
       state.view = state.admin ? 'fixtures' : 'admin';
       await poll();
@@ -747,7 +749,7 @@ document.addEventListener('click', async (ev) => {
     return;
   }
 
-  if (t.id === 'signout') { api.signOut(); state.admin = false; render(); return; }
+  if (t.id === 'signout') { api.signOut(); state.admin = false; state.role = null; render(); return; }
 });
 
 document.addEventListener('change', (ev) => {
@@ -759,7 +761,10 @@ document.addEventListener('change', (ev) => {
 /* ── boot ────────────────────────────────────────────────── */
 (async function boot() {
   if (api.isSignedIn()) {
-    try { state.admin = !!(await api.amAdmin()); } catch { state.admin = false; }
+    try {
+      state.admin = !!(await api.amAdmin());
+      state.role = state.admin ? await api.myRole() : null;
+    } catch { state.admin = false; state.role = null; }
   }
   await poll();
   setInterval(poll, POLL_MS);

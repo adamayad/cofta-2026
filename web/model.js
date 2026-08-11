@@ -119,6 +119,14 @@ function tallyInto(rows, matches) {
   return rows;
 }
 
+/** The stored one-off shoot-out for a pair, if it has been played. */
+function tieResult(ties, x, y) {
+  const [lo, hi] = x < y ? [x, y] : [y, x];
+  const t = (ties || []).find(t => t.a === lo && t.b === hi);
+  if (!t) return null;
+  return { ...t, winner: t.sa > t.sb ? t.a : t.b };
+}
+
 /** Mini-league among the tied clubs, counting only matches between them. */
 function headToHead(tied, matches) {
   const ids = new Set(tied.map(r => r.team.id));
@@ -128,7 +136,7 @@ function headToHead(tied, matches) {
 }
 
 /** Order a group of clubs already level on points. */
-function breakTie(tied, matches) {
+function breakTie(tied, matches, ties) {
   if (tied.length === 1) return tied;
 
   const h2h = headToHead(tied, matches);
@@ -146,17 +154,27 @@ function breakTie(tied, matches) {
     return 0;
   });
 
-  // Anything still level after all four steps needs a shoot-out.
+  // Anything still level after all four steps needs a one-off shoot-out.
+  // If that shoot-out has been played, it is the fifth and final tie-break:
+  // the winner ranks above the loser and the pair is settled, not flagged.
   for (let i = 0; i < sorted.length - 1; i++) {
     const a = sorted[i], b = sorted[i + 1];
     const ha = h2h[a.team.id], hb = h2h[b.team.id];
     const sameH2H = !played || (ha.pts === hb.pts && ha.gd === hb.gd && ha.f === hb.f);
-    if (sameH2H && a.gd === b.gd && a.f === b.f) { a.unresolved = true; b.unresolved = true; }
+    if (!(sameH2H && a.gd === b.gd && a.f === b.f)) continue;
+
+    const t = tieResult(ties, a.team.id, b.team.id);
+    if (t) {
+      if (t.winner === b.team.id) { sorted[i] = b; sorted[i + 1] = a; }
+      sorted[i].tie = 'W'; sorted[i + 1].tie = 'L';
+    } else {
+      a.unresolved = true; b.unresolved = true;
+    }
   }
   return sorted;
 }
 
-export function standings(teams, matches, group) {
+export function standings(teams, matches, group, ties = []) {
   const rows = tallyInto(
     teams.filter(t => t.group_letter === group).map(blankRow),
     matches);
@@ -172,7 +190,7 @@ export function standings(teams, matches, group) {
     const bucket = byPts.get(pts);
     // clubs that have played nothing yet just sort by name, not by tie-break
     const settled = bucket.some(r => r.p > 0)
-      ? breakTie(bucket, matches)
+      ? breakTie(bucket, matches, ties)
       : bucket.sort((x, y) => x.team.city.localeCompare(y.team.city));
     out.push(...settled);
   }
@@ -313,13 +331,14 @@ function groupComplete(matches, g) {
 
 /** Adjacent clubs the rules could not separate, once the group is over.
  *  Mid-group ties are transient noise and are deliberately not reported. */
-export function unresolvedPairs(teams, matches, group) {
+export function unresolvedPairs(teams, matches, group, ties = []) {
   if (!groupComplete(matches, group)) return [];
-  const rows = standings(teams, matches, group);
+  const rows = standings(teams, matches, group, ties);
   const out = [];
-  for (let i = 0; i < rows.length - 1; i++)
-    // Both flagged AND on equal points: two separate level pairs can sit
-    // adjacent in the table, and clubs on different points are never a pair.
+  // Only pairs that decide qualification: 1st/2nd or 2nd/3rd. A 3rd/4th tie
+  // sends nobody through, so the rules require no shoot-out and none is
+  // offered — those clubs simply stay marked level.
+  for (let i = 0; i <= 1 && i < rows.length - 1; i++)
     if (rows[i].unresolved && rows[i + 1].unresolved
         && rows[i].pts === rows[i + 1].pts)
       out.push({ i, a: rows[i], b: rows[i + 1] });
@@ -330,12 +349,12 @@ export function unresolvedPairs(teams, matches, group) {
  *  group tables — but ONLY once the group is complete and the rules have
  *  genuinely separated the top two. Until then the slot stays open, so a
  *  club never appears in a semi-final it has not yet earned. */
-export function resolveSlots(teams, matches, overrides = {}) {
+export function resolveSlots(teams, matches, overrides = {}, ties = []) {
   const live = (r) => !r.team.disqualified;
 
   const decided = (g) => {
     if (!groupComplete(matches, g)) return null;
-    const rows = standings(teams, matches, g).filter(live);
+    const rows = standings(teams, matches, g, ties).filter(live);
     if (rows[0]?.unresolved || rows[1]?.unresolved) return null;
     return rows;
   };

@@ -266,3 +266,6 @@ tbody tr.unres td{background:oklch(.965 .022 82)}
 
 /* own-goal option inside the picker */
 .pk.og{color:var(--acc);font-weight:600}
+
+/* shoot-out winner in the table */
+.tag.so{color:oklch(.55 .09 80);border-color:var(--gold)}

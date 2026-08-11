@@ -95,11 +95,20 @@ export const uuid = () =>
   crypto.randomUUID?.() ??
   `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
 
-export const setClock = (matchId, action, version, halfMs) =>
+export const setClock = (matchId, action, version, halfMs, home = null, away = null) =>
   rpc('set_clock', {
     p_match: matchId, p_action: action,
     p_expected_version: version, p_half_ms: halfMs,
+    p_home: home, p_away: away,
   }, true);
+
+export const setTieShootout = (group, teamA, teamB, scoreA, scoreB) =>
+  rpc('set_tie_shootout', {
+    p_group: group, p_team_a: teamA, p_team_b: teamB,
+    p_score_a: scoreA, p_score_b: scoreB,
+  }, true);
+
+export const resetTournament = () => rpc('reset_tournament', {}, true);
 
 export const logEvent = (o) =>
   rpc('log_event', {
@@ -123,3 +132,4 @@ export const setSlot = (slot, teamId) =>
   rpc('set_slot', { p_slot: slot, p_team: teamId }, true);
 
 export const amAdmin = () => rpc('is_admin', {}, true);
+export const myRole = () => rpc('my_role', {}, true);
