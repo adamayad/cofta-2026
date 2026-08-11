@@ -465,10 +465,11 @@ function viewAdmin() {
       <button class="act ghost" id="signout">Sign out</button>`;
   }
   return `<div class="sect">Organiser sign in</div>
-    <p class="note" style="padding-top:0">Spectators never need this. Only organisers running a
-      pitch sign in.</p>
+    <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
+      and password you were given \u2014 one account per pitch.</p>
     <div class="form">
-      <div><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
+      <div><label for="em">Username</label><input id="em" type="text" autocomplete="username"
+        autocapitalize="none" spellcheck="false" placeholder="pitch1"></div>
       <div><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"></div>
       <button class="act" id="signin">Sign in</button>
       <p class="err" id="autherr"></p>

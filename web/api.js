@@ -32,7 +32,12 @@ function headers(auth = false) {
   return h;
 }
 
-export async function signIn(email, password) {
+/** Usernames are synthetic emails on a reserved domain. Typing "pitch1"
+ *  signs in as pitch1@cofta.example; a full address still works as-is. */
+const ADMIN_DOMAIN = 'cofta.example';
+
+export async function signIn(username, password) {
+  const email = username.includes('@') ? username : `${username}@${ADMIN_DOMAIN}`;
   const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: 'POST',
     headers: { apikey: PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
