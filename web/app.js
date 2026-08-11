@@ -143,10 +143,23 @@ function viewMatch() {
     .filter(w => w.args.p_type === 'goal' && w.args.p_side === sideKey).length;
   const hs = m.hs + pendingGoals('home');
   const as = m.as + pendingGoals('away');
-  const side = (id, score, other) => `
+
+  // Scorers under each score, FotMob-style: confirmed events plus anything
+  // still in the queue, so a goal tapped offline shows its minute at once.
+  const pendingEvts = queue.pendingFor(m.id)
+    .filter(w => w.args.p_type === 'goal' || w.args.p_type === 'own_goal')
+    .map(w => ({ m: m.id, t: w.args.p_type, s: w.args.p_side,
+                 p: w.args.p_player, min: w.args.p_minute, voided: false }));
+  const allEvts = [...state.events, ...pendingEvts];
+  const lines = (sideKey) => M.scorerLines(allEvts, m.id, sideKey, playerName)
+    .map(l => `<i class="gline">${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
+    .join('');
+
+  const side = (id, score, other, sideKey) => `
     <div class="sl ${lead(score, other)}" style="--c:${colOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
-      <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
+      <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>
+        ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</span>
       <span class="gl tnum">${score}</span></div>`;
 
   let clock, phase;
@@ -179,7 +192,7 @@ function viewMatch() {
     : '<div class="empty">Nothing to report yet.</div>';
 
   return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
-    <div class="stack">${side(m.home, hs, as)}${side(m.away, as, hs)}</div>
+    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}</div>
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
       ${M.isLive(m) && m.run ? '<span class="lv"><i></i>Live</span>' : ''}</p>

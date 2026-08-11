@@ -381,3 +381,38 @@ export const fixtureOrder = (a, b) =>
   a.day - b.day
   || String(a.kickoff).localeCompare(String(b.kickoff))
   || String(a.pitch).localeCompare(String(b.pitch));
+
+/* ── scorer lines, FotMob-style ──────────────────────────── */
+/** Chronological key for a minute label: "20+2" sorts before "21". */
+export function minuteKey(label) {
+  const m = /^(\d+)(?:\+(\d+))?/.exec(String(label || ''));
+  if (!m) return 0;
+  return Number(m[1]) * 100 + Number(m[2] || 0);
+}
+
+/**
+ * The lines under a team's score: one per scorer with every minute they
+ * scored, own goals credited to the benefiting side and marked, and any
+ * unattributed goals collapsed into a bare line of minutes.
+ * Returns [{ name|null, og, mins: ['12\u2032', ...] }] in chronological order.
+ */
+export function scorerLines(events, matchId, sideKey, nameOf) {
+  const mine = (events || []).filter(e =>
+    e.m === matchId && !e.voided &&
+    ((e.t === 'goal' && e.s === sideKey) ||
+     (e.t === 'own_goal' && e.s && e.s !== sideKey)));
+
+  const groups = new Map();
+  for (const e of mine) {
+    const og = e.t === 'own_goal';
+    const name = e.p ? (nameOf ? nameOf(e.p) : e.p) : null;
+    const key = (og ? 'og:' : 'g:') + (name ?? '\u2205');
+    if (!groups.has(key)) groups.set(key, { name, og, mins: [] });
+    groups.get(key).mins.push(e.min || '');
+  }
+
+  const out = [...groups.values()];
+  for (const g of out) g.mins.sort((a, b) => minuteKey(a) - minuteKey(b));
+  out.sort((a, b) => minuteKey(a.mins[0]) - minuteKey(b.mins[0]));
+  return out;
+}

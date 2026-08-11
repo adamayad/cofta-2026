@@ -269,3 +269,8 @@ tbody tr.unres td{background:oklch(.965 .022 82)}
 
 /* shoot-out winner in the table */
 .tag.so{color:oklch(.55 .09 80);border-color:var(--gold)}
+
+/* scorer lines under each side */
+.sl .gls{display:block;margin-top:5px}
+.sl .gline{display:block;font-style:normal;font-size:11px;color:var(--dim);
+  line-height:1.6;letter-spacing:.01em;font-variant-numeric:tabular-nums}
