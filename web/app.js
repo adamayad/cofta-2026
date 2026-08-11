@@ -16,18 +16,21 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
 
 const POLL_MS = 5000;
 
-/** Events are queued so a tap on bad signal is never lost. The queue sends
- *  through the same RPC layer, so idempotency and auth still apply. */
-const queue = new WriteQueue((fn, args) => api.rpc(fn, args, true));
-let queueState = { depth: 0, failing: false };
-queue.subscribe(s => { queueState = s; if (state.snap) render(); });
-
 const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [],
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null,
   admin: false, lastFetch: 0, error: null, busy: false, pens: null,
 };
+
+/** Events are queued so a tap on bad signal is never lost. The queue sends
+ *  through the same RPC layer, so idempotency and auth still apply.
+ *  Created AFTER `state`: subscribe fires its callback immediately, and that
+ *  callback reads `state` — declaring the queue first was a TDZ crash that
+ *  took the whole module down before boot() could run. */
+const queue = new WriteQueue((fn, args) => api.rpc(fn, args, true));
+let queueState = { depth: 0, failing: false };
+queue.subscribe(s => { queueState = s; if (state.snap) render(); });
 
 /* ── data ────────────────────────────────────────────────── */
 async function poll() {
@@ -170,9 +173,25 @@ function viewMatch() {
     </div>
     ${m.pd ? `<p class="note">Won ${m.ph}\u2013${m.pa} on penalties. The match stands as a draw,
        so no goal difference is affected.</p>` : ''}
+    ${suspensionNotice(m)}
     ${state.admin ? adminMatchControls(m) : ''}
     <div class="sect">Match report</div>
     <ol class="tl">${timeline}</ol>`;
+}
+
+/** Who cannot play in this match, and why. Shown before kick-off so an
+ *  organiser finds out in time to do something about it. */
+function suspensionNotice(m) {
+  if (M.hasStarted(m)) return '';
+  const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
+  const out = M.suspendedFor(m.id, resolvedMatches(), state.events, byId);
+  if (!out.length) return '';
+  const rows = out.map(s => `<li><span class="nmx">${esc(s.player)}</span>
+      <span class="rs">${esc(s.reason)}</span></li>`).join('');
+  return `<div class="sect">Unavailable</div>
+    <ul class="susp">${rows}</ul>
+    <p class="note" style="padding-top:8px">Suspended for this match under the
+      tournament rules.</p>`;
 }
 
 function eventText(x, m) {
@@ -298,10 +317,10 @@ function viewTables() {
   if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
 
   const tbl = (g) => M.standings(teamsArr, ms, g).map((r, i) => `
-      <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''}">
+      <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''} ${r.unresolved ? 'unres' : ''}">
         <td class="nm"><span class="in"><span class="rk">${i + 1}</span>
           <span class="tile" style="--c:${r.team.colour}"><img src="${crest(r.team.id)}" alt=""></span>
-          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}</b>
+          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.unresolved ? '<span class="tag lvl">Level</span>' : ''}</b>
           <i>${esc(r.team.city)}</i></span></span></td>
         <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
         <td>${r.p ? (r.gd > 0 ? '+' : r.gd < 0 ? '\u2212' : '') + Math.abs(r.gd) : '\u2013'}</td>
@@ -316,7 +335,8 @@ function viewTables() {
   return `<div class="sect">Group A</div><table>${head}<tbody>${tbl('A')}</tbody></table>
     <div class="sect">Group B</div><table>${head}<tbody>${tbl('B')}</tbody></table>
     <p class="note">Computed from logged events, never typed by hand. Ranked on points,
-      then goal difference, then goals scored.</p>
+      then head-to-head, then goal difference, then goals scored.</p>
+    ${unresolvedNotice(teamsArr, ms)}
     <div class="sect">Sunday</div>
     <div class="ko"><span class="l">Semi-final 1</span>
       <span class="w">${slot(s.sf1_home, 'Winner A')} v ${slot(s.sf1_away, 'Runner-up B')}</span></div>
@@ -325,6 +345,19 @@ function viewTables() {
     <div class="ko"><span class="l">Final</span>
       <span class="w">${slot(s.final_home, 'Winner SF1')} v ${slot(s.final_away, 'Winner SF2')}</span></div>
     ${state.admin ? adminQualification(teamsArr, s) : ''}`;
+}
+
+/** The rules cannot always separate two clubs. When they cannot, say so
+ *  rather than presenting an order the rules did not produce. */
+function unresolvedNotice(teamsArr, ms) {
+  const stuck = ['A', 'B'].flatMap(g =>
+    M.standings(teamsArr, ms, g).filter(r => r.unresolved).map(r => ({ g, r })));
+  if (!stuck.length) return '';
+  const names = [...new Set(stuck.map(x => cityOf(x.r.team.id)))].join(' and ');
+  return `<div class="banner warn">${esc(names)} cannot be separated on points,
+    head-to-head, goal difference or goals scored. Under the rules that is settled
+    by a one-off penalty shoot-out. Set the order by hand in Qualification once it
+    has been played.</div>`;
 }
 
 function adminQualification(teamsArr, s) {
@@ -350,6 +383,62 @@ function adminQualification(teamsArr, s) {
     <p class="note" style="padding-top:0">A disqualified club drops out of qualification. Its played
       results stay in the table. Name a replacement in the slots above.</p>
     <div class="dqlist">${dq}</div>`;
+}
+
+/* ── awards ──────────────────────────────────────────────── */
+function viewAwards() {
+  const teamsArr = Object.values(state.teams);
+  const ms = resolvedMatches();
+  if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
+
+  const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
+  const a = M.awards(teamsArr, ms, state.events, byId);
+  const anyPlayed = ms.some(M.hasStarted);
+
+  if (!anyPlayed) return `<div class="sect">Awards</div>
+    <p class="empty">Nothing decided yet. The golden boot, player of the tournament
+      and golden glove fill in as matches are played.</p>`;
+
+  const card = (title, body, foot) => `<div class="award">
+      <span class="at">${title}</span>${body}
+      ${foot ? `<p class="af">${foot}</p>` : ''}</div>`;
+
+  const boot = a.goldenBoot.count
+    ? card('Golden boot',
+        `<p class="an">${a.goldenBoot.names.map(esc).join(' &amp; ')}</p>
+         <p class="ac tnum">${a.goldenBoot.count} goal${a.goldenBoot.count === 1 ? '' : 's'}</p>`,
+        a.goldenBoot.shared ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '')
+    : card('Golden boot', '<p class="an dim">No goals attributed yet</p>',
+        'Goals count towards this only when a scorer is named.');
+
+  const pot = a.playerOfTournament.count
+    ? card('Player of the tournament',
+        `<p class="an">${a.playerOfTournament.names.map(esc).join(' &amp; ')}</p>
+         <p class="ac tnum">${a.playerOfTournament.count} man of the match award${a.playerOfTournament.count === 1 ? '' : 's'}</p>`,
+        a.playerOfTournament.shared ? 'Level on awards.' : '')
+    : card('Player of the tournament', '<p class="an dim">Not yet awarded</p>',
+        'Decided by the most man of the match awards.');
+
+  const glove = a.goldenGlove.winners.length
+    ? card('Golden glove',
+        a.goldenGlove.winners.map(w => `<p class="an">${esc(w.team.city)}</p>`).join('') +
+        `<p class="ac tnum">${a.goldenGlove.count} conceded in ${a.goldenGlove.winners[0].played} match${a.goldenGlove.winners[0].played === 1 ? '' : 'es'}</p>`,
+        a.goldenGlove.decidedByManagers
+          ? 'Level on goals conceded \u2014 decided by the church managers.'
+          : 'Shared by that club\u2019s goalkeepers.')
+    : '';
+
+  const table = a.goldenGlove.conceded
+    .slice().sort((x, y) => x.against - y.against || x.team.city.localeCompare(y.team.city))
+    .map(c => `<tr><td class="nm"><span class="in">
+        <span class="tile" style="--c:${c.team.colour}"><img src="${crest(c.team.id)}" alt=""></span>
+        <span class="who"><b>${esc(c.team.city)}</b></span></span></td>
+      <td>${c.played}</td><td class="p">${c.against}</td></tr>`).join('');
+
+  return `<div class="sect">Awards</div>${boot}${pot}${glove}
+    <div class="sect">Goals conceded</div>
+    <table><thead><tr><th class="nm">Club</th><th>P</th><th>GA</th></tr></thead>
+      <tbody>${table}</tbody></table>`;
 }
 
 /* ── admin sign in ───────────────────────────────────────── */
@@ -382,13 +471,14 @@ function render() {
     : `<i></i>${state.error ? 'Reconnecting' : stale ? 'Stale' : 'Live'}`;
   $('pip').className = `pip ${q || stale ? 'stale' : ''}`;
 
-  ['fixtures', 'match', 'tables', 'admin'].forEach(v =>
+  ['fixtures', 'match', 'tables', 'awards', 'admin'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', state.view === v));
 
   const body =
     state.view === 'fixtures' ? viewFixtures() :
     state.view === 'match'    ? viewMatch()    :
-    state.view === 'tables'   ? viewTables()   : viewAdmin();
+    state.view === 'tables'   ? viewTables()   :
+    state.view === 'awards'   ? viewAwards()  : viewAdmin();
 
   $('body').innerHTML = body +
     (state.error ? `<div class="banner warn">Could not reach the server: ${esc(state.error)}.
