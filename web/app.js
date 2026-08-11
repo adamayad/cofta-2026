@@ -21,6 +21,7 @@ const state = {
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
   admin: false, lastFetch: 0, error: null, busy: false, pens: null,
+  tiePens: {},
 };
 
 /** Events are queued so a tap on bad signal is never lost. The queue sends
@@ -73,7 +74,7 @@ function resolvedMatches() {
   put('SF1', slots.sf1_home, slots.sf1_away);
   put('SF2', slots.sf2_home, slots.sf2_away);
   put('FINAL', slots.final_home, slots.final_away);
-  return list;
+  return list.sort(M.fixtureOrder);
 }
 
 const currentMatch = () => resolvedMatches().find(m => m.id === state.matchId);
@@ -258,8 +259,6 @@ function adminMatchControls(m) {
         <span class="w">Red</span><span class="s">Sent off</span></button>
       <button class="lg" data-card="motm" ${m.status === 'full_time' ? '' : 'disabled'}>
         <span class="w">Man of match</span><span class="s">At full time</span></button>
-      <button class="lg" data-goal="own" ${started && !m.ff ? '' : 'disabled'}>
-        <span class="w">Own goal</span><span class="s">Pick side</span></button>
     </div>
     ${state.picker ? pickerPanel(m) : ''}
     <div class="sect">Match admin</div>
@@ -298,10 +297,18 @@ function pickerPanel(m) {
        ${esc(cityOf(teamId))} yet. Record it without a name for now \u2014
        the goal still counts.</p>`;
 
+  // A goal tapped for a side might turn out to be an own goal. Offering it
+  // here, rather than as a separate button, means the score still moved on
+  // the very first tap and the correction is one more tap.
+  const og = type === 'goal'
+    ? `<button class="pk og" data-pick="own">Own goal \u2014
+        ${esc(cityOf(side === 'home' ? m.away : m.home))} player</button>`
+    : '';
+
   return `<div class="picker">
       <div class="pkhd"><span>${label}</span>
         <button data-pick-cancel="1">Cancel</button></div>
-      <div class="pklist">${names}</div>
+      <div class="pklist">${names}${og}</div>
       <button class="act ghost" data-pick="skip">Record without a name</button>
     </div>`;
 }
@@ -351,7 +358,7 @@ function viewTables() {
     <div class="sect">Group B</div><table>${head}<tbody>${tbl('B')}</tbody></table>
     <p class="note">Computed from logged events, never typed by hand. Ranked on points,
       then head-to-head, then goal difference, then goals scored.</p>
-    ${unresolvedNotice(teamsArr, ms)}
+    ${state.admin ? tieShootoutPanels(teamsArr, ms) : unresolvedNotice(teamsArr, ms)}
     <div class="sect">Sunday</div>
     <div class="ko"><span class="l">Semi-final 1</span>
       <span class="w">${slot(s.sf1_home, 'Winner A')} v ${slot(s.sf1_away, 'Runner-up B')}</span></div>
@@ -362,17 +369,70 @@ function viewTables() {
     ${state.admin ? adminQualification(teamsArr, s) : ''}`;
 }
 
-/** The rules cannot always separate two clubs. When they cannot, say so
- *  rather than presenting an order the rules did not produce. */
+/** Spectator wording when the rules cannot separate two clubs. Only shown
+ *  once the group is actually finished — a mid-group tie is just noise. */
 function unresolvedNotice(teamsArr, ms) {
-  const stuck = ['A', 'B'].flatMap(g =>
-    M.standings(teamsArr, ms, g).filter(r => r.unresolved).map(r => ({ g, r })));
-  if (!stuck.length) return '';
-  const names = [...new Set(stuck.map(x => cityOf(x.r.team.id)))].join(' and ');
-  return `<div class="banner warn">${esc(names)} cannot be separated on points,
-    head-to-head, goal difference or goals scored. Under the rules that is settled
-    by a one-off penalty shoot-out. Set the order by hand in Qualification once it
-    has been played.</div>`;
+  const pairs = ['A', 'B'].flatMap(g =>
+    M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })))
+    .filter(p => p.i <= 1);   // 3rd v 4th decides nothing, so say nothing
+  if (!pairs.length) return '';
+  const names = pairs.map(p =>
+    `${cityOf(p.a.team.id)} and ${cityOf(p.b.team.id)}`).join('; ');
+  return `<div class="banner warn">${esc(names)} finished level on points,
+    head-to-head, goal difference and goals scored. Under the rules that is
+    settled by a one-off penalty shoot-out.</div>`;
+}
+
+/** Which semi-final slots a level pair decides. Pair i is rows i and i+1:
+ *  the top pair decides both qualifying slots; the 2nd/3rd pair decides only
+ *  who takes the runner-up slot; 3rd/4th decides nothing. */
+function tieSlots(g, i) {
+  if (i === 0) return {
+    winner: g === 'A' ? 'sf1_home' : 'sf2_home',
+    loser:  g === 'A' ? 'sf2_away' : 'sf1_away',
+  };
+  if (i === 1) return { winner: g === 'A' ? 'sf2_away' : 'sf1_away', loser: null };
+  return null;
+}
+
+/** The organiser's prompt: enter the one-off shoot-out result and the Sunday
+ *  line-up fills in from it. Whoever is running that group's pitch does it —
+ *  both admin accounts see the same panel, so either can. */
+function tieShootoutPanels(teamsArr, ms) {
+  const pairs = ['A', 'B'].flatMap(g =>
+    M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })));
+  if (!pairs.length) return '';
+
+  return pairs.map(p => {
+    const slots = tieSlots(p.g, p.i);
+    if (!slots) return '';
+    const key = p.g + p.i;
+    const sc = state.tiePens[key] ?? { a: 0, b: 0 };
+    const settled = slots.winner && state.slots[slots.winner];
+
+    if (settled) return `<div class="banner">${esc(cityOf(p.a.team.id))} and
+      ${esc(cityOf(p.b.team.id))} finished level; the one-off shoot-out result
+      has been entered and the Sunday line-up reflects it.</div>`;
+
+    const row = (side, teamId, v) => `<div class="pr" style="--c:${colOf(teamId)}">
+        <span class="bd"><img src="${crest(teamId)}" alt=""></span>
+        <span class="nx">${esc(nameOf(teamId))}</span>
+        <span class="pm"><button data-tiepen="${key}:${side}:-1">&minus;</button>
+          <button data-tiepen="${key}:${side}:1">+</button></span>
+        <span class="cnt tnum">${v}</span></div>`;
+
+    return `<div class="sect">One-off shoot-out</div>
+      <div class="pens">
+        <p class="note" style="padding-top:0">${esc(cityOf(p.a.team.id))} and
+          ${esc(cityOf(p.b.team.id))} finished level on every tie-breaker, so the
+          rules go to a one-off penalty shoot-out. Enter the result and the
+          Sunday line-up fills in from it.</p>
+        ${row('a', p.a.team.id, sc.a)}${row('b', p.b.team.id, sc.b)}
+        <div class="two" style="grid-template-columns:1fr">
+          <button class="act" data-tieconfirm="${key}" ${sc.a === sc.b ? 'disabled' : ''}>
+            Confirm shoot-out result</button></div>
+      </div>`;
+  }).join('');
 }
 
 function adminQualification(teamsArr, s) {
@@ -535,15 +595,15 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-ev],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-dq],#signin,#signout');
   if (!t) return;
 
-  if (t.dataset.view) { state.view = t.dataset.view; render(); return; }
-  if (t.dataset.day) { state.day = +t.dataset.day; render(); return; }
+  if (t.dataset.view) { state.view = t.dataset.view; state.picker = null; render(); return; }
+  if (t.dataset.day) { state.day = +t.dataset.day; state.picker = null; render(); return; }
   if (t.dataset.match) {
     state.from = (state.view === 'live') ? 'live' : 'fixtures';
     state.matchId = t.dataset.match; state.view = 'match';
-    state.pens = null; render(); return;
+    state.pens = null; state.picker = null; render(); return;
   }
 
   const m = currentMatch();
@@ -553,7 +613,7 @@ document.addEventListener('click', async (ev) => {
 
   // Goal for a side: log it immediately, then ask who scored. The score
   // must move on the first tap — attribution is a bonus, never a gate.
-  if (t.dataset.goal && t.dataset.goal !== 'own' && m) {
+  if (t.dataset.goal && m) {
     const id = api.uuid();
     queue.add(id, 'log_event', {
       p_id: id, p_match: m.id, p_type: 'goal', p_side: t.dataset.goal,
@@ -566,11 +626,7 @@ document.addEventListener('click', async (ev) => {
     return;
   }
 
-  // Own goal and cards need a side chosen first, so the picker opens straight away.
-  if (t.dataset.goal === 'own' && m) {
-    state.picker = { type: 'own_goal', side: null, eventId: null };
-    render(); return;
-  }
+  // Cards need a side chosen first, so the picker opens on the club step.
   if (t.dataset.card && m) {
     state.picker = { type: t.dataset.card, side: null, eventId: null };
     render(); return;
@@ -581,6 +637,25 @@ document.addEventListener('click', async (ev) => {
 
   if (t.dataset.pick && m) {
     const pk = state.picker;
+    if (!pk) { render(); return; }
+
+    if (t.dataset.pick === 'own' && pk.type === 'goal' && pk.eventId) {
+      // The tapped goal was an own goal. Void the original, log the own goal
+      // against the other side (which credits the same club, so the score
+      // never moves), then ask which opposition player it was.
+      const other = pk.side === 'home' ? 'away' : 'home';
+      queue.add(api.uuid(), 'void_event', { p_id: pk.eventId });
+      const ogId = api.uuid();
+      queue.add(ogId, 'log_event', {
+        p_id: ogId, p_match: m.id, p_type: 'own_goal',
+        p_side: other, p_player: null,
+        p_elapsed: Math.round(M.elapsedMs(m)),
+        p_minute: M.minuteLabel(m) + '\u2032',
+      });
+      state.picker = { type: 'own_goal', side: other, eventId: ogId };
+      render(); return;
+    }
+
     const playerId = t.dataset.pick === 'skip' ? null : t.dataset.pick;
 
     if (pk.eventId) {
@@ -624,6 +699,33 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.penConfirm && m) {
     const p = state.pens ?? { h: m.ph || 0, a: m.pa || 0 };
     return guard(async () => { await api.setShootout(m.id, p.h, p.a, true); state.pens = null; });
+  }
+
+  if (t.dataset.tiepen) {
+    const [key, side, d] = t.dataset.tiepen.split(':');
+    const sc = state.tiePens[key] ?? { a: 0, b: 0 };
+    sc[side] = Math.max(0, sc[side] + Number(d));
+    state.tiePens[key] = sc; render(); return;
+  }
+
+  if (t.dataset.tieconfirm) {
+    const key = t.dataset.tieconfirm;
+    const teamsArr = Object.values(state.teams);
+    const ms = resolvedMatches();
+    const pair = ['A', 'B'].flatMap(g =>
+      M.unresolvedPairs(teamsArr, ms, g).map(p => ({ g, ...p })))
+      .find(p => p.g + p.i === key);
+    const sc = state.tiePens[key];
+    if (!pair || !sc || sc.a === sc.b) return;
+    const slots = tieSlots(pair.g, pair.i);
+    if (!slots) return;
+    const winner = sc.a > sc.b ? pair.a.team.id : pair.b.team.id;
+    const loser  = sc.a > sc.b ? pair.b.team.id : pair.a.team.id;
+    return guard(async () => {
+      if (slots.winner) await api.setSlot(slots.winner, winner);
+      if (slots.loser)  await api.setSlot(slots.loser, loser);
+      delete state.tiePens[key];
+    });
   }
 
   if (t.dataset.dq) {

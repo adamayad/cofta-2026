@@ -263,3 +263,6 @@ tbody tr.unres td{background:oklch(.965 .022 82)}
 .award .an.dim{color:var(--dim);font-weight:500;font-size:17px}
 .award .ac{font-family:var(--num);font-weight:800;font-size:15px;color:var(--acc);margin-top:5px}
 .award .af{font-size:11.5px;color:var(--dim);font-style:italic;margin-top:9px;line-height:1.55}
+
+/* own-goal option inside the picker */
+.pk.og{color:var(--acc);font-weight:600}

@@ -305,24 +305,60 @@ export function suspendedFor(matchId, matches, events, players = {}) {
 }
 
 /* ── knockout slots ──────────────────────────────────────── */
+/** Every match in the group finished, whether played or forfeited. */
+function groupComplete(matches, g) {
+  const ms = matches.filter(m => m.stage === g);
+  return ms.length > 0 && ms.every(m => m.status === 'full_time' || !!m.ff);
+}
+
+/** Adjacent clubs the rules could not separate, once the group is over.
+ *  Mid-group ties are transient noise and are deliberately not reported. */
+export function unresolvedPairs(teams, matches, group) {
+  if (!groupComplete(matches, group)) return [];
+  const rows = standings(teams, matches, group);
+  const out = [];
+  for (let i = 0; i < rows.length - 1; i++)
+    // Both flagged AND on equal points: two separate level pairs can sit
+    // adjacent in the table, and clubs on different points are never a pair.
+    if (rows[i].unresolved && rows[i + 1].unresolved
+        && rows[i].pts === rows[i + 1].pts)
+      out.push({ i, a: rows[i], b: rows[i + 1] });
+  return out;
+}
+
 /** Who fills each knockout slot: a manual override if one is set, else the
- *  group tables. Overrides exist because disqualifications and unresolved
- *  ties are settled by people, not by the app. */
+ *  group tables — but ONLY once the group is complete and the rules have
+ *  genuinely separated the top two. Until then the slot stays open, so a
+ *  club never appears in a semi-final it has not yet earned. */
 export function resolveSlots(teams, matches, overrides = {}) {
   const live = (r) => !r.team.disqualified;
-  const A = standings(teams, matches, 'A').filter(live);
-  const B = standings(teams, matches, 'B').filter(live);
-  const pick = (key, fallback) => overrides[key] || fallback || null;
 
+  const decided = (g) => {
+    if (!groupComplete(matches, g)) return null;
+    const rows = standings(teams, matches, g).filter(live);
+    if (rows[0]?.unresolved || rows[1]?.unresolved) return null;
+    return rows;
+  };
+
+  const A = decided('A'), B = decided('B');
+  const pick = (key, fallback) => overrides[key] || fallback || null;
   const sf1 = matches.find(m => m.stage === 'SF1');
   const sf2 = matches.find(m => m.stage === 'SF2');
 
   return {
-    sf1_home: pick('sf1_home', A[0]?.team.id),
-    sf1_away: pick('sf1_away', B[1]?.team.id),
-    sf2_home: pick('sf2_home', B[0]?.team.id),
-    sf2_away: pick('sf2_away', A[1]?.team.id),
+    sf1_home: pick('sf1_home', A?.[0]?.team.id),
+    sf1_away: pick('sf1_away', B?.[1]?.team.id),
+    sf2_home: pick('sf2_home', B?.[0]?.team.id),
+    sf2_away: pick('sf2_away', A?.[1]?.team.id),
     final_home: pick('final_home', winnerOf(sf1)),
     final_away: pick('final_away', winnerOf(sf2)),
   };
 }
+
+/** Canonical fixture order: day, kick-off, pitch. The snapshot must never be
+ *  trusted for ordering — Postgres moves updated rows, so without this the
+ *  matches being played kept sinking to the bottom of the list. */
+export const fixtureOrder = (a, b) =>
+  a.day - b.day
+  || String(a.kickoff).localeCompare(String(b.kickoff))
+  || String(a.pitch).localeCompare(String(b.pitch));
