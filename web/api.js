@@ -110,6 +110,11 @@ export const setTieShootout = (group, teamA, teamB, scoreA, scoreB) =>
 
 export const resetTournament = () => rpc('reset_tournament', {}, true);
 
+export const addPlayer = (teamId, name, shirt) =>
+  rpc('add_player', { p_team: teamId, p_name: name, p_shirt: shirt ?? null }, true);
+
+export const removePlayer = (id) => rpc('remove_player', { p_id: id }, true);
+
 export const logEvent = (o) =>
   rpc('log_event', {
     p_id: o.id, p_match: o.matchId, p_type: o.type,

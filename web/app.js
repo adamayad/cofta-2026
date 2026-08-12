@@ -20,7 +20,7 @@ const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
-  admin: false, role: null, lastFetch: 0, error: null, busy: false, pens: null,
+  admin: false, role: null, squadTeam: null, lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
 };
 
@@ -34,18 +34,23 @@ let queueState = { depth: 0, failing: false };
 queue.subscribe(s => { queueState = s; if (state.snap) render(); });
 
 /* ── data ────────────────────────────────────────────────── */
+function applySnap(snap) {
+  state.snap = snap;
+  state.teams = Object.fromEntries((snap.teams || []).map(t => [t.id, t]));
+  state.matches = snap.matches || [];
+  state.events = snap.events || [];
+  state.players = snap.players || [];
+  state.slots = snap.slots || {};
+  state.ties = snap.ties || [];
+}
+
 async function poll() {
   const sent = Date.now();
   try {
     const snap = await api.fetchSnapshot();
     M.syncFromSnapshot(snap.now, sent);
-    state.snap = snap;
-    state.teams = Object.fromEntries((snap.teams || []).map(t => [t.id, t]));
-    state.matches = snap.matches || [];
-    state.events = snap.events || [];
-    state.players = snap.players || [];
-    state.slots = snap.slots || {};
-    state.ties = snap.ties || [];
+    applySnap(snap);
+    try { localStorage.setItem('cofta.snap.v1', JSON.stringify(snap)); } catch {}
     state.lastFetch = Date.now();
     state.error = null;
   } catch (e) {
@@ -533,7 +538,8 @@ function viewAdmin() {
         ? 'Organiser account: full access, including the tools below.'
         : 'Pitch account: run matches, log events, enter shoot-outs.'}
         Open any match and the controls appear inline.</p>
-      <button class="act ghost" id="signout">Sign out</button>${resetSection}`;
+      <button class="act ghost" id="signout">Sign out</button>
+      ${squadSection()}${resetSection}`;
   }
   return `<div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
@@ -545,6 +551,61 @@ function viewAdmin() {
       <button class="act" id="signin">Sign in</button>
       <p class="err" id="autherr"></p>
     </div>`;
+}
+
+/**
+ * Squad entry. Paste one player per line — an optional shirt number first,
+ * so both of these work:
+ *     7 Andrew Ramzy
+ *     Andrew Ramzy
+ * Lines already in the squad are skipped, so pasting the same list twice
+ * cannot create duplicates. The 23-man cap is enforced server-side.
+ */
+function parseSquadLines(text) {
+  return String(text || '').split(/\r?\n/)
+    .map(l => l.trim()).filter(Boolean)
+    .map(l => {
+      const m = /^(\d{1,2})[\s.\-\u2013]+(.+)$/.exec(l);
+      return m ? { no: Number(m[1]), name: m[2].trim() }
+               : { no: null, name: l };
+    })
+    .filter(p => p.name.length > 1 && p.name.length <= 60);
+}
+
+function squadSection() {
+  const teamsArr = Object.values(state.teams);
+  if (!teamsArr.length) return '';
+
+  const chips = teamsArr.map(t => {
+    const n = squadOf(t.id).length;
+    return `<button class="${state.squadTeam === t.id ? 'on' : ''}" data-squad="${t.id}">
+      ${esc(t.city)} \u00b7 ${n}</button>`;
+  }).join('');
+
+  let editor = '';
+  if (state.squadTeam) {
+    const t = team(state.squadTeam);
+    const squad = squadOf(state.squadTeam);
+    const rows = squad.map(p => `<li>
+        <span class="no tnum">${p.no ?? ''}</span>
+        <span class="nmx">${esc(p.name)}</span>
+        <button class="undo" data-delplayer="${p.id}">Remove</button></li>`).join('');
+    editor = `
+      <p class="note" style="padding-top:10px"><b>${esc(t.name)}</b> (${esc(t.city)}) \u2014
+        ${squad.length} of 23. Paste one player per line; a shirt number first is
+        optional, like <i>7 Andrew Ramzy</i>. Repeated names are skipped.</p>
+      ${squad.length ? `<ul class="squad">${rows}</ul>` : ''}
+      <div class="form" style="padding-top:10px">
+        <textarea id="sqin" rows="6" placeholder="7 Andrew Ramzy&#10;Mina Gerges&#10;\u2026"></textarea>
+        <button class="act" data-addsquad="1">Add players</button>
+        <p class="okmsg" id="sqmsg"></p>
+      </div>`;
+  }
+
+  return `<div class="sect">Squads</div>
+    <p class="note" style="padding-top:0">Squad lists unlock goalscorers, the golden boot
+      and suspensions. Tap a club to enter or edit its squad.</p>
+    <div class="dqlist">${chips}</div>${editor}`;
 }
 
 /* ── render ──────────────────────────────────────────────── */
@@ -606,7 +667,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) { state.view = t.dataset.view; state.picker = null; render(); return; }
@@ -736,6 +797,42 @@ document.addEventListener('click', async (ev) => {
     });
   }
 
+  if (t.dataset.squad) {
+    state.squadTeam = state.squadTeam === t.dataset.squad ? null : t.dataset.squad;
+    render(); return;
+  }
+
+  if (t.dataset.delplayer) {
+    const pl = state.players.find(p => p.id === t.dataset.delplayer);
+    if (pl && !confirm(`Remove ${pl.name} from the squad?`)) return;
+    return guard(() => api.removePlayer(t.dataset.delplayer));
+  }
+
+  if (t.dataset.addsquad) {
+    const box = $('sqin'), msg = $('sqmsg');
+    const parsed = parseSquadLines(box?.value);
+    if (!parsed.length || !state.squadTeam) return;
+    const existing = new Set(squadOf(state.squadTeam).map(p => p.name.toLowerCase()));
+    const fresh = parsed.filter(p => !existing.has(p.name.toLowerCase()));
+    const skipped = parsed.length - fresh.length;
+
+    return guard(async () => {
+      let added = 0, stopped = null;
+      for (const p of fresh) {
+        try { await api.addPlayer(state.squadTeam, p.name, p.no); added++; }
+        catch (e) {
+          stopped = /squad_full/.test(e.message) ? 'squad is at the 23-man limit' : e.message;
+          break;
+        }
+      }
+      if (box) box.value = '';
+      if (msg) msg.textContent =
+        `Added ${added}` +
+        (skipped ? `, skipped ${skipped} already listed` : '') +
+        (stopped ? ` \u2014 stopped: ${stopped}` : '') + '.';
+    });
+  }
+
   if (t.dataset.reset) {
     const word = prompt('This wipes every score, event, card, shoot-out and override, and returns all fixtures to scheduled. Clubs and squads are kept.\n\nType RESET to confirm.');
     if (word !== 'RESET') return;
@@ -773,6 +870,19 @@ document.addEventListener('change', (ev) => {
 
 /* ── boot ────────────────────────────────────────────────── */
 (async function boot() {
+  // Boot from the last known snapshot, so a phone with no signal still opens
+  // to yesterday's state (marked stale) instead of an empty screen. The
+  // server's `now` in a cached snapshot is old, so the clock offset is NOT
+  // synced from it — only a live poll may do that.
+  try {
+    const cached = JSON.parse(localStorage.getItem('cofta.snap.v1') || 'null');
+    if (cached) { applySnap(cached); render(); }
+  } catch { /* nothing cached */ }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
   if (api.isSignedIn()) {
     try {
       state.admin = !!(await api.amAdmin());
