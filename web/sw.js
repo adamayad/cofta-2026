@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v3';
+const VERSION = 'cofta-v4';
 const SHELL = [
   './', './index.html', './styles.css', './fonts.css', './themes.css', './diocese.webp',
   './app.js', './api.js', './model.js', './queue.js', './crests.js',
@@ -40,14 +40,30 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
-  // Shell: cache first for speed, refresh in the background for next time.
-  e.respondWith(
-    caches.match(e.request).then(hit => {
-      const refresh = fetch(e.request).then(res => {
+
+  // Fonts and crests never change between deploys: cache first, instant.
+  const immutable = /\.(?:woff2|webp|png)$/.test(url.pathname);
+
+  if (immutable) {
+    e.respondWith(
+      caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
         if (res.ok) caches.open(VERSION).then(c => c.put(e.request, res.clone()));
         return res;
-      }).catch(() => hit);
-      return hit || refresh;
-    })
+      }))
+    );
+    return;
+  }
+
+  // Code and markup: network first, so a deploy lands on the very next
+  // reload. The cache is the offline fallback, not the primary source —
+  // the cache-first version of this handler left phones one deploy behind.
+  e.respondWith(
+    fetch(e.request).then(res => {
+      if (res.ok) caches.open(VERSION).then(c => c.put(e.request, res.clone()));
+      return res;
+    }).catch(() =>
+      caches.match(e.request).then(hit =>
+        hit || (e.request.mode === 'navigate' ? caches.match('./index.html') : undefined))
+    )
   );
 });
