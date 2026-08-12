@@ -1,0 +1,60 @@
+/* ============================================================
+   COFTA 2026 — alternative directions, switchable per device.
+   Each is a token override on the same structure, so the app can
+   be judged in every style with live data rather than mockups.
+   ============================================================ */
+
+/* ── Broadcast: dark, television graphics ─────────────────── */
+[data-theme="broadcast"]{
+  --bg:oklch(.165 .012 262);
+  --card:oklch(.205 .014 260);
+  --fg:oklch(.94 .012 88);
+  --fg2:oklch(.83 .012 88);
+  --dim:oklch(.62 .014 255);
+  --line:oklch(.28 .012 260);
+  --line2:oklch(.37 .014 260);
+  --gold:oklch(.66 .095 82);
+  --acc:oklch(.70 .17 42);
+  --accfg:oklch(.15 .012 262);
+  --ok:oklch(.72 .13 152);
+}
+[data-theme="broadcast"] .hd{border-bottom-color:oklch(.52 .11 45)}
+[data-theme="broadcast"] .fx:hover{background:oklch(.235 .014 260)}
+[data-theme="broadcast"] .pk:active{background:oklch(.26 .014 260)}
+[data-theme="broadcast"] tbody tr.unres td{background:oklch(.27 .04 82)}
+[data-theme="broadcast"] .tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 0 1px var(--gold)}
+[data-theme="broadcast"] .sl .bdg{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 0 1px var(--gold)}
+
+/* ── Terrace: club colour turned right up ─────────────────── */
+[data-theme="terrace"]{
+  --bg:oklch(.958 .018 78);
+  --gold:oklch(.70 .12 68);
+  --acc:oklch(.49 .20 29);
+}
+[data-theme="terrace"] .hd h1{color:var(--acc)}
+[data-theme="terrace"] .sl{background:color-mix(in oklab,var(--c) 26%,var(--card))}
+[data-theme="terrace"] .sl .bdg{width:54px;height:54px}
+[data-theme="terrace"] .sl .bdg img{width:40px;height:40px}
+[data-theme="terrace"] .fx .side{padding-left:11px}
+[data-theme="terrace"] .fx .side::before{width:5px}
+[data-theme="terrace"] .fx .r{font-size:23px}
+
+/* ── Swiss: white, black, one red ─────────────────────────── */
+[data-theme="swiss"]{
+  --bg:#ffffff; --card:#ffffff;
+  --fg:#101010; --fg2:#333; --dim:#767676;
+  --line:#e7e7e7; --line2:#cfcfcf;
+  --gold:#101010;
+  --acc:#d2202a; --accfg:#ffffff;
+  --ok:#1a7f37;
+}
+[data-theme="swiss"] .hd{border-bottom:3px solid #101010}
+[data-theme="swiss"] .sect::after{height:1px}
+[data-theme="swiss"] .fx:hover{background:#f7f7f7}
+[data-theme="swiss"] .pk:active{background:#f2f2f2}
+[data-theme="swiss"] tbody tr.unres td{background:#f5f5f5}
+[data-theme="swiss"] .act,[data-theme="swiss"] .lg,[data-theme="swiss"] .pens,
+[data-theme="swiss"] input,[data-theme="swiss"] select,[data-theme="swiss"] textarea,
+[data-theme="swiss"] .banner,[data-theme="swiss"] .award,[data-theme="swiss"] .picker,
+[data-theme="swiss"] .tile,[data-theme="swiss"] .sl .bdg{border-radius:0}
+[data-theme="swiss"] .tile{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}

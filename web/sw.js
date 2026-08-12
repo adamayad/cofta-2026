@@ -7,9 +7,9 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v1';
+const VERSION = 'cofta-v2';
 const SHELL = [
-  './', './index.html', './styles.css', './fonts.css',
+  './', './index.html', './styles.css', './fonts.css', './themes.css', './diocese.webp',
   './app.js', './api.js', './model.js', './queue.js', './crests.js',
   './manifest.webmanifest',
   './crests/smpk.webp','./crests/ste.webp','./crests/cro.webp','./crests/bri.webp',

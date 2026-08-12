@@ -16,6 +16,30 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
 
 const POLL_MS = 5000;
 
+/* ── appearance ──────────────────────────────────────────── */
+const THEMES = [
+  ['',          'Programme'],
+  ['broadcast', 'Broadcast'],
+  ['terrace',   'Terrace'],
+  ['swiss',     'Swiss'],
+];
+const THEME_COLOURS = { '': '#f6f1e7', broadcast: '#17191d',
+                        terrace: '#f3ebda', swiss: '#ffffff' };
+let theme = '';
+try { theme = localStorage.getItem('cofta.theme') || ''; } catch {}
+
+function applyTheme(v) {
+  theme = v;
+  try { localStorage.setItem('cofta.theme', v); } catch {}
+  try {
+    const root = document.documentElement;
+    if (v) root.setAttribute('data-theme', v);
+    else root.removeAttribute('data-theme');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', THEME_COLOURS[v] ?? THEME_COLOURS['']);
+  } catch { /* stub environments */ }
+}
+
 const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   picker: null,        // { type, side } while an organiser chooses a player
@@ -525,6 +549,15 @@ function viewAwards() {
 }
 
 /* ── admin sign in ───────────────────────────────────────── */
+function appearanceSection() {
+  const btns = THEMES.map(([v, label]) =>
+    `<button class="${theme === v ? 'on' : ''}" data-theme-set="${v}">${label}</button>`).join('');
+  return `<div class="sect">Appearance</div>
+    <p class="note" style="padding-top:0">Four directions on the same live data \u2014 pick
+      whichever reads best. Applies to this device only.</p>
+    <div class="themes">${btns}</div>`;
+}
+
 function viewAdmin() {
   if (state.admin) {
     const resetSection = state.role === 'organiser' ? `
@@ -539,9 +572,9 @@ function viewAdmin() {
         : 'Pitch account: run matches, log events, enter shoot-outs.'}
         Open any match and the controls appear inline.</p>
       <button class="act ghost" id="signout">Sign out</button>
-      ${squadSection()}${resetSection}`;
+      ${appearanceSection()}${squadSection()}${resetSection}`;
   }
-  return `<div class="sect">Organiser sign in</div>
+  return appearanceSection() + `<div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
       and password you were given \u2014 one account per pitch.</p>
     <div class="form">
@@ -667,7 +700,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) { state.view = t.dataset.view; state.picker = null; render(); return; }
@@ -797,6 +830,11 @@ document.addEventListener('click', async (ev) => {
     });
   }
 
+  if (t.dataset.themeSet !== undefined) {
+    applyTheme(t.dataset.themeSet);
+    render(); return;
+  }
+
   if (t.dataset.squad) {
     state.squadTeam = state.squadTeam === t.dataset.squad ? null : t.dataset.squad;
     render(); return;
@@ -870,6 +908,8 @@ document.addEventListener('change', (ev) => {
 
 /* ── boot ────────────────────────────────────────────────── */
 (async function boot() {
+  applyTheme(theme);
+
   // Boot from the last known snapshot, so a phone with no signal still opens
   // to yesterday's state (marked stale) instead of an empty screen. The
   // server's `now` in a cached snapshot is old, so the clock offset is NOT
