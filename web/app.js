@@ -18,16 +18,21 @@ const POLL_MS = 5000;
 
 /* ── appearance ──────────────────────────────────────────── */
 const THEMES = [
-  ['',          'Programme'],
   ['matchday',  'Matchday'],
+  ['',          'Programme'],
   ['broadcast', 'Broadcast'],
   ['terrace',   'Terrace'],
   ['swiss',     'Swiss'],
 ];
 const THEME_COLOURS = { '': '#f6f1e7', matchday: '#eef0f3', broadcast: '#17191d',
                         terrace: '#f3ebda', swiss: '#ffffff' };
-let theme = '';
-try { theme = localStorage.getItem('cofta.theme') || ''; } catch {}
+// Matchday is the default. A stored choice — including an explicit
+// Programme ('') — always wins; only first-time devices get the default.
+let theme = 'matchday';
+try {
+  const stored = localStorage.getItem('cofta.theme');
+  if (stored !== null) theme = stored;
+} catch {}
 
 function applyTheme(v) {
   theme = v;
@@ -226,7 +231,13 @@ function viewMatch() {
     : '<div class="empty">Nothing to report yet.</div>';
 
   return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
-    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}</div>
+    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}
+      <span class="midchip ${M.isLive(m) ? 'live' : ''}" id="midchip">${
+        m.ff ? 'FT'
+        : !M.hasStarted(m) ? esc(m.kickoff)
+        : m.status === 'half_time' ? 'HT'
+        : m.status === 'full_time' ? 'FT'
+        : M.minuteLabel(m) + '\u2032'}</span></div>
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
       ${M.isLive(m) && m.run ? '<span class="lv"><i></i>Live</span>' : ''}</p>
@@ -778,9 +789,10 @@ function tick() {
   if (state.view !== 'match') return;
   const m = currentMatch();
   if (!m || !M.isLive(m)) return;
-  const mm = $('mmin'), el = $('mel');
+  const mm = $('mmin'), el = $('mel'), mc = $('midchip');
   if (mm) mm.textContent = M.minuteLabel(m);
   if (el) el.textContent = M.mmss(M.elapsedMs(m));
+  if (mc) mc.textContent = M.minuteLabel(m) + '\u2032';
 }
 
 /* ── events ──────────────────────────────────────────────── */

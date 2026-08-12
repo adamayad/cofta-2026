@@ -313,3 +313,10 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
   text-transform:uppercase;color:var(--dim)}
 .stat b{display:block;font-family:var(--num);font-weight:800;font-size:24px;margin-top:4px}
 .pk .pstat{font-size:11px;color:var(--dim);flex:none}
+
+/* centre chip on the match header: themes opt in */
+.midchip{display:none}
+
+/* centred clock chip: only themes that want it show it */
+.stack{position:relative}
+.midclock{display:none}
