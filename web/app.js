@@ -19,11 +19,12 @@ const POLL_MS = 5000;
 /* ── appearance ──────────────────────────────────────────── */
 const THEMES = [
   ['',          'Programme'],
+  ['matchday',  'Matchday'],
   ['broadcast', 'Broadcast'],
   ['terrace',   'Terrace'],
   ['swiss',     'Swiss'],
 ];
-const THEME_COLOURS = { '': '#f6f1e7', broadcast: '#17191d',
+const THEME_COLOURS = { '': '#f6f1e7', matchday: '#eef0f3', broadcast: '#17191d',
                         terrace: '#f3ebda', swiss: '#ffffff' };
 let theme = '';
 try { theme = localStorage.getItem('cofta.theme') || ''; } catch {}
@@ -89,6 +90,7 @@ const playerName = (id) => state.players.find(p => p.id === id)?.name ?? null;
 const nameOf = (id) => team(id)?.name ?? 'To be confirmed';
 const cityOf = (id) => team(id)?.city ?? '';
 const colOf  = (id) => team(id)?.colour ?? 'transparent';
+const txtOf  = (id) => team(id)?.text_colour ?? '#FFFFFF';
 const crest  = (id) => CREST[id] || '';
 
 /** Knockout ties whose teams are not yet set get filled from the tables. */
@@ -113,7 +115,7 @@ const currentMatch = () => resolvedMatches().find(m => m.id === state.matchId);
 function clubBlock(id, cls = '') {
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
     <span class="who"><b>To be confirmed</b></span></span>`;
-  return `<span class="side ${cls}" style="--c:${colOf(id)}">
+  return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
     <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span></span>`;
 }
@@ -185,7 +187,7 @@ function viewMatch() {
     .join('');
 
   const side = (id, score, other, sideKey) => `
-    <div class="sl ${lead(score, other)}" style="--c:${colOf(id)}">
+    <div class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>
         ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</span>

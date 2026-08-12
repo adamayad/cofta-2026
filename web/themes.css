@@ -58,3 +58,89 @@
 [data-theme="swiss"] .banner,[data-theme="swiss"] .award,[data-theme="swiss"] .picker,
 [data-theme="swiss"] .tile,[data-theme="swiss"] .sl .bdg{border-radius:0}
 [data-theme="swiss"] .tile{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+
+/* ── Matchday: the modern sports-app synthesis ─────────────
+   Split-colour match header from the Premier League app, card
+   system and pill navigation from the current app generation,
+   FotMob's scorer lines, Sofascore's live accents. Club text
+   colours come from the database so every kit stays legible. */
+[data-theme="matchday"]{
+  --bg:#eef0f3; --card:#ffffff;
+  --fg:#16182b; --fg2:#3a3d55; --dim:#6d7183;
+  --line:#e6e8ef; --line2:#d3d6e0;
+  --gold:#d3d6e0;
+  --acc:#38003c; --accfg:#ffffff;
+  --ok:#00b060;
+  --r:12px;
+}
+[data-theme="matchday"] body{font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;font-size:14px}
+[data-theme="matchday"] .note,[data-theme="matchday"] .hd .meta{font-style:normal}
+
+/* masthead and nav become cards and pills */
+[data-theme="matchday"] .hd{background:var(--card);border-bottom:none;margin:10px 10px 0;
+  border-radius:16px;padding:16px 16px 13px;box-shadow:0 1px 2px rgba(18,20,40,.07)}
+[data-theme="matchday"] .hd h1{font-size:44px}
+[data-theme="matchday"] .nav{border-bottom:none;gap:7px;padding:10px}
+[data-theme="matchday"] .nav button{background:var(--card);border-radius:999px;padding:9px 14px;
+  margin:0;border-bottom:none;font-size:11.5px;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .nav button.on{background:var(--acc);color:var(--accfg)}
+[data-theme="matchday"] .scroll{padding:0 10px 64px}
+[data-theme="matchday"] .daysel{gap:8px}
+[data-theme="matchday"] .daysel button{background:var(--card);border-radius:999px;
+  padding:8px 14px;border-bottom:none;box-shadow:0 1px 2px rgba(18,20,40,.05)}
+[data-theme="matchday"] .daysel button.on{background:var(--fg);color:#fff}
+[data-theme="matchday"] .sect{color:var(--dim)}
+[data-theme="matchday"] .sect::after{background:var(--line)}
+
+/* fixtures and report entries as cards */
+[data-theme="matchday"] .fx{background:var(--card);border-radius:14px;border-bottom:none;
+  margin-bottom:9px;padding:13px 12px;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .fx:hover{background:var(--card)}
+[data-theme="matchday"] .fx .r .st.live{color:#e0003c}
+[data-theme="matchday"] .tl li{background:var(--card);border-radius:12px;border-bottom:none;
+  margin-bottom:8px;padding:12px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
+[data-theme="matchday"] .empty{background:var(--card);border-radius:12px;border-bottom:none;
+  padding:16px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
+
+/* the split-colour match header */
+[data-theme="matchday"] .stack{display:grid;grid-template-columns:1fr 1fr;border:none;
+  border-radius:16px;overflow:hidden;box-shadow:0 2px 6px rgba(18,20,40,.14)}
+[data-theme="matchday"] .sl{flex-direction:column;justify-content:flex-start;text-align:center;
+  gap:9px;background:var(--c);padding:18px 10px 16px}
+[data-theme="matchday"] .sl+.sl{border-top:none;border-left:1px solid rgba(255,255,255,.18)}
+[data-theme="matchday"] .sl .bdg{width:58px;height:58px;border-radius:14px;
+  background:rgba(255,255,255,.94);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+[data-theme="matchday"] .sl .bdg img{width:44px;height:44px}
+[data-theme="matchday"] .sl .who{flex:none}
+[data-theme="matchday"] .sl .who b{color:var(--tc);font-size:14.5px}
+[data-theme="matchday"] .sl .who i{color:var(--tc);opacity:.72}
+[data-theme="matchday"] .sl .gl{color:var(--tc);font-size:46px;text-align:center;min-width:0}
+[data-theme="matchday"] .sl .gls .gline{color:var(--tc);opacity:.85}
+[data-theme="matchday"] .ck{background:var(--card);border:none;border-radius:14px;
+  padding:14px;margin-top:10px;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .ck .m{color:#e0003c}
+[data-theme="matchday"] .kick{justify-content:center}
+
+/* tables and knockout rows */
+[data-theme="matchday"] table{background:var(--card);border-radius:14px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] thead th{padding:11px 4px}
+[data-theme="matchday"] tbody td{padding:12px 4px}
+[data-theme="matchday"] tbody tr:last-child td{border-bottom:none}
+[data-theme="matchday"] tbody tr.unres td{background:#f4f1e2}
+[data-theme="matchday"] .ko{background:var(--card);border-radius:12px;border-bottom:none;
+  padding:13px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
+[data-theme="matchday"] .ko .w{font-style:normal}
+
+/* controls */
+[data-theme="matchday"] .act{border-radius:999px}
+[data-theme="matchday"] .lg,[data-theme="matchday"] .pens,[data-theme="matchday"] .picker,
+[data-theme="matchday"] .banner,[data-theme="matchday"] .award{background:var(--card);
+  border:none;border-radius:14px;box-shadow:0 1px 2px rgba(18,20,40,.07)}
+[data-theme="matchday"] .banner.warn{box-shadow:inset 0 0 0 1px #e0003c;color:#b30030}
+[data-theme="matchday"] input,[data-theme="matchday"] select,[data-theme="matchday"] textarea{
+  border-radius:12px;border-color:var(--line2)}
+[data-theme="matchday"] .pk:active{background:#f2f3f7}
+[data-theme="matchday"] .themes button,[data-theme="matchday"] .dqlist button{
+  background:var(--card);border-radius:999px;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .themes button.on{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc)}
