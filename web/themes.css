@@ -144,3 +144,23 @@
 [data-theme="matchday"] .themes button,[data-theme="matchday"] .dqlist button{
   background:var(--card);border-radius:999px;box-shadow:0 1px 2px rgba(18,20,40,.06)}
 [data-theme="matchday"] .themes button.on{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc)}
+
+/* ── Matchday refinements from live testing ───────────────── */
+/* 2: no white pill — crests sit straight on the club colour */
+[data-theme="matchday"] .sl .bdg{background:transparent;box-shadow:none;
+  width:64px;height:64px;border-radius:0}
+[data-theme="matchday"] .sl .bdg img{width:62px;height:62px;
+  filter:drop-shadow(0 3px 9px rgba(0,0,0,.32))}
+/* 1: crest → name → score → scorers, top to bottom */
+[data-theme="matchday"] .sl .gls{flex-basis:auto;margin:2px 0 0}
+/* 3: vertical scores on the list — one number per club row */
+[data-theme="matchday"] .fx .rsc{display:none}
+[data-theme="matchday"] .fx .side .ssc{display:block;margin-left:auto;
+  font-family:var(--num);font-weight:800;font-size:21px;line-height:1}
+[data-theme="matchday"] .fx .side .who{flex:1}
+[data-theme="matchday"] .fx .r{align-self:center}
+[data-theme="matchday"] .fx .r .st{margin-top:0}
+/* squads page in the card language */
+[data-theme="matchday"] .stat{border:none;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .pk{background:var(--card);border-radius:12px;border-bottom:none;
+  margin-bottom:7px;box-shadow:0 1px 2px rgba(18,20,40,.05)}

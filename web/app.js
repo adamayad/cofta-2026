@@ -45,6 +45,7 @@ const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
+  sq: { team: null, player: null },
   admin: false, role: null, squadTeam: null, lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
 };
@@ -112,18 +113,20 @@ function resolvedMatches() {
 const currentMatch = () => resolvedMatches().find(m => m.id === state.matchId);
 
 /* ── shared bits ─────────────────────────────────────────── */
-function clubBlock(id, cls = '') {
+function clubBlock(id, cls = '', score = null) {
+  const sc = score != null ? `<span class="ssc tnum">${score}</span>` : '';
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
-    <span class="who"><b>To be confirmed</b></span></span>`;
+    <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
   return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
-    <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span></span>`;
+    <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>${sc}</span>`;
 }
 
 /* ── fixtures ────────────────────────────────────────────── */
 function fixtureRow(m) {
+  const started = M.hasStarted(m) || m.ff;
   let score, sub;
-  if (!M.hasStarted(m) && !m.ff) {
+  if (!started) {
     score = '<span class="pend">v</span>';
     sub = `<span class="st">${esc(m.kickoff)}</span>`;
   } else {
@@ -133,8 +136,8 @@ function fixtureRow(m) {
   }
   return `<button class="fx" data-match="${m.id}">
     <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}</span>
-    <span class="n">${clubBlock(m.home)}${clubBlock(m.away)}</span>
-    <span class="r tnum">${score}${sub}</span></button>`;
+    <span class="n">${clubBlock(m.home, '', started ? m.hs : null)}${clubBlock(m.away, '', started ? m.as : null)}</span>
+    <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
 }
 
 function viewFixtures() {
@@ -189,9 +192,9 @@ function viewMatch() {
   const side = (id, score, other, sideKey) => `
     <div class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
-      <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>
-        ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</span>
-      <span class="gl tnum">${score}</span></div>`;
+      <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
+      <span class="gl tnum">${score}</span>
+      ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</div>`;
 
   let clock, phase;
   if (!M.hasStarted(m) && !m.ff) { clock = '<div class="m idle">\u2014\u2014</div>'; phase = 'Awaiting kick-off'; }
@@ -494,6 +497,97 @@ function adminQualification(teamsArr, s) {
     <div class="dqlist">${dq}</div>`;
 }
 
+/* ── squads & player stats ───────────────────────────────── */
+function statsFor(pid) {
+  const mine = state.events.filter(e => e.p === pid);
+  return {
+    goals: mine.filter(e => e.t === 'goal'),
+    og:    mine.filter(e => e.t === 'own_goal').length,
+    y:     mine.filter(e => e.t === 'yellow').length,
+    r:     mine.filter(e => e.t === 'red').length,
+    motm:  mine.filter(e => e.t === 'motm').length,
+  };
+}
+
+function viewSquads() {
+  const teamsArr = Object.values(state.teams);
+  if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
+  const ms = resolvedMatches();
+
+  // player card
+  if (state.sq.player) {
+    const pl = state.players.find(p => p.id === state.sq.player);
+    if (!pl) { state.sq.player = null; return viewSquads(); }
+    const t = team(pl.team);
+    const st = statsFor(pl.id);
+    const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
+    const sus = M.suspensions(ms, state.events, byId)[pl.id];
+
+    const goalRows = st.goals.map(g => {
+      const m = ms.find(x => x.id === g.m);
+      const opp = m ? (m.home === pl.team ? m.away : m.home) : null;
+      return `<li><span class="mk tnum goal">${esc(g.min || '')}</span>
+        <span class="tx">v <b>${esc(opp ? cityOf(opp) : '?')}</b>
+          <i>(${esc(m ? M.stageLabel(m) : '')})</i></span><span></span></li>`;
+    }).join('');
+
+    return `<button class="back" data-sqteam="${pl.team}">&larr; ${esc(t?.city ?? 'Squad')}</button>
+      <div class="stack"><div class="sl" style="--c:${colOf(pl.team)};--tc:${txtOf(pl.team)}">
+        <span class="bdg"><img src="${crest(pl.team)}" alt=""></span>
+        <span class="who"><b>${pl.no != null ? pl.no + ' \u00b7 ' : ''}${esc(pl.name)}</b>
+          <i>${esc(nameOf(pl.team))} \u00b7 ${esc(cityOf(pl.team))}</i></span></div></div>
+      ${sus ? `<div class="banner warn">Suspended (${esc(sus.reason.toLowerCase())})
+        ${sus.misses ? `\u2014 misses the ${esc(M.stageLabel(sus.misses))} fixture` : ''}.</div>` : ''}
+      <div class="sect">This tournament</div>
+      <div class="stats">
+        <div class="stat"><i>Goals</i><b class="tnum">${st.goals.length}</b></div>
+        <div class="stat"><i>Man of match</i><b class="tnum">${st.motm}</b></div>
+        <div class="stat"><i>Yellow</i><b class="tnum">${st.y}</b></div>
+        <div class="stat"><i>Red</i><b class="tnum">${st.r}</b></div>
+      </div>
+      ${st.og ? `<p class="note">${st.og} own goal${st.og === 1 ? '' : 's'} recorded.</p>` : ''}
+      ${st.goals.length ? `<div class="sect">Goals</div><ol class="tl">${goalRows}</ol>` : ''}`;
+  }
+
+  // one club's squad
+  if (state.sq.team) {
+    const t = team(state.sq.team);
+    const squad = squadOf(state.sq.team);
+    const rows = squad.map(p => {
+      const st = statsFor(p.id);
+      const bits = [];
+      if (st.goals.length) bits.push(`${st.goals.length}g`);
+      if (st.motm) bits.push(`${st.motm}\u2605`);
+      if (st.y) bits.push(`${st.y}y`);
+      if (st.r) bits.push(`${st.r}r`);
+      return `<button class="pk" data-sqplayer="${p.id}">
+        <span class="no tnum">${p.no ?? ''}</span>
+        <span style="flex:1">${esc(p.name)}</span>
+        <span class="pstat tnum">${bits.join(' \u00b7 ')}</span></button>`;
+    }).join('');
+    return `<button class="back" data-view="squads">&larr; All clubs</button>
+      <div class="stack"><div class="sl" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
+        <span class="bdg"><img src="${crest(t.id)}" alt=""></span>
+        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></div></div>
+      ${squad.length
+        ? `<div class="sect">Squad \u00b7 ${squad.length}</div><div class="pklist" style="max-height:none">${rows}</div>
+           <p class="note">Tap a player for their tournament record.</p>`
+        : `<p class="empty">No squad list loaded for ${esc(t.city)} yet.</p>`}`;
+  }
+
+  // all clubs
+  const cards = teamsArr.map(t => `<button class="fx" data-sqteam="${t.id}">
+      <span class="t"><b>${esc(t.group_letter ?? '')}</b>Group</span>
+      <span class="n"><span class="side" style="--c:${t.colour}">
+        <span class="tile" style="--c:${t.colour}"><img src="${crest(t.id)}" alt=""></span>
+        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></span></span>
+      <span class="r tnum"><span class="rsc" style="font-size:14px;color:var(--dim)">${squadOf(t.id).length}</span>
+        <span class="st">players</span></span></button>`).join('');
+  return `<div class="sect">Clubs</div>${cards}
+    <p class="note">Every goal, card and award is attributed live, so each player's
+      tournament record builds itself as the weekend goes on.</p>`;
+}
+
 /* ── awards ──────────────────────────────────────────────── */
 function viewAwards() {
   const teamsArr = Object.values(state.teams);
@@ -663,13 +757,14 @@ function render() {
       && $('body') && $('body').contains && $('body').contains(a)) return;
 
   const navFor = state.view === 'match' ? state.from : state.view;
-  ['fixtures', 'live', 'tables', 'awards', 'admin'].forEach(v =>
+  ['fixtures', 'live', 'squads', 'tables', 'awards', 'admin'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
 
   const body =
     state.view === 'fixtures' ? viewFixtures() :
     state.view === 'live'     ? viewLive()     :
     state.view === 'match'    ? viewMatch()    :
+    state.view === 'squads'   ? viewSquads()   :
     state.view === 'tables'   ? viewTables()   :
     state.view === 'awards'   ? viewAwards()   : viewAdmin();
 
@@ -702,10 +797,22 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
-  if (t.dataset.view) { state.view = t.dataset.view; state.picker = null; render(); return; }
+  if (t.dataset.view) {
+    state.view = t.dataset.view; state.picker = null;
+    if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
+    render(); return;
+  }
+
+  if (t.dataset.sqteam) {
+    state.view = 'squads'; state.sq = { team: t.dataset.sqteam, player: null };
+    render(); return;
+  }
+  if (t.dataset.sqplayer) {
+    state.sq.player = t.dataset.sqplayer; render(); return;
+  }
   if (t.dataset.day) { state.day = +t.dataset.day; state.picker = null; render(); return; }
   if (t.dataset.match) {
     state.from = (state.view === 'live') ? 'live' : 'fixtures';
