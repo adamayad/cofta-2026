@@ -175,12 +175,12 @@
 [data-theme="matchday"] .midchip.live{color:#e0003c}
 
 /* the PL-style centre chip: kick-off before, ticking minute during, FT after */
-[data-theme="matchday"] .midclock{display:flex;align-items:center;justify-content:center;
+[data-theme="matchday"] .midchip{display:flex;align-items:center;justify-content:center;
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   background:#fff;color:var(--fg);border-radius:12px;padding:8px 13px;
   font-family:var(--num);font-weight:800;font-size:21px;line-height:1;
   box-shadow:0 2px 8px rgba(18,20,40,.28);min-width:2.6em}
-[data-theme="matchday"] .midclock.live{color:#e0003c}
+[data-theme="matchday"] .midchip.live{color:#e0003c}
 
 /* matchday list centring: time | status | clubs, scores flush right */
 [data-theme="matchday"] .fx{grid-template-columns:46px minmax(48px,auto) 1fr;gap:10px}
@@ -213,3 +213,9 @@
   width:fit-content;margin:10px auto 0;padding:7px 15px;border-radius:999px;
   box-shadow:0 1px 2px rgba(18,20,40,.08);font-size:12px}
 [data-theme="matchday"] .mstar{color:#f0a500}
+
+/* matchday: digits pinned to the exact vertical centre of their row,
+   immune to font metrics and to rows growing an extra line */
+[data-theme="matchday"] .fx .side{position:relative;padding-right:1.5em;align-items:center}
+[data-theme="matchday"] .fx .side .ssc{position:absolute;right:0;top:50%;
+  transform:translateY(-50%);margin:0;display:block;line-height:1}

@@ -126,7 +126,7 @@ function clubBlock(id, cls = '', score = null, reds = 0) {
     <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
   return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
-    <span class="who"><b>${esc(nameOf(id))}${rc}</b><i>${esc(cityOf(id))}</i></span>${sc}</span>`;
+    <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>${reds ? `<span class="rcs">${rc}</span>` : ''}</span>${sc}</span>`;
 }
 
 /* ── fixtures ────────────────────────────────────────────── */
@@ -254,6 +254,7 @@ function viewMatch() {
         : m.status === 'half_time' ? 'HT'
         : m.status === 'full_time' ? 'FT'
         : M.minuteLabel(m) + '\u2032'}</span></div>
+    ${motmLine(m)}
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
       ${M.isLive(m) && m.run ? '<span class="lv"><i></i>Live</span>' : ''}</p>
