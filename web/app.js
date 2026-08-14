@@ -140,7 +140,7 @@ function fixtureRow(m) {
     const live = M.isLive(m);
     sub = `<span class="st ${live ? 'live' : ''}">${esc(M.statusLabel(m))}</span>`;
   }
-  return `<button class="fx" data-match="${m.id}">
+  return `<button class="fx ${started ? 'started' : 'sched'}" data-match="${m.id}">
     <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}</span>
     <span class="n">${clubBlock(m.home, '', started ? m.hs : null)}${clubBlock(m.away, '', started ? m.as : null)}</span>
     <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
@@ -309,14 +309,23 @@ function editorPanel(m) {
     : `<p class="note" style="padding:6px 0">No squad list for ${esc(cityOf(teamId))} yet
        \u2014 the minute can still be corrected.</p>`;
 
-  return `<div class="picker">
-      <div class="pkhd"><span>${label}</span>
-        <button data-edcancel="1">Cancel</button></div>
+  const search = squad.length > 6
+    ? `<input id="pkq" type="search" placeholder="Search players" autocomplete="off"
+        autocapitalize="none" spellcheck="false" style="margin-bottom:9px">` : '';
+
+  // A man of the match award has no meaningful minute, so no field for one.
+  const minuteField = ev.t === 'motm' ? '' : `
       <div class="form" style="padding-top:0;margin-bottom:10px">
         <div><label for="edmin">Minute (e.g. 12 or 20+2)</label>
           <input id="edmin" inputmode="numeric" autocomplete="off" spellcheck="false"
             value="${esc(state.editor.minute)}" style="max-width:9em"></div>
-      </div>
+      </div>`;
+
+  return `<div class="picker">
+      <div class="pkhd"><span>${label}</span>
+        <button data-edcancel="1">Cancel</button></div>
+      ${minuteField}
+      ${search}
       <div class="pklist">
         <button class="pk ${sel == null ? 'on' : ''}" data-edpick="none">
           <span class="no"></span><span>No player recorded</span></button>
@@ -407,9 +416,14 @@ function pickerPanel(m) {
         ${esc(cityOf(side === 'home' ? m.away : m.home))} player</button>`
     : '';
 
+  const search = squad.length > 6
+    ? `<input id="pkq" type="search" placeholder="Search players" autocomplete="off"
+        autocapitalize="none" spellcheck="false" style="margin-bottom:9px">` : '';
+
   return `<div class="picker">
       <div class="pkhd"><span>${label}</span>
         <button data-pick-cancel="1">Cancel</button></div>
+      ${search}
       <div class="pklist">${names}${og}</div>
       <button class="act ghost" data-pick="skip">Record without a name</button>
     </div>`;
@@ -966,10 +980,11 @@ document.addEventListener('click', async (ev) => {
 
   if (t.dataset.edsave) {
     const box = $('edmin');
-    const minute = (box ? box.value : state.editor.minute).trim();
-    if (!/^\d{1,2}(\+\d{1,2})?$/.test(minute)) {
+    let minute = (box ? box.value : state.editor.minute || '').trim();
+    if (box && !/^\d{1,2}(\+\d{1,2})?$/.test(minute)) {
       alert('Minute should look like 12, or 20+2 for added time.'); return;
     }
+    if (!minute) minute = '40';
     const ed = state.editor;
     // optimistic: the report and scorer lines update instantly
     const ev = state.events.find(x => x.id === ed.id);
@@ -1095,6 +1110,21 @@ document.addEventListener('click', async (ev) => {
   }
 
   if (t.id === 'signout') { api.signOut(); state.admin = false; state.role = null; render(); return; }
+});
+
+// Player search: filters the visible list as you type. Action rows (own
+// goal, no-player) stay visible whatever the query.
+document.addEventListener('input', (ev) => {
+  if (ev.target.id !== 'pkq') return;
+  const q = ev.target.value.trim().toLowerCase();
+  const list = ev.target.closest('.picker')?.querySelector('.pklist');
+  if (!list) return;
+  for (const b of list.querySelectorAll('.pk')) {
+    const isAction = b.dataset.pick === 'own' || b.dataset.pick === 'skip'
+      || b.dataset.edpick === 'none';
+    b.style.display = (isAction || !q || b.textContent.toLowerCase().includes(q))
+      ? '' : 'none';
+  }
 });
 
 document.addEventListener('change', (ev) => {

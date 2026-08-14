@@ -181,3 +181,12 @@
   font-family:var(--num);font-weight:800;font-size:21px;line-height:1;
   box-shadow:0 2px 8px rgba(18,20,40,.28);min-width:2.6em}
 [data-theme="matchday"] .midclock.live{color:#e0003c}
+
+/* matchday list centring: time | status | clubs, scores flush right */
+[data-theme="matchday"] .fx{grid-template-columns:46px minmax(48px,auto) 1fr;gap:10px}
+[data-theme="matchday"] .fx .t{grid-column:1}
+[data-theme="matchday"] .fx .r{grid-column:2;align-self:center;text-align:left}
+[data-theme="matchday"] .fx .n{grid-column:3;gap:8px}
+[data-theme="matchday"] .fx.sched .r{display:none}
+[data-theme="matchday"] .fx.sched .n{grid-column:2/4}
+[data-theme="matchday"] .fx .side .ssc{min-width:1.15em;text-align:right}
