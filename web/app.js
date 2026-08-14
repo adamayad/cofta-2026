@@ -119,16 +119,20 @@ function resolvedMatches() {
 const currentMatch = () => resolvedMatches().find(m => m.id === state.matchId);
 
 /* ── shared bits ─────────────────────────────────────────── */
-function clubBlock(id, cls = '', score = null) {
+function clubBlock(id, cls = '', score = null, reds = 0) {
   const sc = score != null ? `<span class="ssc tnum">${score}</span>` : '';
+  const rc = '<i class="rc"></i>'.repeat(reds);
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
     <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
   return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
-    <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>${sc}</span>`;
+    <span class="who"><b>${esc(nameOf(id))}${rc}</b><i>${esc(cityOf(id))}</i></span>${sc}</span>`;
 }
 
 /* ── fixtures ────────────────────────────────────────────── */
+const redsFor = (m, side) =>
+  state.events.filter(e => e.m === m.id && e.t === 'red' && e.s === side).length;
+
 function fixtureRow(m) {
   const started = M.hasStarted(m) || m.ff;
   let score, sub;
@@ -150,7 +154,7 @@ function fixtureRow(m) {
   return `<button class="fx ${started ? 'started' : 'sched'}" data-match="${m.id}">
     <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}
       ${tst ? `<span class="tst ${tstLive ? 'live' : ''} tnum">${tst}</span>` : ''}</span>
-    <span class="n">${clubBlock(m.home, '', started ? m.hs : null)}${clubBlock(m.away, '', started ? m.as : null)}</span>
+    <span class="n">${clubBlock(m.home, '', started ? m.hs : null, redsFor(m, 'home'))}${clubBlock(m.away, '', started ? m.as : null, redsFor(m, 'away'))}</span>
     <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
 }
 
@@ -280,6 +284,15 @@ function suspensionNotice(m) {
     <ul class="susp">${rows}</ul>
     <p class="note" style="padding-top:8px">Suspended for this match under the
       tournament rules.</p>`;
+}
+
+/** The award line under the scoreboard, once a man of the match exists. */
+function motmLine(m) {
+  const ev = state.events.find(x => x.m === m.id && x.t === 'motm');
+  if (!ev) return '';
+  const nm = ev.p ? playerName(ev.p) : null;
+  return `<p class="motmline"><span class="mstar">\u2605</span>${nm
+    ? `${esc(nm)} \u2014 Man of the Match` : 'Man of the Match awarded'}</p>`;
 }
 
 function eventText(x, m) {

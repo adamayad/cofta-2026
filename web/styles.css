@@ -327,3 +327,11 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 
 /* match state under the kick-off time; themes opt in */
 .fx .t .tst{display:none}
+
+/* red card marker on fixture rows */
+.rc{display:inline-block;width:8px;height:11px;background:#d21f26;border-radius:2px;
+  margin-left:6px;vertical-align:-1px;font-style:normal}
+
+/* man of the match, under the scoreboard */
+.motmline{text-align:center;font-size:12px;color:var(--fg2);padding:12px 0 0;font-style:italic}
+.mstar{color:var(--gold);margin-right:6px;font-style:normal}

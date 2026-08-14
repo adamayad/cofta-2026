@@ -201,3 +201,15 @@
 [data-theme="matchday"] .fx .t .tst.live{color:#e0003c}
 [data-theme="matchday"] .fx .t .tst i{display:block;font-style:normal;
   font-size:9.5px;font-weight:600;margin-top:1px}
+
+/* matchday: score digits optically centred against the full row */
+[data-theme="matchday"] .fx .side{align-items:stretch}
+[data-theme="matchday"] .fx .side .tile,
+[data-theme="matchday"] .fx .side .who{align-self:center}
+[data-theme="matchday"] .fx .side .ssc{display:flex;align-items:center;margin-left:auto}
+
+/* matchday: the award as a small chip */
+[data-theme="matchday"] .motmline{font-style:normal;background:var(--card);
+  width:fit-content;margin:10px auto 0;padding:7px 15px;border-radius:999px;
+  box-shadow:0 1px 2px rgba(18,20,40,.08);font-size:12px}
+[data-theme="matchday"] .mstar{color:#f0a500}
