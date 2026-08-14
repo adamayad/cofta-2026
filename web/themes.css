@@ -225,3 +225,12 @@
 [data-theme="matchday"] .sl.alt{background:var(--card)}
 [data-theme="matchday"] .sl.alt .altbox b{color:var(--fg)}
 [data-theme="matchday"] .fx .side .ssc{width:1.35em;text-align:center}
+
+/* matchday player header: one full-colour block, number in the club's
+   text colour — dark on SMPK's white, white on Rotherham's navy */
+[data-theme="matchday"] .stack.one{grid-template-columns:1fr}
+[data-theme="matchday"] .sl.phead{flex-direction:row;text-align:left;
+  align-items:center;gap:14px;padding:20px 18px}
+[data-theme="matchday"] .sl.phead .who{flex:1}
+[data-theme="matchday"] .sl.phead .who b{font-size:17px}
+[data-theme="matchday"] .sl.phead .bignum{color:var(--tc);font-size:58px;margin-left:auto}

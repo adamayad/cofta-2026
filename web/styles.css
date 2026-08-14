@@ -345,5 +345,5 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .sl.alt .altbox i{font-style:normal;font-size:9px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--dim)}
 .sl.alt .altbox b{font-family:var(--disp);font-weight:600;font-size:16px;color:var(--fg)}
-.sl.alt.num{justify-content:center}
-.bignum{font-family:var(--num);font-weight:900;font-size:58px;line-height:1;color:var(--c)}
+.sl.phead .bignum{margin-left:auto;flex:none}
+.bignum{font-family:var(--num);font-weight:900;font-size:44px;line-height:1;color:var(--fg)}

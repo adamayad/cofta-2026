@@ -622,11 +622,11 @@ function viewSquads() {
     }).join('');
 
     return `<button class="back" data-sqteam="${pl.team}">&larr; ${esc(t?.city ?? 'Squad')}</button>
-      <div class="stack"><div class="sl" style="--c:${colOf(pl.team)};--tc:${txtOf(pl.team)}">
+      <div class="stack one"><div class="sl phead" style="--c:${colOf(pl.team)};--tc:${txtOf(pl.team)}">
         <span class="bdg"><img src="${crest(pl.team)}" alt=""></span>
         <span class="who"><b>${esc(pl.name)}</b>
-          <i>${esc(nameOf(pl.team))} \u00b7 ${esc(cityOf(pl.team))}</i></span></div><div class="sl alt num"
-        style="--c:${colOf(pl.team)}"><span class="bignum tnum">${pl.no ?? ''}</span></div></div>
+          <i>${esc(nameOf(pl.team))} \u00b7 ${esc(cityOf(pl.team))}</i></span>
+        <span class="bignum tnum">${pl.no ?? ''}</span></div></div>
       ${sus ? `<div class="banner warn">Suspended (${esc(sus.reason.toLowerCase())})
         ${sus.misses ? `\u2014 misses the ${esc(M.stageLabel(sus.misses))} fixture` : ''}.</div>` : ''}
       <div class="sect">This tournament</div>
