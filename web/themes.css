@@ -190,3 +190,14 @@
 [data-theme="matchday"] .fx.sched .r{display:none}
 [data-theme="matchday"] .fx.sched .n{grid-column:2/4}
 [data-theme="matchday"] .fx .side .ssc{min-width:1.15em;text-align:right}
+
+/* matchday list, corrected: one fixed left column, clubs never shift */
+[data-theme="matchday"] .fx{grid-template-columns:52px 1fr;gap:12px}
+[data-theme="matchday"] .fx .r{display:none}
+[data-theme="matchday"] .fx .n,[data-theme="matchday"] .fx.sched .n{grid-column:2}
+[data-theme="matchday"] .fx .t .tst{display:block;margin-top:4px;
+  font-family:var(--num);font-weight:800;font-size:13px;letter-spacing:.02em;
+  color:var(--dim)}
+[data-theme="matchday"] .fx .t .tst.live{color:#e0003c}
+[data-theme="matchday"] .fx .t .tst i{display:block;font-style:normal;
+  font-size:9.5px;font-weight:600;margin-top:1px}

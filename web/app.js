@@ -140,8 +140,16 @@ function fixtureRow(m) {
     const live = M.isLive(m);
     sub = `<span class="st ${live ? 'live' : ''}">${esc(M.statusLabel(m))}</span>`;
   }
+  let tst = '', tstLive = false;
+  if (m.ff) tst = 'FF';
+  else if (M.isLive(m)) { tst = `${M.minuteLabel(m)}\u2032`; tstLive = true; }
+  else if (m.status === 'half_time') tst = 'HT';
+  else if (m.status === 'full_time')
+    tst = m.pd ? `FT<i>${m.ph}\u2013${m.pa}p</i>` : 'FT';
+
   return `<button class="fx ${started ? 'started' : 'sched'}" data-match="${m.id}">
-    <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}</span>
+    <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}
+      ${tst ? `<span class="tst ${tstLive ? 'live' : ''} tnum">${tst}</span>` : ''}</span>
     <span class="n">${clubBlock(m.home, '', started ? m.hs : null)}${clubBlock(m.away, '', started ? m.as : null)}</span>
     <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
 }
@@ -225,7 +233,7 @@ function viewMatch() {
   const evts = [...queued, ...state.events.filter(x => x.m === m.id)];
   const timeline = evts.length ? evts.map(x => `
       <li class="${x.pending ? 'pending' : ''}">
-        <span class="mk tnum ${x.t === 'goal' ? 'goal' : ''}">${esc(x.min || '')}</span>
+        <span class="mk tnum ${x.t === 'goal' ? 'goal' : ''}">${x.t === 'motm' ? '' : esc(x.min || '')}</span>
         <span class="tx">${eventText(x, m)}${x.pending ? ' <em>sending\u2026</em>' : ''}</span>
         ${state.admin && !x.pending
           ? `<span class="rowacts"><button class="undo" data-edit="${x.id}">Edit</button>

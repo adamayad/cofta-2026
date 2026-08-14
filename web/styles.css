@@ -324,3 +324,6 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 /* event edit */
 .rowacts{display:flex;gap:12px;justify-content:flex-end}
 .picker .pk.on{color:var(--acc);font-weight:600}
+
+/* match state under the kick-off time; themes opt in */
+.fx .t .tst{display:none}
