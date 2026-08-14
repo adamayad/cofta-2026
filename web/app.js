@@ -253,7 +253,7 @@ function viewMatch() {
         : !M.hasStarted(m) ? esc(m.kickoff)
         : m.status === 'half_time' ? 'HT'
         : m.status === 'full_time' ? 'FT'
-        : M.minuteLabel(m) + '\u2032'}</span></div>
+        : M.mmss(M.elapsedMs(m))}</span></div>
     ${motmLine(m)}
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
@@ -624,8 +624,9 @@ function viewSquads() {
     return `<button class="back" data-sqteam="${pl.team}">&larr; ${esc(t?.city ?? 'Squad')}</button>
       <div class="stack"><div class="sl" style="--c:${colOf(pl.team)};--tc:${txtOf(pl.team)}">
         <span class="bdg"><img src="${crest(pl.team)}" alt=""></span>
-        <span class="who"><b>${pl.no != null ? pl.no + ' \u00b7 ' : ''}${esc(pl.name)}</b>
-          <i>${esc(nameOf(pl.team))} \u00b7 ${esc(cityOf(pl.team))}</i></span></div></div>
+        <span class="who"><b>${esc(pl.name)}</b>
+          <i>${esc(nameOf(pl.team))} \u00b7 ${esc(cityOf(pl.team))}</i></span></div><div class="sl alt num"
+        style="--c:${colOf(pl.team)}"><span class="bignum tnum">${pl.no ?? ''}</span></div></div>
       ${sus ? `<div class="banner warn">Suspended (${esc(sus.reason.toLowerCase())})
         ${sus.misses ? `\u2014 misses the ${esc(M.stageLabel(sus.misses))} fixture` : ''}.</div>` : ''}
       <div class="sect">This tournament</div>
@@ -658,7 +659,9 @@ function viewSquads() {
     return `<button class="back" data-view="squads">&larr; All clubs</button>
       <div class="stack"><div class="sl" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
         <span class="bdg"><img src="${crest(t.id)}" alt=""></span>
-        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></div></div>
+        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></div><div class="sl alt">
+        <span class="altbox"><i>Manager</i><b>${t.manager ? esc(t.manager) : '\u2014'}</b>
+          <i style="margin-top:6px">Group ${esc(t.group_letter ?? '')}</i></span></div></div>
       ${squad.length
         ? `<div class="sect">Squad \u00b7 ${squad.length}</div><div class="pklist" style="max-height:none">${rows}</div>
            <p class="note">Tap a player for their tournament record.</p>`
@@ -818,6 +821,10 @@ function squadSection() {
         <textarea id="sqin" rows="6" placeholder="7 Andrew Ramzy&#10;Mina Gerges&#10;\u2026"></textarea>
         <button class="act" data-addsquad="1">Add players</button>
         <p class="okmsg" id="sqmsg"></p>
+        <div style="padding-top:8px"><label for="mgrin">Manager</label>
+          <input id="mgrin" value="${esc(t.manager ?? '')}" placeholder="Manager name"
+            autocomplete="off" spellcheck="false"></div>
+        <button class="act ghost" data-setmgr="1">Save manager</button>
       </div>`;
   }
 
@@ -871,7 +878,7 @@ function tick() {
   const mm = $('mmin'), el = $('mel'), mc = $('midchip');
   if (mm) mm.textContent = M.minuteLabel(m);
   if (el) el.textContent = M.mmss(M.elapsedMs(m));
-  if (mc) mc.textContent = M.minuteLabel(m) + '\u2032';
+  if (mc) mc.textContent = M.mmss(M.elapsedMs(m));
 }
 
 /* ── events ──────────────────────────────────────────────── */
@@ -888,7 +895,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) {
@@ -1103,6 +1110,11 @@ document.addEventListener('click', async (ev) => {
         (skipped ? `, skipped ${skipped} already listed` : '') +
         (stopped ? ` \u2014 stopped: ${stopped}` : '') + '.';
     });
+  }
+
+  if (t.dataset.setmgr) {
+    const v = $('mgrin')?.value ?? '';
+    return guard(() => api.setManager(state.squadTeam, v));
   }
 
   if (t.dataset.reset) {

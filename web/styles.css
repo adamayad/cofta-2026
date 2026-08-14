@@ -339,3 +339,11 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 /* red cards on their own line under the city */
 .rcs{display:block;line-height:1;margin-top:3px}
 .rcs .rc{margin-left:0;margin-right:4px;vertical-align:0}
+
+/* the second half of a squad/player header card */
+.sl.alt .altbox{display:flex;flex-direction:column;gap:2px}
+.sl.alt .altbox i{font-style:normal;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim)}
+.sl.alt .altbox b{font-family:var(--disp);font-weight:600;font-size:16px;color:var(--fg)}
+.sl.alt.num{justify-content:center}
+.bignum{font-family:var(--num);font-weight:900;font-size:58px;line-height:1;color:var(--c)}

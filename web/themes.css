@@ -219,3 +219,9 @@
 [data-theme="matchday"] .fx .side{position:relative;padding-right:1.5em;align-items:center}
 [data-theme="matchday"] .fx .side .ssc{position:absolute;right:0;top:50%;
   transform:translateY(-50%);margin:0;display:block;line-height:1}
+
+/* matchday: the alt half stays a white card; digits centre in a fixed box
+   so 0 and 1 align on optical centres, not on glyph side-bearings */
+[data-theme="matchday"] .sl.alt{background:var(--card)}
+[data-theme="matchday"] .sl.alt .altbox b{color:var(--fg)}
+[data-theme="matchday"] .fx .side .ssc{width:1.35em;text-align:center}

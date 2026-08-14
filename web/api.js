@@ -115,6 +115,9 @@ export const addPlayer = (teamId, name, shirt) =>
 
 export const removePlayer = (id) => rpc('remove_player', { p_id: id }, true);
 
+export const setManager = (teamId, name) =>
+  rpc('set_team_manager', { p_team: teamId, p_name: name }, true);
+
 export const logEvent = (o) =>
   rpc('log_event', {
     p_id: o.id, p_match: o.matchId, p_type: o.type,
