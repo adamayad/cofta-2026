@@ -19,7 +19,7 @@ const KEY = 'cofta.queue.v1';
 const MAX_ATTEMPTS = 10;
 
 /** Errors that will never succeed on retry, so the write is dropped. */
-const PERMANENT = /not_authorised|bad_transition|no_such_match|shootout_level|no_shootout_in_groups|bad_side|no_such_event|squad_full/;
+const PERMANENT = /not_authorised|bad_transition|no_such_match|shootout_level|no_shootout_in_groups|bad_side|no_such_event|squad_full|bad_minute/;
 
 export class WriteQueue {
   constructor(send) {

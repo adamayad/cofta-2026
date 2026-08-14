@@ -51,7 +51,8 @@ const state = {
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
-  admin: false, role: null, squadTeam: null, lastFetch: 0, error: null, busy: false, pens: null,
+  admin: false, role: null, squadTeam: null, editor: null,
+  lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
 };
 
@@ -226,7 +227,10 @@ function viewMatch() {
       <li class="${x.pending ? 'pending' : ''}">
         <span class="mk tnum ${x.t === 'goal' ? 'goal' : ''}">${esc(x.min || '')}</span>
         <span class="tx">${eventText(x, m)}${x.pending ? ' <em>sending\u2026</em>' : ''}</span>
-        ${state.admin && !x.pending ? `<button class="undo" data-void="${x.id}">Undo</button>` : '<span></span>'}
+        ${state.admin && !x.pending
+          ? `<span class="rowacts"><button class="undo" data-edit="${x.id}">Edit</button>
+             <button class="undo" data-void="${x.id}">Undo</button></span>`
+          : '<span></span>'}
       </li>`).join('')
     : '<div class="empty">Nothing to report yet.</div>';
 
@@ -251,6 +255,7 @@ function viewMatch() {
     ${suspensionNotice(m)}
     ${state.admin ? adminMatchControls(m) : ''}
     <div class="sect">Match report</div>
+    ${state.editor ? editorPanel(m) : ''}
     <ol class="tl">${timeline}</ol>`;
 }
 
@@ -281,6 +286,44 @@ function eventText(x, m) {
     case 'motm':     return `${by ?? 'Man of the match'} &mdash; man of the match`;
     default:         return esc(x.t);
   }
+}
+
+/**
+ * Edit a recorded event: minute and player, full replace. The crediting
+ * squad is the event's own side — which for an own goal is the side whose
+ * player put it in, exactly who should be listed.
+ */
+function editorPanel(m) {
+  const ev = state.events.find(x => x.id === state.editor.id);
+  if (!ev) { state.editor = null; return ''; }
+  const teamId = ev.s === 'home' ? m.home : ev.s === 'away' ? m.away : null;
+  const squad = teamId ? squadOf(teamId) : [];
+  const label = { goal: 'Edit goal', own_goal: 'Edit own goal', yellow: 'Edit booking',
+                  red: 'Edit red card', motm: 'Edit man of the match' }[ev.t] ?? 'Edit event';
+  const sel = state.editor.player;
+
+  const names = squad.length
+    ? squad.map(p => `<button class="pk ${sel === p.id ? 'on' : ''}" data-edpick="${p.id}">
+        ${p.no != null ? `<span class="no tnum">${p.no}</span>` : '<span class="no"></span>'}
+        <span>${esc(p.name)}</span></button>`).join('')
+    : `<p class="note" style="padding:6px 0">No squad list for ${esc(cityOf(teamId))} yet
+       \u2014 the minute can still be corrected.</p>`;
+
+  return `<div class="picker">
+      <div class="pkhd"><span>${label}</span>
+        <button data-edcancel="1">Cancel</button></div>
+      <div class="form" style="padding-top:0;margin-bottom:10px">
+        <div><label for="edmin">Minute (e.g. 12 or 20+2)</label>
+          <input id="edmin" inputmode="numeric" autocomplete="off" spellcheck="false"
+            value="${esc(state.editor.minute)}" style="max-width:9em"></div>
+      </div>
+      <div class="pklist">
+        <button class="pk ${sel == null ? 'on' : ''}" data-edpick="none">
+          <span class="no"></span><span>No player recorded</span></button>
+        ${names}
+      </div>
+      <button class="act" data-edsave="1">Save changes</button>
+    </div>`;
 }
 
 /* ── admin controls on a match ───────────────────────────── */
@@ -809,11 +852,11 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) {
-    state.view = t.dataset.view; state.picker = null;
+    state.view = t.dataset.view; state.picker = null; state.editor = null;
     if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
     render(); return;
   }
@@ -829,7 +872,7 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.match) {
     state.from = (state.view === 'live') ? 'live' : 'fixtures';
     state.matchId = t.dataset.match; state.view = 'match';
-    state.pens = null; state.picker = null; render(); return;
+    state.pens = null; state.picker = null; state.editor = null; render(); return;
   }
 
   const m = currentMatch();
@@ -902,6 +945,39 @@ document.addEventListener('click', async (ev) => {
     state.picker = null;
     render();
     return;
+  }
+
+  if (t.dataset.edit) {
+    const ev = state.events.find(x => x.id === t.dataset.edit);
+    if (!ev) return;
+    state.editor = { id: ev.id, player: ev.p ?? null,
+                     minute: String(ev.min || '').replace(/[\u2032']/g, '') };
+    render(); return;
+  }
+
+  if (t.dataset.edpick) {
+    const box = $('edmin');
+    if (box) state.editor.minute = box.value.trim();   // keep what was typed
+    state.editor.player = t.dataset.edpick === 'none' ? null : t.dataset.edpick;
+    render(); return;
+  }
+
+  if (t.dataset.edcancel) { state.editor = null; render(); return; }
+
+  if (t.dataset.edsave) {
+    const box = $('edmin');
+    const minute = (box ? box.value : state.editor.minute).trim();
+    if (!/^\d{1,2}(\+\d{1,2})?$/.test(minute)) {
+      alert('Minute should look like 12, or 20+2 for added time.'); return;
+    }
+    const ed = state.editor;
+    // optimistic: the report and scorer lines update instantly
+    const ev = state.events.find(x => x.id === ed.id);
+    if (ev) { ev.min = minute + '\u2032'; ev.p = ed.player; }
+    queue.add(api.uuid(), 'edit_event',
+      { p_event: ed.id, p_player: ed.player, p_minute: minute + '\u2032' });
+    state.editor = null;
+    render(); return;
   }
 
   if (t.dataset.void) {
