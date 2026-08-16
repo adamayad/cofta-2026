@@ -347,3 +347,11 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .sl.alt .altbox b{font-family:var(--disp);font-weight:600;font-size:16px;color:var(--fg)}
 .sl.phead .bignum{margin-left:auto;flex:none}
 .bignum{font-family:var(--num);font-weight:900;font-size:44px;line-height:1;color:var(--fg)}
+
+/* club header meta, right-hand side of the colour block */
+.sl.phead .clubmeta{margin-left:auto;flex:none;text-align:right;
+  display:flex;flex-direction:column;gap:2px}
+.sl.phead .clubmeta i{font-style:normal;font-size:8.5px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--dim)}
+.sl.phead .clubmeta b{font-family:var(--disp);font-weight:600;font-size:15px}
+.sl.phead .clubmeta .cstat{margin-top:5px;letter-spacing:.08em}

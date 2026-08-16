@@ -588,6 +588,38 @@ function adminQualification(teamsArr, s) {
 }
 
 /* ── squads & player stats ───────────────────────────────── */
+/** One line of truth about a club: live now, next fixture, how far they
+ *  got, or the trophy. */
+function teamStatus(id) {
+  const t = team(id);
+  if (t?.disqualified) return 'Disqualified';
+  const ms = resolvedMatches().filter(m => m.home === id || m.away === id);
+  const opp = (m) => cityOf(m.home === id ? m.away : m.home);
+
+  const live = ms.find(m => M.isLive(m) || m.status === 'half_time');
+  if (live) return `Live \u00b7 v ${opp(live)}`;
+
+  const next = ms.filter(m => !M.hasStarted(m) && !m.ff).sort(M.fixtureOrder)[0];
+  if (next) {
+    const stage = M.isKnockout(next) ? M.stageLabel(next) : `Group ${t?.group_letter ?? ''}`;
+    return `${stage} \u00b7 v ${opp(next)} ${next.kickoff}`;
+  }
+
+  const fin = ms.find(m => m.stage === 'FINAL');
+  if (fin) {
+    const w = M.winnerOf(fin);
+    if (w === id) return 'Champions';
+    if (w) return 'Runners-up';
+  }
+  const sf = ms.find(m => m.stage === 'SF1' || m.stage === 'SF2');
+  if (sf && M.winnerOf(sf) && M.winnerOf(sf) !== id) return 'Eliminated \u00b7 semi-final';
+
+  const teamsArr = Object.values(state.teams);
+  const pairs = M.unresolvedPairs(teamsArr, resolvedMatches(), t?.group_letter ?? '', state.ties);
+  if (pairs.some(p => p.a.team.id === id || p.b.team.id === id)) return 'Awaiting shoot-out';
+  return 'Eliminated \u00b7 group stage';
+}
+
 function statsFor(pid) {
   const mine = state.events.filter(e => e.p === pid);
   return {
@@ -657,11 +689,11 @@ function viewSquads() {
         <span class="pstat tnum">${bits.join(' \u00b7 ')}</span></button>`;
     }).join('');
     return `<button class="back" data-view="squads">&larr; All clubs</button>
-      <div class="stack"><div class="sl" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
+      <div class="stack one"><div class="sl phead" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
         <span class="bdg"><img src="${crest(t.id)}" alt=""></span>
-        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></div><div class="sl alt">
-        <span class="altbox"><i>Manager</i><b>${t.manager ? esc(t.manager) : '\u2014'}</b>
-          <i style="margin-top:6px">Group ${esc(t.group_letter ?? '')}</i></span></div></div>
+        <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span>
+        <span class="clubmeta"><i>Manager</i><b>${t.manager ? esc(t.manager) : '\u2014'}</b>
+          <i class="cstat">${esc(teamStatus(t.id))}</i></span></div></div>
       ${squad.length
         ? `<div class="sect">Squad \u00b7 ${squad.length}</div><div class="pklist" style="max-height:none">${rows}</div>
            <p class="note">Tap a player for their tournament record.</p>`

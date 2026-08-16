@@ -234,3 +234,8 @@
 [data-theme="matchday"] .sl.phead .who{flex:1}
 [data-theme="matchday"] .sl.phead .who b{font-size:17px}
 [data-theme="matchday"] .sl.phead .bignum{color:var(--tc);font-size:58px;margin-left:auto}
+
+/* matchday: club meta in the club's own text colour */
+[data-theme="matchday"] .sl.phead .clubmeta i,
+[data-theme="matchday"] .sl.phead .clubmeta b{color:var(--tc)}
+[data-theme="matchday"] .sl.phead .clubmeta i{opacity:.75}
