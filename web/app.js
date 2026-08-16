@@ -124,7 +124,7 @@ function clubBlock(id, cls = '', score = null, reds = 0) {
   const rc = '<i class="rc"></i>'.repeat(reds);
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
     <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
-  return `<span class="side ${cls}" data-team="${id}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
+  return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
     <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>${reds ? `<span class="rcs">${rc}</span>` : ''}</span>${sc}</span>`;
 }
