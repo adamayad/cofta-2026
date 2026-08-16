@@ -124,7 +124,7 @@ function clubBlock(id, cls = '', score = null, reds = 0) {
   const rc = '<i class="rc"></i>'.repeat(reds);
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
     <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
-  return `<span class="side ${cls}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
+  return `<span class="side ${cls}" data-team="${id}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
     <span class="tile" style="--c:${colOf(id)}"><img src="${crest(id)}" alt=""></span>
     <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i>${reds ? `<span class="rcs">${rc}</span>` : ''}</span>${sc}</span>`;
 }
@@ -204,11 +204,11 @@ function viewMatch() {
                  p: w.args.p_player, min: w.args.p_minute, voided: false }));
   const allEvts = [...state.events, ...pendingEvts];
   const lines = (sideKey) => M.scorerLines(allEvts, m.id, sideKey, playerName)
-    .map(l => `<i class="gline">${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
+    .map(l => `<i class="gline" ${l.pid ? `data-player="${l.pid}"` : ''}>${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
     .join('');
 
   const side = (id, score, other, sideKey) => `
-    <div class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}">
+    <div class="sl ${lead(score, other)}" ${id ? `data-team="${id}"` : ''} style="--c:${colOf(id)};--tc:${txtOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
       <span class="gl tnum">${score}</span>
@@ -279,7 +279,7 @@ function suspensionNotice(m) {
   const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
   const out = M.suspendedFor(m.id, resolvedMatches(), state.events, byId);
   if (!out.length) return '';
-  const rows = out.map(s => `<li><span class="nmx">${esc(s.player)}</span>
+  const rows = out.map(s => `<li><span class="nmx plink" data-player="${s.id}">${esc(s.player)}</span>
       <span class="rs">${esc(s.reason)}</span></li>`).join('');
   return `<div class="sect">Unavailable</div>
     <ul class="susp">${rows}</ul>
@@ -299,7 +299,7 @@ function motmLine(m) {
 function eventText(x, m) {
   const who = x.s === 'home' ? m.home : m.away;
   const nm = x.p ? playerName(x.p) : null;
-  const by = nm ? `<b>${esc(nm)}</b>` : null;
+  const by = nm ? `<b class="plink" data-player="${x.p}">${esc(nm)}</b>` : null;
   switch (x.t) {
     case 'goal':     return by ? `${by} <i>(${esc(cityOf(who))})</i>` : `<b>${esc(nameOf(who))}</b> score`;
     case 'own_goal': return `Own goal \u2014 ${by ?? `<b>${esc(nameOf(who))}</b>`}`;
@@ -478,7 +478,7 @@ function viewTables() {
 
   const tbl = (g) => M.standings(teamsArr, ms, g, state.ties).map((r, i) => `
       <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''} ${r.unresolved ? 'unres' : ''}">
-        <td class="nm"><span class="in"><span class="rk">${i + 1}</span>
+        <td class="nm"><span class="in" data-team="${r.team.id}"><span class="rk">${i + 1}</span>
           <span class="tile" style="--c:${r.team.colour}"><img src="${crest(r.team.id)}" alt=""></span>
           <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.unresolved ? '<span class="tag lvl">Level</span>' : ''}${r.tie === 'W' ? '<span class="tag so">Shoot-out</span>' : ''}</b>
           <i>${esc(r.team.city)}</i></span></span></td>
@@ -731,9 +731,12 @@ function viewAwards() {
       <span class="at">${title}</span>${body}
       ${foot ? `<p class="af">${foot}</p>` : ''}</div>`;
 
+  const linked = (aw) => aw.winners
+    .map((id, i) => `<span data-player="${id}">${esc(aw.names[i])}</span>`)
+    .join(' &amp; ');
   const boot = a.goldenBoot.count
     ? card('Golden boot',
-        `<p class="an">${a.goldenBoot.names.map(esc).join(' &amp; ')}</p>
+        `<p class="an">${linked(a.goldenBoot)}</p>
          <p class="ac tnum">${a.goldenBoot.count} goal${a.goldenBoot.count === 1 ? '' : 's'}</p>`,
         a.goldenBoot.shared ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '')
     : card('Golden boot', '<p class="an dim">No goals attributed yet</p>',
@@ -741,7 +744,7 @@ function viewAwards() {
 
   const pot = a.playerOfTournament.count
     ? card('Player of the tournament',
-        `<p class="an">${a.playerOfTournament.names.map(esc).join(' &amp; ')}</p>
+        `<p class="an">${linked(a.playerOfTournament)}</p>
          <p class="ac tnum">${a.playerOfTournament.count} man of the match award${a.playerOfTournament.count === 1 ? '' : 's'}</p>`,
         a.playerOfTournament.shared ? 'Level on awards.' : '')
     : card('Player of the tournament', '<p class="an dim">Not yet awarded</p>',
@@ -749,7 +752,7 @@ function viewAwards() {
 
   const glove = a.goldenGlove.winners.length
     ? card('Golden glove',
-        a.goldenGlove.winners.map(w => `<p class="an">${esc(w.team.city)}</p>`).join('') +
+        a.goldenGlove.winners.map(w => `<p class="an" data-team="${w.team.id}">${esc(w.team.city)}</p>`).join('') +
         `<p class="ac tnum">${a.goldenGlove.count} conceded in ${a.goldenGlove.winners[0].played} match${a.goldenGlove.winners[0].played === 1 ? '' : 'es'}</p>`,
         a.goldenGlove.decidedByManagers
           ? 'Level on goals conceded \u2014 decided by the church managers.'
@@ -758,7 +761,7 @@ function viewAwards() {
 
   const table = a.goldenGlove.conceded
     .slice().sort((x, y) => x.against - y.against || x.team.city.localeCompare(y.team.city))
-    .map(c => `<tr><td class="nm"><span class="in">
+    .map(c => `<tr><td class="nm"><span class="in" data-team="${c.team.id}">
         <span class="tile" style="--c:${c.team.colour}"><img src="${crest(c.team.id)}" alt=""></span>
         <span class="who"><b>${esc(c.team.city)}</b></span></span></td>
       <td>${c.played}</td><td class="p">${c.against}</td></tr>`).join('');
@@ -927,12 +930,26 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
   if (!t) return;
 
   if (t.dataset.view) {
     state.view = t.dataset.view; state.picker = null; state.editor = null;
     if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
+    render(); return;
+  }
+
+  if (t.dataset.team) {
+    state.view = 'squads';
+    state.sq = { team: t.dataset.team, player: null };
+    state.picker = null; state.editor = null;
+    render(); return;
+  }
+  if (t.dataset.player) {
+    const pl = state.players.find(p => p.id === t.dataset.player);
+    state.view = 'squads';
+    state.sq = { team: pl?.team ?? state.sq.team, player: t.dataset.player };
+    state.picker = null; state.editor = null;
     render(); return;
   }
 

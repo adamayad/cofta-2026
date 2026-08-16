@@ -407,7 +407,7 @@ export function scorerLines(events, matchId, sideKey, nameOf) {
     const og = e.t === 'own_goal';
     const name = e.p ? (nameOf ? nameOf(e.p) : e.p) : null;
     const key = (og ? 'og:' : 'g:') + (name ?? '\u2205');
-    if (!groups.has(key)) groups.set(key, { name, og, mins: [] });
+    if (!groups.has(key)) groups.set(key, { name, og, mins: [], pid: e.p ?? null });
     groups.get(key).mins.push(e.min || '');
   }
 

@@ -355,3 +355,7 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
   text-transform:uppercase;color:var(--dim)}
 .sl.phead .clubmeta b{font-family:var(--disp);font-weight:600;font-size:15px}
 .sl.phead .clubmeta .cstat{margin-top:5px;letter-spacing:.08em}
+
+/* clubs and players are tappable wherever they appear */
+[data-team],[data-player]{cursor:pointer}
+.tx .plink{border-bottom:1px dotted var(--line2)}
