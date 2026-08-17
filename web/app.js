@@ -281,6 +281,10 @@ function viewMatch() {
   const m = currentMatch();
   if (!m) return '<p class="empty">Match not found.</p>';
 
+  // A forfeit counts as started: it has a 3–0 result to show and no clock.
+  const started = M.hasStarted(m) || !!m.ff;
+  const scheduled = !started;
+
   const lead = (a, b) => a > b ? 'lead' : '';
   const pendingGoals = (sideKey) => queue.pendingFor(m.id)
     .filter(w => w.args.p_type === 'goal' && w.args.p_side === sideKey).length;
@@ -309,17 +313,23 @@ function viewMatch() {
    */
   const side = (id, score, other, sideKey) => {
     const attrs = `class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}"`;
+    // Nobody has scored yet, so nothing should say 0. A blank cell rather than
+    // no cell: the header is then exactly as tall before kick-off as after it,
+    // and the centre chip does not jump when the clock starts.
+    const scoreCell = started
+      ? `<span class="gl tnum">${score}</span>`
+      : '<span class="gl tnum" aria-hidden="true">&nbsp;</span>';
     const inner = `
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
-      <span class="gl tnum">${score}</span>
-      ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}`;
+      ${scoreCell}
+      ${started && lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}`;
     return id ? `<button ${attrs} data-team="${id}">${inner}</button>`
               : `<div ${attrs}>${inner}</div>`;
   };
 
   let clock, phase;
-  if (!M.hasStarted(m) && !m.ff) { clock = '<div class="m idle">\u2014\u2014</div>'; phase = 'Awaiting kick-off'; }
+  if (scheduled) { clock = '<div class="m idle">\u2014\u2014</div>'; phase = 'Awaiting kick-off'; }
   else if (m.status === 'half_time') { clock = '<div class="m idle">HT</div>'; phase = 'Half time'; }
   else if (m.status === 'full_time' || m.ff) { clock = '<div class="m idle">FT</div>'; phase = m.ff ? 'Forfeit' : 'Full time'; }
   else {
@@ -360,19 +370,26 @@ function viewMatch() {
         : M.mmss(M.elapsedMs(m))}</span></div>
     ${penStrip(m)}
     ${motmLine(m)}
-    <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
+    <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept${
+        scheduled ? '' : ` &middot; ${esc(m.kickoff)}`}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>
       ${M.isLive(m) && m.run ? '<span class="lv"><i></i>Live</span>' : ''}</p>
-    <div class="ck">
+    ${scheduled
+      // Before kick-off the rail said "——", "Awaiting kick-off" and 00:00:
+      // three ways of saying nothing, in the loudest part of the page. One
+      // muted line instead. Live, HT and FT keep the full rail.
+      ? `<div class="ck pre"><span class="kox">Kick-off ${esc(m.kickoff)}</span></div>`
+      : `<div class="ck">
       <div>${clock}${added ? `<div class="stop">${added}</div>` : ''}</div>
       <div class="rail"><span class="ph">${esc(phase)}</span>
         <span class="el tnum" id="mel">${M.mmss(e)}</span></div>
-    </div>
+    </div>`}
     ${suspensionNotice(m)}
     ${state.admin ? adminMatchControls(m) : ''}
-    <div class="sect">Match report</div>
+    ${scheduled && !evts.length ? ''
+      : `<div class="sect">Match report</div>
     ${state.editor ? editorPanel(m) : ''}
-    <ol class="tl">${timeline}</ol>`;
+    <ol class="tl">${timeline}</ol>`}`;
 }
 
 /**
