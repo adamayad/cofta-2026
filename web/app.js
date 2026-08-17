@@ -135,7 +135,12 @@ function applySnap(snap) {
   // Once both groups are done, Sunday is the day worth opening on — Saturday
   // is finished and nobody arriving wants yesterday's results first. A reader
   // who has picked a day for themselves keeps it.
-  if (!state.dayPinned && M.groupStageComplete(state.matches)) state.day = 2;
+  //
+  // Symmetric on purpose: a phone boots from its cached snapshot before the
+  // first poll lands, so an organiser who has just run reset_tournament()
+  // would otherwise open on Sunday off yesterday's cache and stay there,
+  // because nothing would ever move the day back.
+  if (!state.dayPinned) state.day = M.groupStageComplete(state.matches) ? 2 : 1;
 }
 
 async function poll() {
