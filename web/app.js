@@ -293,12 +293,25 @@ function viewMatch() {
     .map(l => `<i class="gline" ${l.pid ? `data-player="${l.pid}"` : ''}>${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
     .join('');
 
-  const side = (id, score, other, sideKey) => `
-    <div class="sl ${lead(score, other)}" ${id ? `data-team="${id}"` : ''} style="--c:${colOf(id)};--tc:${txtOf(id)}">
+  /**
+   * A club block on the header opens that club's squad, so where there is a
+   * club it is a real <button>: a div carrying a click handler cannot be
+   * reached by keyboard at all and announces nothing when it is. The crest
+   * stays alt="" because the club's name sits right beside it — giving the
+   * image the name too would just have every screen reader say it twice.
+   * A knockout slot still to be confirmed has nothing to open, so it stays
+   * an inert div rather than a focusable button that does nothing.
+   */
+  const side = (id, score, other, sideKey) => {
+    const attrs = `class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}"`;
+    const inner = `
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
       <span class="gl tnum">${score}</span>
-      ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</div>`;
+      ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}`;
+    return id ? `<button ${attrs} data-team="${id}">${inner}</button>`
+              : `<div ${attrs}>${inner}</div>`;
+  };
 
   let clock, phase;
   if (!M.hasStarted(m) && !m.ff) { clock = '<div class="m idle">\u2014\u2014</div>'; phase = 'Awaiting kick-off'; }
@@ -556,11 +569,15 @@ function pickerPanel(m) {
 
 function shootoutPanel(m) {
   const p = state.pens ?? { h: m.ph || 0, a: m.pa || 0 };
+  // The plus and minus carry no text of their own, so they get the club name
+  // in a label — otherwise a screen reader offers four identical buttons.
   const row = (side, id, v) => `<div class="pr" style="--c:${colOf(id)}">
       <span class="bd"><img src="${crest(id)}" alt=""></span>
       <span class="nx">${esc(nameOf(id))}</span>
-      <span class="pm"><button data-pen="${side}:-1">&minus;</button>
-        <button data-pen="${side}:1">+</button></span>
+      <span class="pm"><button data-pen="${side}:-1"
+          aria-label="One fewer penalty for ${esc(nameOf(id))}">&minus;</button>
+        <button data-pen="${side}:1"
+          aria-label="One more penalty for ${esc(nameOf(id))}">+</button></span>
       <span class="cnt tnum">${v}</span></div>`;
   return `<div class="sect">Penalty shootout</div>
     <div class="pens">
@@ -643,8 +660,10 @@ function tieShootoutPanels(teamsArr, ms) {
     const row = (side, teamId, v) => `<div class="pr" style="--c:${colOf(teamId)}">
         <span class="bd"><img src="${crest(teamId)}" alt=""></span>
         <span class="nx">${esc(nameOf(teamId))}</span>
-        <span class="pm"><button data-tiepen="${key}:${side}:-1">&minus;</button>
-          <button data-tiepen="${key}:${side}:1">+</button></span>
+        <span class="pm"><button data-tiepen="${key}:${side}:-1"
+            aria-label="One fewer penalty for ${esc(nameOf(teamId))}">&minus;</button>
+          <button data-tiepen="${key}:${side}:1"
+            aria-label="One more penalty for ${esc(nameOf(teamId))}">+</button></span>
         <span class="cnt tnum">${v}</span></div>`;
 
     return `<div class="sect">One-off shoot-out</div>
@@ -1043,8 +1062,12 @@ function trophyPanel(key, label, boards, teamsArr) {
   const openTeam = state.trophyTeam[key] ?? trophyDefaultTeam(key, boards, teamsArr);
 
   const chips = chosen.length
-    ? chosen.map(id => `<span class="tchip">${esc(playerName(id) ?? 'Unknown player')}
-        <button data-trophy-remove="${key}:${id}">\u00d7</button></span>`).join('')
+    ? chosen.map(id => {
+        const nm = playerName(id) ?? 'Unknown player';
+        return `<span class="tchip">${esc(nm)}
+          <button data-trophy-remove="${key}:${id}"
+            aria-label="Remove ${esc(nm)} from ${esc(label.toLowerCase())}">\u00d7</button></span>`;
+      }).join('')
     : '<span class="tnone">No winner chosen yet</span>';
 
   const clubs = teamsArr.map(t =>

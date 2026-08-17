@@ -66,7 +66,10 @@
    colours come from the database so every kit stays legible. */
 [data-theme="matchday"]{
   --bg:#eef0f3; --card:#ffffff;
-  --fg:#16182b; --fg2:#3a3d55; --dim:#6d7183;
+  /* --dim was #6d7183: 4.84:1 on a white card but only 4.24:1 on the grey
+     page background, where most of the small text actually sits (.note,
+     .sect, leaderboard sub-labels). Darkened to clear AA on both. */
+  --fg:#16182b; --fg2:#3a3d55; --dim:#65697b;
   --line:#e6e8ef; --line2:#d3d6e0;
   --gold:#d3d6e0;
   --acc:#38003c; --accfg:#ffffff;
@@ -209,6 +212,13 @@
 [data-theme="matchday"] .fx .side .ssc .spen{font-style:normal;font-size:13px;
   margin-left:5px;color:var(--dim)}
 [data-theme="matchday"] .fx .side .ssc .spen.won{color:var(--acc)}
+
+/* Focus rings. The accent is near-black purple, which is legible on white
+   and on the grey page but disappears into a club's own colour, so the
+   split-colour header and anything else sitting on --c gets a white ring. */
+[data-theme="matchday"] :focus-visible{outline-color:var(--acc)}
+[data-theme="matchday"] .sl:focus-visible,
+[data-theme="matchday"] .fx .side:focus-visible{outline-color:#fff;outline-offset:-3px}
 
 /* matchday: score digits optically centred against the full row */
 [data-theme="matchday"] .fx .side{align-items:stretch}
