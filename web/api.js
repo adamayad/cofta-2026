@@ -136,6 +136,10 @@ export const setForfeit = (matchId, side) =>
 export const setDisqualified = (teamId, value) =>
   rpc('set_disqualified', { p_team: teamId, p_value: value }, true);
 
+/** Replaces that trophy's winners outright — one call, one atomic swap. */
+export const setTrophy = (trophy, playerIds) =>
+  rpc('set_trophy', { p_trophy: trophy, p_players: playerIds }, true);
+
 export const setSlot = (slot, teamId) =>
   rpc('set_slot', { p_slot: slot, p_team: teamId }, true);
 

@@ -48,12 +48,17 @@ function applyTheme(v) {
 
 const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
+  trophies: {},        // confirmed winners, { trophy: [playerId, ...] }
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
+  award: null,         // which leaderboard is open, while view === 'award'
+  hist: [],            // pages to come back to, newest last
   admin: false, role: null, squadTeam: null, editor: null,
   lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
+  trophyPick: null,    // the organiser's working set, before confirming
+  trophyTeam: null,    // which club's squad each trophy picker is showing
 };
 
 /** Events are queued so a tap on bad signal is never lost. The queue sends
@@ -65,6 +70,56 @@ const queue = new WriteQueue((fn, args) => api.rpc(fn, args, true));
 let queueState = { depth: 0, failing: false };
 queue.subscribe(s => { queueState = s; if (state.snap) render(); });
 
+/* ── where "back" goes ───────────────────────────────────── */
+/**
+ * A club or player page can be opened from a fixture, a match report, a
+ * table, a leaderboard or another player's card — so any single fixed back
+ * target was always going to be wrong somewhere, and it was: every back
+ * button led to the Squads root regardless of the way in.
+ *
+ * Forward navigation pushes the page it is leaving; a back button pops it.
+ * The cap is high enough that no one reaches it by tapping around and low
+ * enough that the stack cannot grow all weekend. With an empty stack the
+ * back buttons fall back to exactly what they did before, so the first tap
+ * of a fresh session still behaves.
+ *
+ * Matches are deliberately left out: `state.from` already returns them to
+ * the tab they were opened from, and fixture rows only exist on those two
+ * tabs. A match opened from Fixtures still goes back to Fixtures.
+ */
+const HIST_MAX = 20;
+
+const here = () => ({
+  view: state.view, matchId: state.matchId, from: state.from,
+  day: state.day, award: state.award, sq: { ...state.sq },
+});
+
+const samePage = (a, b) =>
+  a.view === b.view && a.matchId === b.matchId && a.award === b.award
+  && a.sq.team === b.sq.team && a.sq.player === b.sq.player;
+
+/** Move to another page, remembering the one being left — unless the tap
+ *  lands on the page already showing, which must not stack a duplicate. */
+function navigate(mutate) {
+  const before = here();
+  mutate();
+  state.picker = null; state.editor = null;
+  if (samePage(before, here())) return;
+  state.hist.push(before);
+  if (state.hist.length > HIST_MAX) state.hist.shift();
+}
+
+/** Step back one page. Returns false when there is nothing to go back to,
+ *  leaving the caller to use its own fallback destination. */
+function popHist() {
+  const prev = state.hist.pop();
+  if (!prev) return false;
+  state.view = prev.view; state.matchId = prev.matchId; state.from = prev.from;
+  state.day = prev.day; state.award = prev.award; state.sq = { ...prev.sq };
+  state.picker = null; state.editor = null;
+  return true;
+}
+
 /* ── data ────────────────────────────────────────────────── */
 function applySnap(snap) {
   state.snap = snap;
@@ -74,6 +129,8 @@ function applySnap(snap) {
   state.players = snap.players || [];
   state.slots = snap.slots || {};
   state.ties = snap.ties || [];
+  // A snapshot cached by a build that predates trophies simply has no key.
+  state.trophies = M.confirmedTrophies(snap);
 }
 
 async function poll() {
@@ -620,6 +677,30 @@ function teamStatus(id) {
   return 'Eliminated \u00b7 group stage';
 }
 
+/** What a back button should say: the page it will actually return to, which
+ *  is the top of the stack whenever there is one. A button reading "Croydon"
+ *  that lands on a match report is worse than no label at all. */
+function backLabel(fallback) {
+  const prev = state.hist[state.hist.length - 1];
+  if (!prev) {
+    const [kind, arg] = String(fallback).split(':');
+    if (kind === 'sqteam') return cityOf(arg) || 'Squad';
+    return arg === 'awards' ? 'Awards' : 'All clubs';
+  }
+  if (prev.view === 'match') {
+    const mm = resolvedMatches().find(x => x.id === prev.matchId);
+    return mm ? `${cityOf(mm.home)} v ${cityOf(mm.away)}` : 'Match';
+  }
+  if (prev.view === 'award') return M.trophyLabel(prev.award);
+  if (prev.view === 'squads' && prev.sq.player) return playerName(prev.sq.player) ?? 'Player';
+  if (prev.view === 'squads' && prev.sq.team) return cityOf(prev.sq.team) || 'Squad';
+  return { fixtures: 'Fixtures', live: 'Live now', squads: 'All clubs',
+           tables: 'Tables', awards: 'Awards', admin: 'Organiser' }[prev.view] ?? 'Back';
+}
+
+const backButton = (fallback) =>
+  `<button class="back" data-back="${fallback}">&larr; ${esc(backLabel(fallback))}</button>`;
+
 function statsFor(pid) {
   const mine = state.events.filter(e => e.p === pid);
   return {
@@ -653,7 +734,15 @@ function viewSquads() {
           <i>(${esc(m ? M.stageLabel(m) : '')})</i></span><span></span></li>`;
     }).join('');
 
-    return `<button class="back" data-sqteam="${pl.team}">&larr; ${esc(t?.city ?? 'Squad')}</button>
+    // Honours only ever appear once an organiser has confirmed a trophy;
+    // leading a leaderboard is not the same thing as having won it.
+    const hon = M.honoursFor(pl.id, state.trophies);
+    const honours = hon.length ? `<div class="sect">Honours</div>
+      <ul class="honours">${hon.map(h => `<li><span class="hz">\u2605</span>
+        <span class="hl">${esc(h.label)} 2026</span>
+        ${h.shared ? '<span class="hsh">shared</span>' : ''}</li>`).join('')}</ul>` : '';
+
+    return `${backButton(`sqteam:${pl.team}`)}
       <div class="stack one"><div class="sl phead" style="--c:${colOf(pl.team)};--tc:${txtOf(pl.team)}">
         <span class="bdg"><img src="${crest(pl.team)}" alt=""></span>
         <span class="who"><b>${esc(pl.name)}</b>
@@ -661,6 +750,7 @@ function viewSquads() {
         <span class="bignum tnum">${pl.no ?? ''}</span></div></div>
       ${sus ? `<div class="banner warn">Suspended (${esc(sus.reason.toLowerCase())})
         ${sus.misses ? `\u2014 misses the ${esc(M.stageLabel(sus.misses))} fixture` : ''}.</div>` : ''}
+      ${honours}
       <div class="sect">This tournament</div>
       <div class="stats">
         <div class="stat"><i>Goals</i><b class="tnum">${st.goals.length}</b></div>
@@ -688,7 +778,7 @@ function viewSquads() {
         <span style="flex:1">${esc(p.name)}</span>
         <span class="pstat tnum">${bits.join(' \u00b7 ')}</span></button>`;
     }).join('');
-    return `<button class="back" data-view="squads">&larr; All clubs</button>
+    return `${backButton('view:squads')}
       <div class="stack one"><div class="sl phead" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
         <span class="bdg"><img src="${crest(t.id)}" alt=""></span>
         <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span>
@@ -714,62 +804,223 @@ function viewSquads() {
 }
 
 /* ── awards ──────────────────────────────────────────────── */
+/** All three boards, computed once and shared by the cards, the leaderboards
+ *  and the organiser's confirmation panel. */
+function awardBoards() {
+  const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
+  return {
+    golden_boot: M.goldenBootBoard(state.events, byId),
+    player_of_tournament: M.playerOfTournamentBoard(state.events, byId),
+    golden_glove: M.goldenGloveBoard(Object.values(state.teams), resolvedMatches()),
+  };
+}
+
+const AWARD_UNIT = {
+  golden_boot: (n) => `${n} goal${n === 1 ? '' : 's'}`,
+  player_of_tournament: (n) => `${n} man of the match award${n === 1 ? '' : 's'}`,
+  golden_glove: (n) => `${n} conceded`,
+};
+
+/** Confirmed winners of one trophy, as a display string. */
+const wonNames = (key) =>
+  (state.trophies[key] || []).map(id => playerName(id) ?? 'Unknown player').join(' & ');
+
 function viewAwards() {
   const teamsArr = Object.values(state.teams);
   const ms = resolvedMatches();
   if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
 
-  const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
-  const a = M.awards(teamsArr, ms, state.events, byId);
   const anyPlayed = ms.some(M.hasStarted);
 
   if (!anyPlayed) return `<div class="sect">Awards</div>
     <p class="empty">Nothing decided yet. The golden boot, player of the tournament
       and golden glove fill in as matches are played.</p>`;
 
-  const card = (title, body, foot) => `<div class="award">
-      <span class="at">${title}</span>${body}
-      ${foot ? `<p class="af">${foot}</p>` : ''}</div>`;
+  const boards = awardBoards();
 
-  const linked = (aw) => aw.winners
-    .map((id, i) => `<span data-player="${id}">${esc(aw.names[i])}</span>`)
-    .join(' &amp; ');
-  const boot = a.goldenBoot.count
-    ? card('Golden boot',
-        `<p class="an">${linked(a.goldenBoot)}</p>
-         <p class="ac tnum">${a.goldenBoot.count} goal${a.goldenBoot.count === 1 ? '' : 's'}</p>`,
-        a.goldenBoot.shared ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '')
-    : card('Golden boot', '<p class="an dim">No goals attributed yet</p>',
+  // The whole card is the button now: it opens the full leaderboard rather
+  // than jumping straight to whoever leads it, which was the old behaviour
+  // and left no way at all to see who came second.
+  const card = (key, title, lead, foot) => {
+    const won = state.trophies[key] || [];
+    const conf = won.length ? `<span class="conf">
+        <span class="ct">Trophy confirmed</span>
+        <span class="cn">${esc(wonNames(key))}${won.length > 1 ? ' <i>shared</i>' : ''}</span>
+      </span>` : '';
+    return `<button class="award ${won.length ? 'won' : ''}" data-award="${key}">
+        <span class="at">${title}</span>${lead}${conf}
+        ${foot ? `<p class="af">${foot}</p>` : ''}
+        <span class="more">Full leaderboard \u2192</span></button>`;
+  };
+
+  const leaders = (key) => (boards[key] || []).filter(r => r.place === 1);
+  const bootTop = leaders('golden_boot');
+  const boot = bootTop.length
+    ? card('golden_boot', 'Golden boot',
+        `<p class="an">${esc(bootTop.map(r => r.item.name).join(' & '))}</p>
+         <p class="ac tnum">${AWARD_UNIT.golden_boot(bootTop[0].score)}</p>`,
+        bootTop.length > 1 ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '')
+    : card('golden_boot', 'Golden boot', '<p class="an dim">No goals attributed yet</p>',
         'Goals count towards this only when a scorer is named.');
 
-  const pot = a.playerOfTournament.count
-    ? card('Player of the tournament',
-        `<p class="an">${linked(a.playerOfTournament)}</p>
-         <p class="ac tnum">${a.playerOfTournament.count} man of the match award${a.playerOfTournament.count === 1 ? '' : 's'}</p>`,
-        a.playerOfTournament.shared ? 'Level on awards.' : '')
-    : card('Player of the tournament', '<p class="an dim">Not yet awarded</p>',
+  const potTop = leaders('player_of_tournament');
+  const pot = potTop.length
+    ? card('player_of_tournament', 'Player of the tournament',
+        `<p class="an">${esc(potTop.map(r => r.item.name).join(' & '))}</p>
+         <p class="ac tnum">${AWARD_UNIT.player_of_tournament(potTop[0].score)}</p>`,
+        potTop.length > 1 ? 'Level on awards.' : '')
+    : card('player_of_tournament', 'Player of the tournament',
+        '<p class="an dim">Not yet awarded</p>',
         'Decided by the most man of the match awards.');
 
-  const glove = a.goldenGlove.winners.length
-    ? card('Golden glove',
-        a.goldenGlove.winners.map(w => `<p class="an" data-team="${w.team.id}">${esc(w.team.city)}</p>`).join('') +
-        `<p class="ac tnum">${a.goldenGlove.count} conceded in ${a.goldenGlove.winners[0].played} match${a.goldenGlove.winners[0].played === 1 ? '' : 'es'}</p>`,
-        a.goldenGlove.decidedByManagers
+  const gloveTop = leaders('golden_glove');
+  const glove = gloveTop.length
+    ? card('golden_glove', 'Golden glove',
+        `<p class="an">${esc(gloveTop.map(r => r.item.team.city).join(' & '))}</p>
+         <p class="ac tnum">${AWARD_UNIT.golden_glove(gloveTop[0].score)} in
+           ${gloveTop[0].item.played} match${gloveTop[0].item.played === 1 ? '' : 'es'}</p>`,
+        gloveTop.length > 1
           ? 'Level on goals conceded \u2014 decided by the church managers.'
-          : 'Shared by that club\u2019s goalkeepers.')
-    : '';
-
-  const table = a.goldenGlove.conceded
-    .slice().sort((x, y) => x.against - y.against || x.team.city.localeCompare(y.team.city))
-    .map(c => `<tr><td class="nm"><span class="in" data-team="${c.team.id}">
-        <span class="tile" style="--c:${c.team.colour}"><img src="${crest(c.team.id)}" alt=""></span>
-        <span class="who"><b>${esc(c.team.city)}</b></span></span></td>
-      <td>${c.played}</td><td class="p">${c.against}</td></tr>`).join('');
+          : 'The trophy itself goes to that club\u2019s goalkeeper.')
+    : card('golden_glove', 'Golden glove', '<p class="an dim">No matches played yet</p>', '');
 
   return `<div class="sect">Awards</div>${boot}${pot}${glove}
-    <div class="sect">Goals conceded</div>
-    <table><thead><tr><th class="nm">Club</th><th>P</th><th>GA</th></tr></thead>
-      <tbody>${table}</tbody></table>`;
+    <p class="note">Tap any award for its full leaderboard.</p>
+    ${trophySection(boards, teamsArr, ms)}`;
+}
+
+/* \u2500\u2500 one award's leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+function viewAwardBoard() {
+  const key = state.award;
+  if (!Object.values(state.teams).length) return '<p class="empty">Loading\u2026</p>';
+  if (!M.TROPHIES.some(([k]) => k === key)) {   // unknown award \u2014 nothing to show
+    state.view = 'awards'; state.award = null;
+    return viewAwards();
+  }
+
+  const board = awardBoards()[key];
+  const won = state.trophies[key] || [];
+  const confirmed = won.length
+    ? `<div class="banner conf">Trophy confirmed \u2014 ${esc(wonNames(key))}${
+        won.length > 1 ? ' (shared)' : ''}.</div>`
+    : '';
+
+  // Joint places carry the "=" leaderboards conventionally use, so a reader
+  // can tell 1, 2, 2, 4 from a numbering mistake at a glance.
+  const rank = (r) => `<span class="pl tnum ${r.joint ? 'joint' : ''}">${
+    r.joint ? '=' : ''}${r.place}</span>`;
+
+  const rows = key === 'golden_glove'
+    ? board.map(r => `<button class="lbr" data-team="${r.item.team.id}">
+        ${rank(r)}
+        <span class="tile" style="--c:${r.item.team.colour}"><img src="${crest(r.item.team.id)}" alt=""></span>
+        <span class="who"><b>${esc(r.item.team.name)}</b>
+          <i>${esc(r.item.team.city)} \u00b7 ${r.item.played} played</i></span>
+        <span class="lbn tnum">${r.score}</span></button>`).join('')
+    : board.map(r => `<button class="lbr" data-player="${r.item.id}">
+        ${rank(r)}
+        <span class="who"><b>${esc(r.item.name)}${
+          won.includes(r.item.id) ? '<span class="tag wn">Winner</span>' : ''}</b>
+          <i>${esc(cityOf(r.item.team))}</i></span>
+        <span class="lbn tnum">${r.score}</span></button>`).join('');
+
+  const empty = {
+    golden_boot: 'No goals have been attributed to a named player yet.',
+    player_of_tournament: 'No man of the match awards have been given yet.',
+    golden_glove: 'No matches have been played yet.',
+  }[key];
+
+  const foot = {
+    golden_boot: 'Every player with a goal to their name. A goal logged without a scorer still counts on the scoreboard, but cannot appear here.',
+    player_of_tournament: 'Every player with a man of the match award.',
+    golden_glove: 'Goals conceded by club, fewest first. The trophy itself goes to a goalkeeper, which is why an organiser names the winner rather than this table doing it.',
+  }[key];
+
+  return `${backButton('view:awards')}
+    <div class="sect">${esc(M.trophyLabel(key))}</div>
+    ${confirmed}
+    ${board.length
+      ? `<div class="lb">${rows}</div><p class="note">${foot}</p>`
+      : `<p class="empty">${empty}</p>`}`;
+}
+
+/* \u2500\u2500 confirming the trophies (organisers) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/**
+ * All three trophies are presented to players \u2014 including the golden glove,
+ * whose leaderboard is clubs, because a conceded column cannot name the
+ * keeper who earned it. So the boot and player of the tournament start from
+ * their leaderboards, and the glove starts empty with the conceded table one
+ * tap away as guidance.
+ *
+ * Gated on the final being over. Hiding the panel is cosmetic: set_trophy()
+ * checks the organiser role in the database, which is the real gate.
+ */
+function trophySection(boards, teamsArr, ms) {
+  if (!state.admin || state.role !== 'organiser') return '';
+  if (!M.finalComplete(ms)) return '';
+  return `<div class="sect">Confirm trophies</div>
+    <p class="note" style="padding-top:0">The final is over, so the trophies can be
+      presented. Add or remove names before confirming \u2014 one winner is the norm,
+      sharing is the fallback. Confirming again replaces that trophy's winners.</p>
+    ${M.TROPHIES.map(([key, label]) => trophyPanel(key, label, boards, teamsArr)).join('')}`;
+}
+
+/** The working set for one trophy: whatever is already confirmed, else the
+ *  computed leaders \u2014 except the glove, which nothing can compute. */
+function trophyPick(key, boards) {
+  state.trophyPick ??= {};
+  if (state.trophyPick[key]) return state.trophyPick[key];
+  const already = state.trophies[key];
+  if (already?.length) return (state.trophyPick[key] = [...already]);
+  if (key === 'golden_glove') return (state.trophyPick[key] = []);
+  return (state.trophyPick[key] =
+    (boards[key] || []).filter(r => r.place === 1).map(r => r.item.id));
+}
+
+/** Which club's squad a picker opens on: for the glove the club that
+ *  conceded fewest, for the others the club of whoever leads. */
+function trophyDefaultTeam(key, boards, teamsArr) {
+  const glove = (boards.golden_glove || [])[0]?.item.team.id;
+  if (key === 'golden_glove') return glove ?? teamsArr[0]?.id ?? null;
+  return (boards[key] || [])[0]?.item.team ?? glove ?? teamsArr[0]?.id ?? null;
+}
+
+function trophyPanel(key, label, boards, teamsArr) {
+  const chosen = trophyPick(key, boards);
+  state.trophyTeam ??= {};
+  const openTeam = state.trophyTeam[key] ?? trophyDefaultTeam(key, boards, teamsArr);
+
+  const chips = chosen.length
+    ? chosen.map(id => `<span class="tchip">${esc(playerName(id) ?? 'Unknown player')}
+        <button data-trophy-remove="${key}:${id}">\u00d7</button></span>`).join('')
+    : '<span class="tnone">No winner chosen yet</span>';
+
+  const clubs = teamsArr.map(t =>
+    `<button class="${openTeam === t.id ? 'on' : ''}" data-trophy-team="${key}:${t.id}">${esc(t.city)}</button>`
+  ).join('');
+
+  // Every player is rendered, not only the open club's, because the search
+  // has to reach a keeper at another club and cannot ask for a repaint to get
+  // there: render() deliberately refuses to paint over a focused input. So
+  // both the club chips and the search work by showing and hiding rows that
+  // are already in the DOM.
+  const rows = state.players.map(p => `<button class="pk ${chosen.includes(p.id) ? 'on' : ''}"
+      data-trophy-add="${key}:${p.id}" data-club="${p.team}"${p.team === openTeam ? '' : ' style="display:none"'}>
+      ${p.no != null ? `<span class="no tnum">${p.no}</span>` : '<span class="no"></span>'}
+      <span style="flex:1">${esc(p.name)}</span>
+      <span class="pstat">${esc(cityOf(p.team))}</span></button>`).join('');
+
+  return `<div class="picker trophy">
+      <div class="pkhd"><span>${esc(label)}</span>
+        <button data-award="${key}">Leaderboard</button></div>
+      <div class="tchips">${chips}</div>
+      <div class="dqlist tclubs">${clubs}</div>
+      <input class="tpq" type="search" placeholder="Search all players" autocomplete="off"
+        autocapitalize="none" spellcheck="false" style="margin-bottom:9px">
+      <div class="pklist" data-club="${openTeam}">${rows}</div>
+      <button class="act" data-trophy-confirm="${key}" ${chosen.length ? '' : 'disabled'}>
+        ${(state.trophies[key] || []).length ? 'Update' : 'Confirm'} ${esc(label.toLowerCase())}</button>
+    </div>`;
 }
 
 /* ── admin sign in ───────────────────────────────────────── */
@@ -888,7 +1139,11 @@ function render() {
   if (a && a.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)
       && $('body') && $('body').contains && $('body').contains(a)) return;
 
-  const navFor = state.view === 'match' ? state.from : state.view;
+  // A leaderboard belongs to the Awards tab, so that tab stays lit while one
+  // is open — same reasoning as a match staying under the tab it came from.
+  const navFor = state.view === 'match' ? state.from
+               : state.view === 'award' ? 'awards'
+               : state.view;
   ['fixtures', 'live', 'squads', 'tables', 'awards', 'admin'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
 
@@ -898,6 +1153,7 @@ function render() {
     state.view === 'match'    ? viewMatch()    :
     state.view === 'squads'   ? viewSquads()   :
     state.view === 'tables'   ? viewTables()   :
+    state.view === 'award'    ? viewAwardBoard() :
     state.view === 'awards'   ? viewAwards()   : viewAdmin();
 
   $('body').innerHTML = body +
@@ -930,35 +1186,69 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],#signin,#signout');
   if (!t) return;
 
+  // Back before view: a back button carries only data-back, but checking it
+  // first keeps the two from ever racing if one later carries both.
+  if (t.dataset.back) {
+    if (!popHist()) {
+      // Nothing to go back to — the fixed destination this button used to have.
+      const [kind, arg] = String(t.dataset.back).split(':');
+      state.award = null;
+      state.picker = null; state.editor = null;
+      if (kind === 'sqteam') {
+        state.view = 'squads'; state.sq = { team: arg, player: null };
+      } else {
+        state.view = arg;
+        if (arg === 'squads') state.sq = { team: null, player: null };
+      }
+    }
+    render(); return;
+  }
+
   if (t.dataset.view) {
+    // The bottom nav always lands on the root of its tab, so the trail of
+    // wherever you had wandered is discarded rather than resumed later.
     state.view = t.dataset.view; state.picker = null; state.editor = null;
+    state.hist = []; state.award = null;
     if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
     render(); return;
   }
 
   if (t.dataset.team) {
-    state.view = 'squads';
-    state.sq = { team: t.dataset.team, player: null };
-    state.picker = null; state.editor = null;
+    navigate(() => {
+      state.view = 'squads';
+      state.sq = { team: t.dataset.team, player: null };
+      state.award = null;
+    });
     render(); return;
   }
   if (t.dataset.player) {
     const pl = state.players.find(p => p.id === t.dataset.player);
-    state.view = 'squads';
-    state.sq = { team: pl?.team ?? state.sq.team, player: t.dataset.player };
-    state.picker = null; state.editor = null;
+    navigate(() => {
+      state.view = 'squads';
+      state.sq = { team: pl?.team ?? state.sq.team, player: t.dataset.player };
+      state.award = null;
+    });
     render(); return;
   }
 
   if (t.dataset.sqteam) {
-    state.view = 'squads'; state.sq = { team: t.dataset.sqteam, player: null };
+    navigate(() => {
+      state.view = 'squads'; state.sq = { team: t.dataset.sqteam, player: null };
+      state.award = null;
+    });
     render(); return;
   }
   if (t.dataset.sqplayer) {
-    state.sq.player = t.dataset.sqplayer; render(); return;
+    navigate(() => { state.sq = { ...state.sq, player: t.dataset.sqplayer }; });
+    render(); return;
+  }
+
+  if (t.dataset.award) {
+    navigate(() => { state.view = 'award'; state.award = t.dataset.award; });
+    render(); return;
   }
   if (t.dataset.day) { state.day = +t.dataset.day; state.picker = null; render(); return; }
   if (t.dataset.match) {
@@ -1178,6 +1468,45 @@ document.addEventListener('click', async (ev) => {
     return guard(() => api.setDisqualified(tm.id, !tm.disqualified));
   }
 
+  if (t.dataset.trophyTeam) {
+    const [key, teamId] = t.dataset.trophyTeam.split(':');
+    state.trophyTeam ??= {};
+    state.trophyTeam[key] = teamId;
+    render(); return;
+  }
+
+  // One control for both directions: tapping a chosen name takes it off again,
+  // which is what everyone tries first.
+  if (t.dataset.trophyAdd) {
+    const [key, pid] = t.dataset.trophyAdd.split(':');
+    state.trophyPick ??= {};
+    const list = state.trophyPick[key] ?? [];
+    state.trophyPick[key] = list.includes(pid)
+      ? list.filter(x => x !== pid)
+      : [...list, pid];
+    render(); return;
+  }
+
+  if (t.dataset.trophyRemove) {
+    const [key, pid] = t.dataset.trophyRemove.split(':');
+    state.trophyPick ??= {};
+    state.trophyPick[key] = (state.trophyPick[key] ?? []).filter(x => x !== pid);
+    render(); return;
+  }
+
+  if (t.dataset.trophyConfirm) {
+    const key = t.dataset.trophyConfirm;
+    const picked = (state.trophyPick ?? {})[key] ?? [];
+    if (!picked.length) return;
+    const names = picked.map(id => playerName(id) ?? 'Unknown player').join(' & ');
+    if (!confirm(`Confirm the ${M.trophyLabel(key)} for ${names}?`)) return;
+    return guard(async () => {
+      await api.setTrophy(key, picked);
+      // drop the working set so the panel re-reads the confirmed winners
+      if (state.trophyPick) delete state.trophyPick[key];
+    });
+  }
+
   if (t.id === 'signin') {
     const email = $('em').value.trim(), pw = $('pw').value;
     $('autherr').textContent = '';
@@ -1198,15 +1527,29 @@ document.addEventListener('click', async (ev) => {
 // Player search: filters the visible list as you type. Action rows (own
 // goal, no-player) stay visible whatever the query.
 document.addEventListener('input', (ev) => {
-  if (ev.target.id !== 'pkq') return;
-  const q = ev.target.value.trim().toLowerCase();
   const list = ev.target.closest('.picker')?.querySelector('.pklist');
   if (!list) return;
-  for (const b of list.querySelectorAll('.pk')) {
-    const isAction = b.dataset.pick === 'own' || b.dataset.pick === 'skip'
-      || b.dataset.edpick === 'none';
-    b.style.display = (isAction || !q || b.textContent.toLowerCase().includes(q))
-      ? '' : 'none';
+
+  if (ev.target.id === 'pkq') {
+    const q = ev.target.value.trim().toLowerCase();
+    for (const b of list.querySelectorAll('.pk')) {
+      const isAction = b.dataset.pick === 'own' || b.dataset.pick === 'skip'
+        || b.dataset.edpick === 'none';
+      b.style.display = (isAction || !q || b.textContent.toLowerCase().includes(q))
+        ? '' : 'none';
+    }
+    return;
+  }
+
+  // The trophy search reaches every club: a golden glove keeper need not play
+  // for the club that conceded fewest. With the box empty the list falls back
+  // to whichever club chip is selected.
+  if (ev.target.classList.contains('tpq')) {
+    const q = ev.target.value.trim().toLowerCase();
+    for (const b of list.querySelectorAll('.pk')) {
+      b.style.display = (q ? b.textContent.toLowerCase().includes(q)
+                           : b.dataset.club === list.dataset.club) ? '' : 'none';
+    }
   }
 });
 
