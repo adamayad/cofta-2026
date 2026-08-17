@@ -202,6 +202,14 @@
 [data-theme="matchday"] .fx .t .tst i{display:block;font-style:normal;
   font-size:9.5px;font-weight:600;margin-top:1px}
 
+/* Matchday hides the combined score column, so a shoot-out had nowhere to go
+   but the narrow left column, in 9.5px type nobody reads. It now sits in
+   brackets beside each club's own score, where the eye already is, with the
+   winning tally in the accent. */
+[data-theme="matchday"] .fx .side .ssc .spen{font-style:normal;font-size:13px;
+  margin-left:5px;color:var(--dim)}
+[data-theme="matchday"] .fx .side .ssc .spen.won{color:var(--acc)}
+
 /* matchday: score digits optically centred against the full row */
 [data-theme="matchday"] .fx .side{align-items:stretch}
 [data-theme="matchday"] .fx .side .tile,

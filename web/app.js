@@ -181,8 +181,13 @@ function resolvedMatches() {
 const currentMatch = () => resolvedMatches().find(m => m.id === state.matchId);
 
 /* ── shared bits ─────────────────────────────────────────── */
-function clubBlock(id, cls = '', score = null, reds = 0) {
-  const sc = score != null ? `<span class="ssc tnum">${score}</span>` : '';
+function clubBlock(id, cls = '', score = null, reds = 0, pens = null) {
+  // Penalties ride alongside the score, in brackets, the way a results list
+  // has always written them: 1 (3). Hidden with .ssc in the themes that show
+  // a combined score on the right instead, where statusLabel already says
+  // "3–2 on pens" in full.
+  const pen = pens ? `<i class="spen ${pens.won ? 'won' : ''}">(${pens.n})</i>` : '';
+  const sc = score != null ? `<span class="ssc tnum">${score}${pen}</span>` : '';
   const rc = '<i class="rc"></i>'.repeat(reds);
   if (!id) return `<span class="side tbc ${cls}" style="--c:var(--line2)">
     <span class="who"><b>To be confirmed</b></span>${sc}</span>`;
@@ -210,13 +215,19 @@ function fixtureRow(m) {
   if (m.ff) tst = 'FF';
   else if (M.isLive(m)) { tst = `${M.minuteLabel(m)}\u2032`; tstLive = true; }
   else if (m.status === 'half_time') tst = 'HT';
-  else if (m.status === 'full_time')
-    tst = m.pd ? `FT<i>${m.ph}\u2013${m.pa}p</i>` : 'FT';
+  // The shoot-out used to be a second line here, 9.5px wide in a 52px column
+  // that the eye never reaches. It now sits beside the scores instead.
+  else if (m.status === 'full_time') tst = 'FT';
+
+  const pens = (sideKey) => m.pd
+    ? { n:   sideKey === 'home' ? m.ph : m.pa,
+        won: sideKey === 'home' ? m.ph > m.pa : m.pa > m.ph }
+    : null;
 
   return `<button class="fx ${started ? 'started' : 'sched'}" data-match="${m.id}">
     <span class="t"><b>${esc(m.kickoff)}</b>${esc(M.stageLabel(m))}
       ${tst ? `<span class="tst ${tstLive ? 'live' : ''} tnum">${tst}</span>` : ''}</span>
-    <span class="n">${clubBlock(m.home, '', started ? m.hs : null, redsFor(m, 'home'))}${clubBlock(m.away, '', started ? m.as : null, redsFor(m, 'away'))}</span>
+    <span class="n">${clubBlock(m.home, '', started ? m.hs : null, redsFor(m, 'home'), pens('home'))}${clubBlock(m.away, '', started ? m.as : null, redsFor(m, 'away'), pens('away'))}</span>
     <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
 }
 
@@ -369,7 +380,7 @@ function penStrip(m) {
   if (!m.pd) return '';
   const winner = m.ph > m.pa ? m.home : m.away;
   const hi = Math.max(m.ph, m.pa), lo = Math.min(m.ph, m.pa);
-  return `<div class="pnstrip"><b>${esc(cityOf(winner))}</b> win
+  return `<div class="pnstrip"><b>${esc(nameOf(winner))}</b> win
     <span class="tnum">${hi}–${lo}</span> on penalties</div>`;
 }
 
