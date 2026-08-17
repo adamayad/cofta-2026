@@ -255,6 +255,130 @@ export function awards(teams, matches, events, players = {}) {
   };
 }
 
+/* ── leaderboards ────────────────────────────────────────── */
+/**
+ * Standard competition ranking, the "1224" kind: rows level on the ranked
+ * number share the higher place, and the places they consume are then
+ * skipped — two joint seconds are followed by a fourth, never a third.
+ * Dense ranking (1,2,2,3) would quietly promote whoever came next, which is
+ * not what a trophy board means by "joint second".
+ *
+ * `scoreOf` pulls the number being ranked. The golden glove ranks upward —
+ * fewest conceded wins — so `lowerIsBetter` flips the comparison rather than
+ * keeping a second copy of this. `tieBreak` only orders rows that already
+ * share a place; it never changes the place itself.
+ *
+ * Returns [{ item, score, place, joint }] in display order.
+ */
+export function rankRows(items, scoreOf, { lowerIsBetter = false, tieBreak } = {}) {
+  const sorted = [...(items || [])].sort((a, b) => {
+    const d = lowerIsBetter ? scoreOf(a) - scoreOf(b) : scoreOf(b) - scoreOf(a);
+    if (d) return d;
+    return tieBreak ? tieBreak(a, b) : 0;
+  });
+
+  const out = [];
+  let place = 0, prev = 0, started = false;
+  sorted.forEach((item, i) => {
+    const score = scoreOf(item);
+    if (!started || score !== prev) { place = i + 1; prev = score; started = true; }
+    out.push({ item, score, place });
+  });
+
+  const held = {};
+  for (const r of out) held[r.place] = (held[r.place] || 0) + 1;
+  for (const r of out) r.joint = held[r.place] > 1;
+  return out;
+}
+
+/** Count one kind of event per player, ranked. Players with none are absent
+ *  — a leaderboard of nobodies on nought helps no one. */
+function playerBoard(events, pred, players) {
+  const tally = {};
+  for (const e of (events || [])) {
+    if (e.voided || !e.p || !pred(e)) continue;
+    tally[e.p] = (tally[e.p] || 0) + 1;
+  }
+  const rows = Object.entries(tally).map(([id, n]) => ({
+    id, n,
+    name: players?.[id]?.name ?? id,
+    team: players?.[id]?.team ?? null,
+  }));
+  return rankRows(rows, r => r.n, { tieBreak: (a, b) => a.name.localeCompare(b.name) });
+}
+
+/** Every player with at least one attributed goal. */
+export const goldenBootBoard = (events, players = {}) =>
+  playerBoard(events, e => e.t === 'goal', players);
+
+/** Every player with at least one man-of-the-match award. */
+export const playerOfTournamentBoard = (events, players = {}) =>
+  playerBoard(events, e => e.t === 'motm', players);
+
+/** Goals conceded per club — the golden glove board is club-level even though
+ *  the trophy itself goes to a goalkeeper. Fewest conceded ranks first. */
+export function goldenGloveBoard(teams, matches) {
+  const conceded = {};
+  for (const t of (teams || [])) conceded[t.id] = { team: t, played: 0, against: 0 };
+  for (const m of (matches || [])) {
+    if (!m.home || !m.away || !hasStarted(m)) continue;
+    const H = conceded[m.home], A = conceded[m.away];
+    if (!H || !A) continue;
+    H.played++; H.against += m.as;
+    A.played++; A.against += m.hs;
+  }
+  return rankRows(Object.values(conceded).filter(c => c.played > 0), r => r.against, {
+    lowerIsBetter: true,
+    tieBreak: (a, b) => a.team.city.localeCompare(b.team.city),
+  });
+}
+
+/* ── trophies ────────────────────────────────────────────── */
+/** The three trophies, in the order they are presented. All go to players —
+ *  the golden glove to a goalkeeper, even though its board is club-level. */
+export const TROPHIES = [
+  ['golden_boot',          'Golden Boot'],
+  ['player_of_tournament', 'Player of the Tournament'],
+  ['golden_glove',         'Golden Glove'],
+];
+
+export const trophyLabel = (key) =>
+  (TROPHIES.find(([k]) => k === key) ?? [, key])[1];
+
+/** Nothing is presented until the final is over, one way or the other. */
+export function finalComplete(matches) {
+  const f = (matches || []).find(m => m.stage === 'FINAL');
+  return !!f && (f.status === 'full_time' || !!f.ff);
+}
+
+/**
+ * Confirmed winners from a snapshot, as { trophy: [playerId, ...] }.
+ * Deliberately tolerant: a snapshot cached by an older build has no
+ * `trophies` key at all, and that must read as "none confirmed yet" rather
+ * than throwing on a phone that has not reloaded since the deploy.
+ */
+export function confirmedTrophies(snap) {
+  const raw = snap?.trophies;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [key] of TROPHIES) {
+    const ids = raw[key];
+    if (Array.isArray(ids) && ids.length) out[key] = ids.filter(Boolean);
+  }
+  return out;
+}
+
+/** What a player's profile should list under Honours. */
+export function honoursFor(playerId, trophies) {
+  if (!playerId) return [];
+  return TROPHIES
+    .filter(([k]) => (trophies?.[k] || []).includes(playerId))
+    .map(([k, label]) => ({
+      key: k, label,
+      shared: (trophies[k] || []).length > 1,
+    }));
+}
+
 /* ── suspensions ─────────────────────────────────────────── */
 /**
  * COFTA discipline:
