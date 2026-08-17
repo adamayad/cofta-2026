@@ -346,13 +346,14 @@ function viewMatch() {
     : '<div class="empty">Nothing to report yet.</div>';
 
   return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
-    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}${penStrip(m)}
+    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}
       <span class="midchip ${M.isLive(m) ? 'live' : ''}" id="midchip">${
         m.ff ? 'FT'
         : !M.hasStarted(m) ? esc(m.kickoff)
         : m.status === 'half_time' ? 'HT'
         : m.status === 'full_time' ? 'FT'
         : M.mmss(M.elapsedMs(m))}</span></div>
+    ${penStrip(m)}
     ${motmLine(m)}
     <p class="kick"><span>${m.day === 1 ? 'Sat 12' : 'Sun 13'} Sept &middot; ${esc(m.kickoff)}
       &middot; ${esc(M.stageLabel(m))} &middot; ${esc(m.pitch)}</span>

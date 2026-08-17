@@ -213,6 +213,33 @@
   margin-left:5px;color:var(--dim)}
 [data-theme="matchday"] .fx .side .ssc .spen.won{color:var(--acc)}
 
+/* ── Matchday: surfaces that predate it ───────────────────────
+   Row lists were styled before Matchday existed and still wore the base
+   sheet's bare hairlines on the page background. They become one card with
+   dividers inside, the same treatment the tables already get, rather than
+   one card per row — these are ranked or enumerated lists, and boxing every
+   line breaks the column the eye is reading down. */
+[data-theme="matchday"] .lb,
+[data-theme="matchday"] .squad,
+[data-theme="matchday"] .honours,
+[data-theme="matchday"] .susp{background:var(--card);border-radius:14px;border-top:none;
+  overflow:hidden;box-shadow:0 1px 2px rgba(18,20,40,.06)}
+[data-theme="matchday"] .lb .lbr,
+[data-theme="matchday"] .squad li,
+[data-theme="matchday"] .honours li,
+[data-theme="matchday"] .susp li{padding-left:13px;padding-right:13px;border-color:var(--line)}
+[data-theme="matchday"] .lb .lbr:last-child,
+[data-theme="matchday"] .squad li:last-child,
+[data-theme="matchday"] .honours li:last-child,
+[data-theme="matchday"] .susp li:last-child{border-bottom:none}
+
+/* qualification rows join the knockout rows they sit beside */
+[data-theme="matchday"] .qrow{background:var(--card);border-radius:12px;border-bottom:none;
+  padding:12px 13px;margin-bottom:8px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
+
+/* the trophy chips read as removable tokens, not as another card */
+[data-theme="matchday"] .tchip{border-radius:999px;padding:7px 8px 7px 12px}
+
 /* Focus rings. The accent is near-black purple, which is legible on white
    and on the grey page but disappears into a club's own colour, so the
    split-colour header and anything else sitting on --c gets a white ring. */
@@ -258,8 +285,10 @@
 [data-theme="matchday"] .sl.phead .clubmeta b{color:var(--tc)}
 [data-theme="matchday"] .sl.phead .clubmeta i{opacity:.75}
 
-/* the penalties strip spans both club colours at the foot of the split
-   header, so it needs its own row and the card's own background rather than
-   either club's — neither colour can be neutral between the two of them. */
-[data-theme="matchday"] .stack .pnstrip{grid-column:1/-1;border-top:none;
-  padding:11px 12px}
+/* The penalties strip is a sibling of the header rather than a row inside it
+   (see styles.css), so it re-joins the card here: the stack drops its bottom
+   corners when a strip follows and the strip carries them instead. */
+[data-theme="matchday"] .pnstrip{border-bottom:none;padding:11px 12px;
+  border-radius:0 0 16px 16px;box-shadow:0 2px 6px rgba(18,20,40,.14)}
+[data-theme="matchday"] .stack:has(+ .pnstrip){
+  border-bottom-left-radius:0;border-bottom-right-radius:0}

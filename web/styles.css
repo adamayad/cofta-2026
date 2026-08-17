@@ -369,11 +369,14 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
    scoreboard. The shoot-out decided the tie, so it belongs here rather than
    in the note underneath, where it read as a footnote to a 1–1 draw. Goals
    stay the score, because for goal difference the match really is a draw. */
-.stack .pnstrip{border-top:1px solid var(--line);background:var(--card);
+/* The strip sits OUTSIDE .stack, not inside it: the centre chip is centred
+   on the stack, so an extra row in there pushed the chip half a strip's
+   height below the club blocks on exactly the matches that matter most. */
+.pnstrip{background:var(--card);border-bottom:1px solid var(--line);
   padding:9px 12px;text-align:center;font-size:11.5px;color:var(--dim)}
-.stack .pnstrip b{font-family:var(--disp);font-weight:600;font-size:13px;
+.pnstrip b{font-family:var(--disp);font-weight:600;font-size:13px;
   color:var(--fg);letter-spacing:.03em}
-.stack .pnstrip .tnum{font-family:var(--num);font-weight:800;font-size:14.5px;
+.pnstrip .tnum{font-family:var(--num);font-weight:800;font-size:14.5px;
   color:var(--acc);margin:0 1px}
 
 /* the final is not just the next fixture on the list */
