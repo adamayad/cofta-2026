@@ -50,7 +50,7 @@ const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   trophies: {},        // confirmed winners, { trophy: [playerId, ...] }
   picker: null,        // { type, side } while an organiser chooses a player
-  view: 'fixtures', day: 1, matchId: null, from: 'fixtures',
+  view: 'fixtures', day: 1, dayPinned: false, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
   award: null,         // which leaderboard is open, while view === 'award'
   hist: [],            // pages to come back to, newest last
@@ -131,6 +131,11 @@ function applySnap(snap) {
   state.ties = snap.ties || [];
   // A snapshot cached by a build that predates trophies simply has no key.
   state.trophies = M.confirmedTrophies(snap);
+
+  // Once both groups are done, Sunday is the day worth opening on — Saturday
+  // is finished and nobody arriving wants yesterday's results first. A reader
+  // who has picked a day for themselves keeps it.
+  if (!state.dayPinned && M.groupStageComplete(state.matches)) state.day = 2;
 }
 
 async function poll() {
@@ -215,18 +220,38 @@ function fixtureRow(m) {
     <span class="r tnum"><span class="rsc">${score}</span>${sub}</span></button>`;
 }
 
+const PHASE_LABEL = { group: 'Group matches', semi: 'Semi-finals', final: 'Final' };
+const phaseOf = (m) => m.stage === 'FINAL' ? 'final' : M.isKnockout(m) ? 'semi' : 'group';
+
 function viewFixtures() {
   const all = resolvedMatches().filter(m => m.day === state.day);
-  const rows = all.map(fixtureRow).join('');
+
+  // Sunday runs two semi-finals and then the final, and a flat list gave the
+  // final no more weight than an 11:00 group game. Headings appear only where
+  // a day actually holds more than one phase, so Saturday's twelve group
+  // matches stay one uninterrupted list.
+  const mixed = new Set(all.map(phaseOf)).size > 1;
+  let last = null;
+  const rows = all.map(m => {
+    const p = phaseOf(m);
+    const head = mixed && p !== last
+      ? `<div class="sect ${p === 'final' ? 'crown' : ''}">${PHASE_LABEL[p]}</div>` : '';
+    last = p;
+    return head + fixtureRow(m);
+  }).join('');
+
+  const note = state.day === 1
+    ? 'Twelve group matches across two pitches. Each carries its own clock, so several run live at once.'
+    : M.groupStageComplete(state.matches)
+      ? 'The knockout rounds. Winners carry through automatically as each tie is settled.'
+      : 'Semi-finalists fill in automatically once the group tables are final.';
 
   return `<div class="daysel">
       <button data-day="1" class="${state.day === 1 ? 'on' : ''}">Sat 12 Sept</button>
       <button data-day="2" class="${state.day === 2 ? 'on' : ''}">Sun 13 Sept</button>
     </div>
     ${rows || '<p class="empty">No fixtures for this day.</p>'}
-    <p class="note">${state.day === 1
-      ? 'Twelve group matches across two pitches. Each carries its own clock, so several run live at once.'
-      : 'Semi-finalists fill in automatically once the group tables are final.'}</p>`;
+    <p class="note">${note}</p>`;
 }
 
 /* ── live now ────────────────────────────────────────────── */
@@ -264,26 +289,11 @@ function viewMatch() {
     .map(l => `<i class="gline" ${l.pid ? `data-player="${l.pid}"` : ''}>${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
     .join('');
 
-  /**
-   * A tie settled on penalties is decided by that shoot-out, so the shoot-out
-   * belongs on the scoreboard next to the score — not only in the note
-   * underneath, where it read as a footnote to a 1–1 draw. The goals stay the
-   * score, because for goal difference the match genuinely is a draw; the
-   * penalties sit under them, and the winner's are the ones lit up.
-   */
-  const pens = (sideKey) => {
-    if (!m.pd) return '';
-    const mine  = sideKey === 'home' ? m.ph : m.pa;
-    const yours = sideKey === 'home' ? m.pa : m.ph;
-    return `<span class="pgl tnum ${mine > yours ? 'won' : ''}">${mine}<i>pens</i></span>`;
-  };
-
   const side = (id, score, other, sideKey) => `
     <div class="sl ${lead(score, other)}" ${id ? `data-team="${id}"` : ''} style="--c:${colOf(id)};--tc:${txtOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
       <span class="gl tnum">${score}</span>
-      ${pens(sideKey)}
       ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</div>`;
 
   let clock, phase;
@@ -319,7 +329,7 @@ function viewMatch() {
     : '<div class="empty">Nothing to report yet.</div>';
 
   return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
-    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}
+    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}${penStrip(m)}
       <span class="midchip ${M.isLive(m) ? 'live' : ''}" id="midchip">${
         m.ff ? 'FT'
         : !M.hasStarted(m) ? esc(m.kickoff)
@@ -342,6 +352,25 @@ function viewMatch() {
     <div class="sect">Match report</div>
     ${state.editor ? editorPanel(m) : ''}
     <ol class="tl">${timeline}</ol>`;
+}
+
+/**
+ * A tie settled on penalties was decided by that shoot-out, so it belongs on
+ * the scoreboard and not in the note underneath, where it read as a footnote
+ * to a 1–1 draw. One strip across the foot of the card, naming the winner:
+ * repeating "pens" under each score was noise, and two bare numbers left the
+ * reader working out which belonged to whom.
+ *
+ * The goals stay the score, because for goal difference the match really is
+ * a draw. Group matches can never reach this — set_shootout() refuses a
+ * stage of A or B — so m.pd already implies a knockout tie.
+ */
+function penStrip(m) {
+  if (!m.pd) return '';
+  const winner = m.ph > m.pa ? m.home : m.away;
+  const hi = Math.max(m.ph, m.pa), lo = Math.min(m.ph, m.pa);
+  return `<div class="pnstrip"><b>${esc(cityOf(winner))}</b> win
+    <span class="tnum">${hi}–${lo}</span> on penalties</div>`;
 }
 
 /** Who cannot play in this match, and why. Shown before kick-off so an
@@ -1264,7 +1293,12 @@ document.addEventListener('click', async (ev) => {
     navigate(() => { state.view = 'award'; state.award = t.dataset.award; });
     render(); return;
   }
-  if (t.dataset.day) { state.day = +t.dataset.day; state.picker = null; render(); return; }
+  // Choosing a day pins it: the automatic jump to Sunday must never drag
+  // someone back off the day they deliberately opened.
+  if (t.dataset.day) {
+    state.day = +t.dataset.day; state.dayPinned = true;
+    state.picker = null; render(); return;
+  }
   if (t.dataset.match) {
     state.from = (state.view === 'live') ? 'live' : 'fixtures';
     state.matchId = t.dataset.match; state.view = 'match';

@@ -415,6 +415,11 @@ function groupComplete(matches, g) {
   return ms.length > 0 && ms.every(m => m.status === 'full_time' || !!m.ff);
 }
 
+/** Both groups played out. From this point Sunday is the day that matters,
+ *  which is when the Fixtures tab should stop opening on Saturday. */
+export const groupStageComplete = (matches) =>
+  ['A', 'B'].every(g => groupComplete(matches || [], g));
+
 /** Adjacent clubs the rules could not separate, once the group is over.
  *  Mid-group ties are transient noise and are deliberately not reported. */
 export function unresolvedPairs(teams, matches, group, ties = []) {

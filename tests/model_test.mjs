@@ -277,6 +277,42 @@ test('finalComplete counts a forfeited final as complete', () => {
   eq(M.finalComplete([{ stage: 'FINAL', status: 'scheduled', ff: 'home' }]), true, 'forfeited');
 });
 
+/* ── group stage complete: when Sunday becomes the default day ─ */
+/* Two clubs per group here rather than four; groupComplete only asks whether
+   every match of that stage has finished, not how many there were. */
+const GROUPS = [
+  { stage: 'A', status: 'full_time' }, { stage: 'A', status: 'full_time' },
+  { stage: 'B', status: 'full_time' }, { stage: 'B', status: 'full_time' },
+];
+
+test('groupStageComplete is false while either group is unfinished', () => {
+  eq(M.groupStageComplete([...GROUPS.slice(0, 3), { stage: 'B', status: 'second_half' }]),
+     false, 'B still playing');
+  eq(M.groupStageComplete([{ stage: 'A', status: 'scheduled' }, ...GROUPS.slice(1)]),
+     false, 'A not started');
+});
+
+test('groupStageComplete is true once both groups are played out', () => {
+  eq(M.groupStageComplete(GROUPS), true, 'both done');
+});
+
+test('groupStageComplete counts a forfeit as finished', () => {
+  eq(M.groupStageComplete([...GROUPS.slice(0, 3),
+      { stage: 'B', status: 'scheduled', ff: 'away' }]), true, 'forfeited');
+});
+
+test('groupStageComplete ignores the knockout rounds entirely', () => {
+  eq(M.groupStageComplete([...GROUPS,
+      { stage: 'SF1', status: 'scheduled' },
+      { stage: 'FINAL', status: 'scheduled' }]), true, 'knockouts pending');
+});
+
+test('groupStageComplete is false with no fixtures at all', () => {
+  eq(M.groupStageComplete([]), false, 'empty');
+  eq(M.groupStageComplete(undefined), false, 'undefined');
+  eq(M.groupStageComplete([{ stage: 'A', status: 'full_time' }]), false, 'no group B');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };
