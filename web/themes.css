@@ -110,7 +110,11 @@
   border-radius:16px;overflow:hidden;box-shadow:0 2px 6px rgba(18,20,40,.14)}
 [data-theme="matchday"] .sl{flex-direction:column;justify-content:flex-start;text-align:center;
   gap:9px;background:var(--c);padding:18px 10px 16px}
-[data-theme="matchday"] .sl+.sl{border-top:none;border-left:1px solid rgba(255,255,255,.18)}
+/* The divider is drawn as two hairlines rather than one — see the block
+   further down, which supplies them. A single colour cannot separate every
+   pairing: rgba(255,255,255,.18) vanished on Hounslow's white, and any mid
+   grey washes out on Croydon's blue. */
+[data-theme="matchday"] .sl+.sl{border-top:none;border-left:none}
 [data-theme="matchday"] .sl .bdg{width:58px;height:58px;border-radius:14px;
   background:rgba(255,255,255,.94);box-shadow:0 1px 3px rgba(0,0,0,.18)}
 [data-theme="matchday"] .sl .bdg img{width:44px;height:44px}
@@ -239,6 +243,37 @@
 
 /* the trophy chips read as removable tokens, not as another card */
 [data-theme="matchday"] .tchip{border-radius:999px;padding:7px 8px 7px 12px}
+
+/* ── Matchday: the split-colour header, finished ──────────────
+   A white half on a white card reads as a hole rather than a panel, so every
+   half carries a neutral inset hairline. It is invisible on a dark kit and
+   does the whole job on a white one. Scoped away from .stack.one, which is
+   the single-block squad and player header, not a match. */
+[data-theme="matchday"] .stack:not(.one) .sl{
+  box-shadow:inset 0 0 0 1px rgba(18,20,40,.07)}
+
+/* The divider between the halves is a light hairline and a dark one side by
+   side. Whatever the club colour, one of the two reads: the dark line does
+   the work on Hounslow's white, the light line on Kensington's near-black,
+   and on a mid tone like Croydon's blue — where a single grey washes out
+   entirely — both are faintly visible. Drawn as insets so it costs no width. */
+[data-theme="matchday"] .stack:not(.one) .sl:first-child + .sl{
+  box-shadow:inset 0 0 0 1px rgba(18,20,40,.07),
+             inset 1px 0 0 rgba(255,255,255,.34),
+             inset 2px 0 0 rgba(18,20,40,.20)}
+
+/* A centre channel, so a long club name wraps instead of running under the
+   chip. "St Mary & Pope Kyrillos VI" is the name that decides the width. */
+[data-theme="matchday"] .stack:not(.one) .sl:first-child{padding-right:46px}
+[data-theme="matchday"] .stack:not(.one) .sl:first-child + .sl{padding-left:46px}
+
+/* the chip sits on the halves rather than hovering above them: a lighter
+   shadow, and a hairline so it still has an edge against a white kit */
+[data-theme="matchday"] .midchip{border:1px solid var(--line2);
+  box-shadow:0 1px 4px rgba(18,20,40,.16)}
+
+/* before kick-off the rail is a single muted line */
+[data-theme="matchday"] .ck.pre{padding:16px 14px;border-bottom:none}
 
 /* Focus rings. The accent is near-black purple, which is legible on white
    and on the grey page but disappears into a club's own colour, so the
