@@ -1076,12 +1076,19 @@ function trophyPanel(key, label, boards, teamsArr) {
 }
 
 /* ── admin sign in ───────────────────────────────────────── */
+/**
+ * Matchday is the public face of the app now, so the switcher is no longer
+ * offered to spectators: it appears only once someone is signed in, either
+ * role. The other four themes stay in themes.css deliberately \u2014 a working
+ * fallback one tap away is worth its bytes two weeks before a live event,
+ * and none of them costs anything until it is selected.
+ */
 function appearanceSection() {
   const btns = THEMES.map(([v, label]) =>
     `<button class="${theme === v ? 'on' : ''}" data-theme-set="${v}">${label}</button>`).join('');
   return `<div class="sect">Appearance</div>
-    <p class="note" style="padding-top:0">Four directions on the same live data \u2014 pick
-      whichever reads best. Applies to this device only.</p>
+    <p class="note" style="padding-top:0">Matchday is what the public sees. The others are
+      kept as a fallback and apply to this device only.</p>
     <div class="themes">${btns}</div>`;
 }
 
@@ -1101,7 +1108,7 @@ function viewAdmin() {
       <button class="act ghost" id="signout">Sign out</button>
       ${appearanceSection()}${squadSection()}${resetSection}`;
   }
-  return appearanceSection() + `<div class="sect">Organiser sign in</div>
+  return `<div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
       and password you were given \u2014 one account per pitch.</p>
     <div class="form">
