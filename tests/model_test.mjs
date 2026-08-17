@@ -187,6 +187,52 @@ test('goldenGloveBoard before any match is empty', () => {
   eq(M.goldenGloveBoard(GTEAMS, []), [], 'empty board');
 });
 
+/* ── leading a board, and a tie at the top ───────────────── */
+test('leaders returns the sole first place', () => {
+  const r = M.goldenBootBoard(GOALS, PLAYERS);
+  eq(M.leaders(r).map(x => x.item.id), ['p1'], 'one leader');
+});
+
+test('leaders returns every joint first, not just the first row', () => {
+  const r = M.rankRows([{ n: 4 }, { n: 4 }, { n: 2 }], n);
+  eq(M.leaders(r).map(x => x.score), [4, 4], 'both leaders');
+});
+
+test('leaders on an empty or missing board is empty', () => {
+  eq(M.leaders([]), [], 'empty');
+  eq(M.leaders(undefined), [], 'undefined');
+});
+
+test('decidedByManagers is false when one club leads the glove outright', () => {
+  // Bexley alone on 1 conceded.
+  eq(M.decidedByManagers(M.goldenGloveBoard(GTEAMS, GMATCHES)), false, 'sole leader');
+});
+
+test('decidedByManagers is true when clubs are level at the top of the glove', () => {
+  // Ashford and Bexley both finish on 1 conceded; Croydon on 2.
+  const board = M.goldenGloveBoard(GTEAMS, [
+    { home: 'a', away: 'b', hs: 1, as: 1, status: 'full_time' },
+    { home: 'c', away: 'a', hs: 0, as: 2, status: 'full_time' },
+  ]);
+  eq(M.leaders(board).map(x => x.item.team.id), ['a', 'b'], 'level at the top');
+  eq(M.decidedByManagers(board), true, 'managers decide');
+});
+
+test('decidedByManagers before any match is false, not a tie of nobody', () => {
+  eq(M.decidedByManagers(M.goldenGloveBoard(GTEAMS, [])), false, 'empty board');
+  eq(M.decidedByManagers(undefined), false, 'no board');
+});
+
+test('a club level further down the glove does not invoke the managers', () => {
+  // Ashford clear on 0; Bexley and Croydon joint second on 2.
+  const board = M.goldenGloveBoard(GTEAMS, [
+    { home: 'a', away: 'b', hs: 2, as: 0, status: 'full_time' },
+    { home: 'c', away: 'a', hs: 0, as: 2, status: 'full_time' },
+  ]);
+  eq(places(board), [1, 2, 2], 'joint second');
+  eq(M.decidedByManagers(board), false, 'only a tie at the top counts');
+});
+
 /* ── trophies ────────────────────────────────────────────── */
 test('confirmedTrophies tolerates a snapshot cached before trophies existed', () => {
   eq(M.confirmedTrophies(undefined), {}, 'no snapshot');

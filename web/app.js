@@ -264,11 +264,26 @@ function viewMatch() {
     .map(l => `<i class="gline" ${l.pid ? `data-player="${l.pid}"` : ''}>${l.name ? esc(l.name) + ' ' : ''}${l.mins.map(esc).join(', ')}${l.og ? ' (OG)' : ''}</i>`)
     .join('');
 
+  /**
+   * A tie settled on penalties is decided by that shoot-out, so the shoot-out
+   * belongs on the scoreboard next to the score — not only in the note
+   * underneath, where it read as a footnote to a 1–1 draw. The goals stay the
+   * score, because for goal difference the match genuinely is a draw; the
+   * penalties sit under them, and the winner's are the ones lit up.
+   */
+  const pens = (sideKey) => {
+    if (!m.pd) return '';
+    const mine  = sideKey === 'home' ? m.ph : m.pa;
+    const yours = sideKey === 'home' ? m.pa : m.ph;
+    return `<span class="pgl tnum ${mine > yours ? 'won' : ''}">${mine}<i>pens</i></span>`;
+  };
+
   const side = (id, score, other, sideKey) => `
     <div class="sl ${lead(score, other)}" ${id ? `data-team="${id}"` : ''} style="--c:${colOf(id)};--tc:${txtOf(id)}">
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
       <span class="gl tnum">${score}</span>
+      ${pens(sideKey)}
       ${lines(sideKey) ? `<span class="gls">${lines(sideKey)}</span>` : ''}</div>`;
 
   let clock, phase;
@@ -320,7 +335,7 @@ function viewMatch() {
       <div class="rail"><span class="ph">${esc(phase)}</span>
         <span class="el tnum" id="mel">${M.mmss(e)}</span></div>
     </div>
-    ${m.pd ? `<p class="note">Won ${m.ph}\u2013${m.pa} on penalties. The match stands as a draw,
+    ${m.pd ? `<p class="note">Settled on penalties. The match itself stands as a draw,
        so no goal difference is affected.</p>` : ''}
     ${suspensionNotice(m)}
     ${state.admin ? adminMatchControls(m) : ''}
@@ -853,7 +868,7 @@ function viewAwards() {
         <span class="more">Full leaderboard \u2192</span></button>`;
   };
 
-  const leaders = (key) => (boards[key] || []).filter(r => r.place === 1);
+  const leaders = (key) => M.leaders(boards[key]);
   const bootTop = leaders('golden_boot');
   const boot = bootTop.length
     ? card('golden_boot', 'Golden boot',
@@ -879,7 +894,7 @@ function viewAwards() {
         `<p class="an">${esc(gloveTop.map(r => r.item.team.city).join(' & '))}</p>
          <p class="ac tnum">${AWARD_UNIT.golden_glove(gloveTop[0].score)} in
            ${gloveTop[0].item.played} match${gloveTop[0].item.played === 1 ? '' : 'es'}</p>`,
-        gloveTop.length > 1
+        M.decidedByManagers(boards.golden_glove)
           ? 'Level on goals conceded \u2014 decided by the church managers.'
           : 'The trophy itself goes to that club\u2019s goalkeeper.')
     : card('golden_glove', 'Golden glove', '<p class="an dim">No matches played yet</p>', '');
@@ -973,8 +988,7 @@ function trophyPick(key, boards) {
   const already = state.trophies[key];
   if (already?.length) return (state.trophyPick[key] = [...already]);
   if (key === 'golden_glove') return (state.trophyPick[key] = []);
-  return (state.trophyPick[key] =
-    (boards[key] || []).filter(r => r.place === 1).map(r => r.item.id));
+  return (state.trophyPick[key] = M.leaders(boards[key]).map(r => r.item.id));
 }
 
 /** Which club's squad a picker opens on: for the glove the club that

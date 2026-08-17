@@ -239,3 +239,13 @@
 [data-theme="matchday"] .sl.phead .clubmeta i,
 [data-theme="matchday"] .sl.phead .clubmeta b{color:var(--tc)}
 [data-theme="matchday"] .sl.phead .clubmeta i{opacity:.75}
+
+/* penalties sit directly under the score in the split-colour header, in the
+   club's own text colour — the accent red is unreadable on Rotherham's navy.
+   The winner's tally is the one lit up, so who went through is legible at a
+   glance without reading a word. */
+[data-theme="matchday"] .sl .pgl{flex-basis:auto;text-align:center;margin-top:3px;
+  color:var(--tc);opacity:.62}
+[data-theme="matchday"] .sl .pgl.won{opacity:1;display:inline-block;
+  background:color-mix(in oklab,var(--tc) 22%,transparent);
+  border-radius:999px;padding:4px 12px}

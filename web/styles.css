@@ -360,6 +360,16 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 [data-team],[data-player]{cursor:pointer}
 .tx .plink{border-bottom:1px dotted var(--line2)}
 
+/* a knockout tie settled on penalties. The shoot-out decided the tie, so it
+   belongs on the scoreboard under the score — as a note underneath it read
+   as a footnote to a 1–1 draw. Goals stay the score, because for goal
+   difference the match really is a draw. */
+.sl .pgl{flex:0 0 100%;display:block;text-align:right;margin-top:5px;line-height:1;
+  font-family:var(--num);font-weight:800;font-size:17px;color:var(--dim)}
+.sl .pgl i{font-style:normal;font-family:var(--disp);font-weight:600;font-size:8.5px;
+  letter-spacing:.16em;text-transform:uppercase;margin-left:5px}
+.sl .pgl.won{color:var(--acc)}
+
 /* award cards are buttons now: the whole card opens its leaderboard */
 .award{display:block;width:100%}
 .award .more{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;

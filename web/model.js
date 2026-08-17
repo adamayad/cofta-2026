@@ -197,64 +197,6 @@ export function standings(teams, matches, group, ties = []) {
   return out;
 }
 
-/* ── awards ──────────────────────────────────────────────── */
-/**
- * Golden boot, player of the tournament and golden glove.
- * Ties are reported rather than resolved: the rules say a shared golden boot
- * gets a duplicate trophy, and a tied golden glove is decided by the managers.
- */
-export function awards(teams, matches, events, players = {}) {
-  const live = events.filter(e => !e.voided);
-
-  const count = (pred, key) => {
-    const tally = {};
-    for (const e of live) if (pred(e)) {
-      const k = key(e);
-      if (k) tally[k] = (tally[k] || 0) + 1;
-    }
-    const best = Math.max(0, ...Object.values(tally));
-    return {
-      tally,
-      winners: best ? Object.keys(tally).filter(k => tally[k] === best) : [],
-      count: best,
-    };
-  };
-
-  const boot = count(e => e.t === 'goal', e => e.p);
-  const motm = count(e => e.t === 'motm', e => e.p);
-
-  // Golden glove: fewest conceded, among clubs that have actually played.
-  const conceded = {};
-  for (const t of teams) conceded[t.id] = { team: t, played: 0, against: 0 };
-  for (const m of matches) {
-    if (!m.home || !m.away || !hasStarted(m)) continue;
-    conceded[m.home].played++; conceded[m.home].against += m.as;
-    conceded[m.away].played++; conceded[m.away].against += m.hs;
-  }
-  const eligible = Object.values(conceded).filter(c => c.played > 0);
-  const fewest = eligible.length ? Math.min(...eligible.map(c => c.against)) : null;
-
-  return {
-    goldenBoot: {
-      ...boot,
-      shared: boot.winners.length > 1,
-      names: boot.winners.map(id => players[id]?.name ?? id),
-    },
-    playerOfTournament: {
-      ...motm,
-      shared: motm.winners.length > 1,
-      names: motm.winners.map(id => players[id]?.name ?? id),
-    },
-    goldenGlove: {
-      conceded: eligible,
-      winners: eligible.filter(c => c.against === fewest),
-      count: fewest,
-      // "Where there is a tie, it will be decided by the church managers."
-      decidedByManagers: eligible.filter(c => c.against === fewest).length > 1,
-    },
-  };
-}
-
 /* ── leaderboards ────────────────────────────────────────── */
 /**
  * Standard competition ranking, the "1224" kind: rows level on the ranked
@@ -332,6 +274,26 @@ export function goldenGloveBoard(teams, matches) {
     tieBreak: (a, b) => a.team.city.localeCompare(b.team.city),
   });
 }
+
+/* ── who leads a board, and what a tie at the top means ──── */
+/**
+ * Everyone in first place on any of the three boards — one row normally, more
+ * when the top is joint. Board rows already carry their place, so this is the
+ * one place that decides what "leading" means, rather than each card deciding
+ * again with its own filter.
+ */
+export const leaders = (board) => (board || []).filter(r => r.place === 1);
+
+/**
+ * The golden glove is the trophy the app cannot award on its own:
+ * "Where there is a tie, it will be decided by the church managers."
+ *
+ * The other two duplicate instead — a shared golden boot means a second
+ * trophy is bought — so only this one turns a joint lead into a decision
+ * taken off the app. The organiser's trophy panel deliberately starts the
+ * glove with nobody picked for exactly this reason.
+ */
+export const decidedByManagers = (gloveBoard) => leaders(gloveBoard).length > 1;
 
 /* ── trophies ────────────────────────────────────────────── */
 /** The three trophies, in the order they are presented. All go to players —
