@@ -251,18 +251,11 @@ function viewFixtures() {
     return head + fixtureRow(m);
   }).join('');
 
-  const note = state.day === 1
-    ? 'Twelve group matches across two pitches. Each carries its own clock, so several run live at once.'
-    : M.groupStageComplete(state.matches)
-      ? 'The knockout rounds. Winners carry through automatically as each tie is settled.'
-      : 'Semi-finalists fill in automatically once the group tables are final.';
-
   return `<div class="daysel">
       <button data-day="1" class="${state.day === 1 ? 'on' : ''}">Sat 12 Sept</button>
       <button data-day="2" class="${state.day === 2 ? 'on' : ''}">Sun 13 Sept</button>
     </div>
-    ${rows || '<p class="empty">No fixtures for this day.</p>'}
-    <p class="note">${note}</p>`;
+    ${rows || '<p class="empty">No fixtures for this day.</p>'}`;
 }
 
 /* ── live now ────────────────────────────────────────────── */
@@ -356,8 +349,6 @@ function viewMatch() {
       <div class="rail"><span class="ph">${esc(phase)}</span>
         <span class="el tnum" id="mel">${M.mmss(e)}</span></div>
     </div>
-    ${m.pd ? `<p class="note">Settled on penalties. The match itself stands as a draw,
-       so no goal difference is affected.</p>` : ''}
     ${suspensionNotice(m)}
     ${state.admin ? adminMatchControls(m) : ''}
     <div class="sect">Match report</div>
@@ -606,8 +597,6 @@ function viewTables() {
 
   return `<div class="sect">Group A</div><table>${head}<tbody>${tbl('A')}</tbody></table>
     <div class="sect">Group B</div><table>${head}<tbody>${tbl('B')}</tbody></table>
-    <p class="note">Computed from logged events, never typed by hand. Ranked on points,
-      then head-to-head, then goal difference, then goals scored.</p>
     ${state.admin ? tieShootoutPanels(teamsArr, ms) : unresolvedNotice(teamsArr, ms)}
     <div class="sect">Sunday</div>
     <div class="ko"><span class="l">Semi-final 1</span>
@@ -896,14 +885,23 @@ function viewAwards() {
   // The whole card is the button now: it opens the full leaderboard rather
   // than jumping straight to whoever leads it, which was the old behaviour
   // and left no way at all to see who came second.
+  // Once a trophy is confirmed the winners ARE the card. Printing the computed
+  // leader beside them only asked the reader to work out why the two
+  // disagreed \u2014 and for the glove they always disagree, its board being clubs
+  // and its trophy a goalkeeper.
   const card = (key, title, lead, foot) => {
     const won = state.trophies[key] || [];
-    const conf = won.length ? `<span class="conf">
-        <span class="ct">Trophy confirmed</span>
-        <span class="cn">${esc(wonNames(key))}${won.length > 1 ? ' <i>shared</i>' : ''}</span>
-      </span>` : '';
+    if (won.length) {
+      // the winners' own tally, where the board has one and they agree on it
+      const counts = won.map(id => (boards[key] || []).find(r => r.item.id === id)?.score);
+      const agreed = counts.every(c => c != null && c === counts[0]);
+      const stat = key !== 'golden_glove' && agreed ? AWARD_UNIT[key](counts[0]) : '';
+      lead = `<p class="an">${esc(wonNames(key))}</p>`
+           + (stat ? `<p class="ac tnum">${stat}</p>` : '');
+      foot = won.length > 1 ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '';
+    }
     return `<button class="award ${won.length ? 'won' : ''}" data-award="${key}">
-        <span class="at">${title}</span>${lead}${conf}
+        <span class="at">${title}</span>${lead}
         ${foot ? `<p class="af">${foot}</p>` : ''}
         <span class="more">Full leaderboard \u2192</span></button>`;
   };
