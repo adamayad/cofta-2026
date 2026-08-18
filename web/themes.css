@@ -156,28 +156,8 @@
 /* 2: no white pill — crests sit straight on the club colour */
 [data-theme="matchday"] .sl .bdg{background:transparent;box-shadow:none;
   width:64px;height:64px;border-radius:0}
-/* A crest sits straight on the club's own colour, so a light crest on a light
-   block has nothing to separate it: Hounslow's white disc on their white half
-   simply vanished. drop-shadow follows the alpha channel, so the contour
-   traces the crest's real silhouette — disc, shield or otherwise — and never
-   draws a box or a ring around a shape that is not one.
-
-   Two contours, not one, for the same reason the header divider needs two. A
-   dark hairline separates a light crest on a light block and does nothing for
-   Kensington's near-black disc on their near-black half; the light halo just
-   outside it covers that case. Whichever way the tone falls, one of the two
-   reads and the other is simply invisible rather than wrong.
-
-   Order matters more than the values. The ambient shadow goes FIRST so the
-   two contours are drawn outside it: with the contours first the ambient
-   washed them out, and Stevenage's shield on their red — the hardest of the
-   three, mid-tone against mid-tone — measured worse than the single soft
-   shadow this replaces. Measured against all eight club colours, the weakest
-   separation is now 1.71:1 where it used to be 1.04:1. */
 [data-theme="matchday"] .sl .bdg img{width:62px;height:62px;
-  filter:drop-shadow(0 3px 8px rgba(0,0,0,.34))
-         drop-shadow(0 0 1.5px rgba(18,20,40,.75))
-         drop-shadow(0 0 2px rgba(255,255,255,.55))}
+  filter:drop-shadow(0 3px 9px rgba(0,0,0,.32))}
 /* 1: crest → name → score → scorers, top to bottom */
 [data-theme="matchday"] .sl .gls{flex-basis:auto;margin:2px 0 0}
 /* 3: vertical scores on the list — one number per club row */
