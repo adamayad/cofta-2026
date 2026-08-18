@@ -153,6 +153,21 @@
 [data-theme="matchday"] .themes button.on{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc)}
 
 /* ── Matchday refinements from live testing ───────────────── */
+/* ── CREST PRESENTATION IS SETTLED ────────────────────────────
+   No plates, no rings, no contours. A crest is drawn alone on the club's
+   colour with one soft drop shadow, on the split header and on both phead
+   club/player headers. Where a crest does not separate from its background,
+   the fix goes into the asset — see smpk.webp, whose ring and edge are now
+   baked into the artwork — not into a filter here.
+
+   Do not restyle these two rules without an explicit instruction naming
+   this comment. They have been reverted to this exact state more than once.
+
+   NOTE: an earlier [data-theme="matchday"] .sl .bdg above sets a white pill
+   (58px, radius 14, rgba(255,255,255,.94)). It is dead — the rules below
+   override every property of it — and it is what makes a grep look alarming.
+   Reading this file top to bottom, the last declaration is the one that
+   ships. */
 /* 2: no white pill — crests sit straight on the club colour */
 [data-theme="matchday"] .sl .bdg{background:transparent;box-shadow:none;
   width:64px;height:64px;border-radius:0}
@@ -354,3 +369,41 @@
   padding-top:calc(18px + 27px);
   padding-bottom:calc(16px + 28px);
   min-height:191px}
+
+/* ── Matchday: the two halves share rows ──────────────────────
+   The halves were independent columns, so each sized its own content: when
+   one club's name wrapped and the other's did not, the big scores landed at
+   different heights and the header read as two posters rather than one.
+
+   subgrid fixes it at the layout level rather than by guessing heights. The
+   stack owns four rows — crest, name+city, score, scorer lines — and each
+   half spans all four and adopts them, so every row is as tall as the taller
+   half needs and the scores always sit on one line.
+
+   Spacing is a margin on each cell rather than a row-gap. A gap is charged
+   even when the track beside it is empty, so a scheduled match — no score
+   row, no scorer row — paid 18px for two rows that are not there and the
+   card grew by that much. A margin lives inside its track and collapses
+   with it, which keeps the pre-match card exactly the height it will have
+   once the clock starts.
+
+   Behind @supports on purpose. Where subgrid is missing the flex column
+   above still applies untouched, which is precisely the behaviour this
+   replaces — degraded, not broken. Scoped to matchday: the other four themes
+   lay a half out as a horizontal row and must not become a grid. */
+@supports (grid-template-rows: subgrid) {
+  [data-theme="matchday"] .stack:not(.one){
+    grid-template-rows:auto auto auto auto;
+    row-gap:0}
+  [data-theme="matchday"] .stack:not(.one) .sl{
+    display:grid;
+    grid-row:span 4;
+    grid-template-rows:subgrid;
+    row-gap:0;
+    justify-items:center;
+    align-items:center}
+  /* each cell centres its own content, so a wrapped name and a single-line
+     one still read as sitting on the same line */
+  [data-theme="matchday"] .stack:not(.one) .sl > *{grid-column:1;text-align:center}
+  [data-theme="matchday"] .stack:not(.one) .sl > * + *{margin-top:9px}
+}
