@@ -214,10 +214,29 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
   | Red cards | Different goalscorers |
 
   `BOARDS` in `app.js` is the registry: label, whether rows are players or
-  clubs (which decides whether a row links to a profile or a club page), how
-  the number reads, and the empty state. `allBoards()` computes all eight
-  once; the three trophy keys alias the board each is decided from, so a
-  trophy and its stat can never drift apart.
+  clubs (which decides whether a row links to a profile or a club page), and
+  the empty state. `allBoards()` computes all eight once; the three trophy
+  keys alias the board each is decided from, so a trophy and its stat can
+  never drift apart.
+- **Each card previews its board's top three rows** — crest, name, value —
+  rather than summarising it in a sentence. `topRows()` in `model.js` takes
+  rows, not places: four level at the top means the card shows three of them
+  and the board tells the rest, so a card's height never depends on how
+  level the tournament happens to be.
+- Values on cards are **bare numerals**. The header already says what they
+  count, so "1 clean sheet" under a card headed Clean sheets said it twice.
+  Every row in **first place** gets the filled accent pill, not merely the
+  first row: where two clubs are level at the top, calling one of them the
+  leader because the tie-break sorted it first would invent a result.
+- **Church names are the primary identity on Stats**, cards and full boards
+  alike. A club's city is the small line beneath it; a player's club is the
+  small line beneath them, matching what their profile already does.
+- A stat card is a `div` carrying `data-award`, with a real `button` header
+  carrying the same and real `button` rows for the players and clubs. A
+  button inside a button is invalid HTML, so the card cannot be one: the
+  delegated handler walks up from whatever was clicked, so a row wins over
+  the card and the card wins over nothing. Pointer users get the whole card;
+  keyboard users get the header.
 - Definitions live in `model.js` as pure tested functions. A **clean sheet**
   needs a match played out to full time and not forfeited — a 3–0 awarded at
   a desk is a result, not a shut-out. **Different goalscorers** counts
@@ -226,8 +245,6 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
   only; a card logged without a name stays on the match report.
 - Empty boards are normal and say so plainly. The card boards being empty all
   weekend is the good outcome, not a gap to apologise for.
-- An index row names the leader, but past two it says how many are level —
-  early on a dozen players share top spot on one goal, and listing them all
   tells the reader less than the count does.
 - **Trophy winners sit at the top of Stats** as an honours strip, once
   confirmed and not before: a leader is not a winner, and announcing one

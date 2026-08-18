@@ -430,17 +430,26 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .tclubs{margin-bottom:10px}
 .tpq{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);background:var(--card);
   border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px}
-
-/* stats hub: one tappable row per board */
-.brd{display:grid;grid-template-columns:1fr auto;grid-template-areas:"t v" "l v";
-  width:100%;gap:2px 12px;align-items:center;padding:12px 0;
-  border-bottom:1px solid var(--line)}
-.brd .bt{grid-area:t;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-.brd .bl{grid-area:l;font-family:var(--disp);font-weight:600;font-size:16px;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.brd .bl .dim{font-style:normal;font-weight:400;font-size:14px;color:var(--dim)}
-.brd .bv{grid-area:v;font-family:var(--num);font-weight:800;font-size:15px;
-  color:var(--acc);white-space:nowrap}
+/* stats hub: each card previews its board's top three */
+.scard{border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px}
+.sch{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;padding:12px 0 8px}
+.sch .stt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.sch .chev{font-size:17px;line-height:1;color:var(--dim);flex:none}
+.srow{display:flex;align-items:center;gap:11px;width:100%;padding:7px 0;min-width:0}
+/* the name column is the only thing allowed to give way: min-width:0 lets it
+   shrink and ellipsize so a long church name can never push the value out of
+   its column or off the card */
+.srow .who{flex:1;min-width:0}
+.srow .who b{display:block;font-family:var(--disp);font-weight:600;font-size:15px;
+  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .who i{display:block;font-style:normal;font-size:10px;letter-spacing:.06em;
+  color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sv{flex:none;font-family:var(--num);font-weight:800;font-size:17px;
+  min-width:1.5em;text-align:right;color:var(--fg2)}
+.srow .sv.lead{color:var(--accfg);background:var(--acc);border-radius:999px;
+  padding:3px 9px;text-align:center}
+.snone{font-size:12px;color:var(--dim);font-style:italic;padding:2px 0 10px}
 
 /* the trophy honours strip at the top of stats */
 .honstrip{border-top:1px solid var(--line)}

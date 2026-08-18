@@ -921,35 +921,27 @@ function allBoards() {
  *  so they say so rather than apologising. */
 const BOARDS = {
   goals: { of: 'players', label: 'Goalscorers',
-    unit: n => `${n} goal${n === 1 ? '' : 's'}`,
     empty: 'No goals have been attributed to a named player yet.',
     foot: 'Every player with a goal to their name. A goal logged without a scorer still counts on the scoreboard, but cannot appear here.' },
   motm: { of: 'players', label: 'Man of the Match',
-    unit: n => `${n} award${n === 1 ? '' : 's'}`,
     empty: 'No man of the match awards have been given yet.',
     foot: 'Every player with a man of the match award.' },
   yellow: { of: 'players', label: 'Yellow cards',
-    unit: n => `${n} yellow${n === 1 ? '' : 's'}`,
     empty: 'Nobody has been booked. Long may it last.',
     foot: 'Bookings attributed to a named player. A card logged without a name stays on the match report.' },
   red: { of: 'players', label: 'Red cards',
-    unit: n => `${n} red${n === 1 ? '' : 's'}`,
     empty: 'Nobody has been sent off.',
     foot: 'Dismissals attributed to a named player.' },
   scored: { of: 'teams', label: 'Goals scored',
-    unit: n => `${n} scored`,
     empty: 'No matches have been played yet.',
     foot: 'Goals scored by club, most first.' },
   conceded: { of: 'teams', label: 'Goals conceded',
-    unit: n => `${n} conceded`,
     empty: 'No matches have been played yet.',
     foot: 'Goals conceded by club, fewest first. This is the golden glove board — the trophy itself goes to a goalkeeper, which is why an organiser names the winner rather than this table doing it.' },
   clean: { of: 'teams', label: 'Clean sheets',
-    unit: n => `${n} clean sheet${n === 1 ? '' : 's'}`,
     empty: 'No clean sheets yet.',
     foot: 'Matches played out to full time without conceding. A forfeit is a result, not a shut-out, and does not count.' },
   scorers: { of: 'teams', label: 'Different goalscorers',
-    unit: n => `${n} scorer${n === 1 ? '' : 's'}`,
     empty: 'No goals have been attributed to a named player yet.',
     foot: 'How many different players have scored for each club — a squad sharing its goals around against one that relies on a single striker. Own goals belong to nobody and are excluded.' },
 };
@@ -1002,25 +994,56 @@ function viewAwards() {
 
   const boards = allBoards();
 
-  // Early on, a dozen players can be joint top on one goal. Naming them all
-  // on a summary row is unreadable and tells you less than the count does,
-  // so past a pair the row says how many are level and the board itself
-  // lists them.
-  const link = (key) => {
-    const b = BOARDS[key], top = M.leaders(boards[key]);
-    const names = b.of === 'players' ? top.map(r => r.item.name) : top.map(r => r.item.team.city);
-    const who = !top.length ? null
-      : names.length <= 2 ? names.join(' & ')
-      : `${names.length} ${b.of === 'players' ? 'players' : 'clubs'} level`;
-    return `<button class="brd" data-award="${key}">
-        <span class="bt">${esc(b.label)}</span>
-        <span class="bl">${who ? esc(who) : '<i class="dim">nothing yet</i>'}</span>
-        <span class="bv tnum">${top.length ? esc(b.unit(top[0].score)) : ''}</span></button>`;
+  /**
+   * A card is a preview of its board: the stat's name, then its top three
+   * rows. Values are bare numerals — the header already says what they
+   * count, so "1 clean sheet" under a card headed Clean sheets was saying it
+   * twice. The leader's number sits in a filled pill and the rest are plain,
+   * which is the pattern that makes a board readable at a glance.
+   *
+   * A pill goes on every row in first place, not merely the first row: where
+   * two clubs are level at the top, calling one of them the leader because
+   * the tie-break sorted it first would be inventing a result.
+   */
+  const previewRow = (r, cfg) => {
+    const pill = r.place === 1 ? ' lead' : '';
+    if (cfg.of === 'teams') {
+      const t = r.item.team;
+      return `<button class="srow" data-team="${t.id}">
+          <span class="tile" style="--c:${t.colour}"><img src="${crest(t.id)}" alt=""></span>
+          <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span>
+          <span class="sv tnum${pill}">${r.score}</span></button>`;
+    }
+    const club = r.item.team;
+    return `<button class="srow" data-player="${r.item.id}">
+        ${club ? `<span class="tile" style="--c:${colOf(club)}"><img src="${crest(club)}" alt=""></span>`
+               : '<span class="tile"></span>'}
+        <span class="who"><b>${esc(r.item.name)}</b><i>${club ? esc(nameOf(club)) : ''}</i></span>
+        <span class="sv tnum${pill}">${r.score}</span></button>`;
+  };
+
+  /**
+   * The card carries data-award so a tap anywhere on it opens the board, and
+   * its header is a real button carrying the same, so a keyboard reaches it
+   * too. The rows are real buttons in their own right. Nesting a button
+   * inside a button is invalid HTML, which is why the card itself is a div:
+   * the delegated handler walks up from whatever was clicked, so a row wins
+   * over the card and the card wins over nothing.
+   */
+  const card = (key) => {
+    const cfg = BOARDS[key];
+    const top = M.topRows(boards[key], 3);
+    return `<div class="scard" data-award="${key}">
+        <button class="sch" data-award="${key}">
+          <span class="stt">${esc(cfg.label)}</span><span class="chev">&rsaquo;</span></button>
+        ${top.length ? top.map(r => previewRow(r, cfg)).join('')
+                     : `<p class="snone">${cfg.empty}</p>`}
+      </div>`;
   };
 
   return `${honoursStrip()}
-    <div class="sect">Players</div>${PLAYER_BOARDS.map(link).join('')}
-    <div class="sect">Teams</div>${TEAM_BOARDS.map(link).join('')}
+    <div class="sect">Players</div>${PLAYER_BOARDS.map(card).join('')}
+    <div class="sect">Teams</div>${TEAM_BOARDS.map(card).join('')}
     ${trophySection(boards, teamsArr, ms)}`;
 }
 
@@ -1060,7 +1083,7 @@ function viewAwardBoard() {
         ${rank(r)}
         <span class="who"><b>${esc(r.item.name)}${
           won.includes(r.item.id) ? '<span class="tag wn">Winner</span>' : ''}</b>
-          <i>${esc(cityOf(r.item.team))}</i></span>
+          <i>${esc(nameOf(r.item.team))}</i></span>
         <span class="lbn tnum">${r.score}</span></button>`).join('');
 
   return `${backButton('view:awards')}

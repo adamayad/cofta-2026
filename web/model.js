@@ -355,6 +355,18 @@ export function distinctScorersBoard(teams, events, players = {}) {
   return rankRows(rows, r => r.n, { tieBreak: byCity });
 }
 
+/**
+ * The first n rows of a ranked board, for a preview card.
+ *
+ * ROWS, not places. If four players tie for first, a three-row preview shows
+ * three of them and the full board tells the rest — the alternative, showing
+ * every row that shares a place, makes the card's height depend on how level
+ * the tournament happens to be. The order is whatever rankRows settled, so it
+ * is deterministic and the preview always matches the top of the board it
+ * previews, tie-break and all.
+ */
+export const topRows = (board, n = 3) => (board || []).slice(0, n);
+
 export const leaders = (board) => (board || []).filter(r => r.place === 1);
 
 /**

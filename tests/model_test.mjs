@@ -425,6 +425,49 @@ test('distinctScorersBoard ranks more scorers higher and omits clubs with none',
   eq(places(r), [1, 1, 1], 'all level on one');
 });
 
+/* ── topRows: what a preview card shows ──────────────────── */
+test('topRows takes three rows, not three places', () => {
+  // four level on 5, then one on 2: the card shows three of the four
+  const b = M.rankRows([{ n: 5 }, { n: 5 }, { n: 5 }, { n: 5 }, { n: 2 }], n);
+  const t = M.topRows(b, 3);
+  eq(t.length, 3, 'exactly three rows');
+  eq(t.map(x => x.place), [1, 1, 1], 'all three are joint first');
+  eq(b.length, 5, 'the full board still holds everyone');
+});
+
+test('topRows keeps the board order, so a card matches the board it previews', () => {
+  const rows = [{ k: 'Zoe', n: 2 }, { k: 'Adam', n: 2 }, { k: 'Mina', n: 5 }, { k: 'Bea', n: 1 }];
+  const b = M.rankRows(rows, n, { tieBreak: (a, c) => a.k.localeCompare(c.k) });
+  eq(M.topRows(b, 3).map(x => x.item.k), ['Mina', 'Adam', 'Zoe'], 'same order as the board');
+  eq(M.topRows(b, 3).map(x => x.item.k), b.slice(0, 3).map(x => x.item.k), 'identical to the head');
+});
+
+test('topRows shows what exists on a short board', () => {
+  const b = M.rankRows([{ n: 3 }, { n: 1 }], n);
+  eq(M.topRows(b, 3).length, 2, 'two rows, not padded');
+  eq(M.topRows(M.rankRows([{ n: 9 }], n), 3).length, 1, 'one row');
+});
+
+test('topRows on an empty or missing board is empty, not an error', () => {
+  eq(M.topRows([], 3), [], 'empty board');
+  eq(M.topRows(undefined, 3), [], 'no board at all');
+});
+
+test('topRows defaults to three and honours a different n', () => {
+  const b = M.rankRows([{ n: 5 }, { n: 4 }, { n: 3 }, { n: 2 }], n);
+  eq(M.topRows(b).length, 3, 'default');
+  eq(M.topRows(b, 1).map(x => x.score), [5], 'just the leader');
+  eq(M.topRows(b, 99).length, 4, 'never invents rows');
+});
+
+test('topRows off a real board previews the same leaders it reports', () => {
+  const b = M.goldenBootBoard(GOALS, PLAYERS);
+  const t = M.topRows(b, 3);
+  eq(t.map(x => x.item.id), ['p1', 'p3', 'p2'], 'three of the four scorers');
+  eq(t.map(x => x.place), [1, 2, 2], 'places carried through');
+  eq(t[0].item.id, M.leaders(b)[0].item.id, 'the card leader is the board leader');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

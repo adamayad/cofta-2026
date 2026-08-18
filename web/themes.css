@@ -493,10 +493,15 @@
 /* Stats hub in the card language. The honours strip takes the gold edge the
    confirmed award cards used, so a decided trophy reads the same wherever it
    appears. */
-[data-theme="matchday"] .brd,
+[data-theme="matchday"] .scard,
 [data-theme="matchday"] .hon{background:var(--card);border-radius:12px;border-bottom:none;
   margin-bottom:8px;padding:12px 13px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
 [data-theme="matchday"] .honstrip{border-top:none}
 [data-theme="matchday"] .hon{box-shadow:inset 0 0 0 1px var(--gold)}
-[data-theme="matchday"] .brd:active,
+[data-theme="matchday"] .srow:active,
 [data-theme="matchday"] .hon:active{background:color-mix(in oklab,var(--acc) 4%,var(--card))}
+[data-theme="matchday"] .scard{padding:4px 13px 8px;border-bottom:none}
+[data-theme="matchday"] .scard .sch{padding:10px 0 6px}
+[data-theme="matchday"] .scard .srow{padding:8px 0}
+[data-theme="matchday"] .scard .srow + .srow{border-top:1px solid var(--line)}
+[data-theme="matchday"] .snone{padding:2px 0 8px}
