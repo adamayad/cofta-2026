@@ -262,10 +262,20 @@
              inset 1px 0 0 rgba(255,255,255,.34),
              inset 2px 0 0 rgba(18,20,40,.20)}
 
-/* A centre channel, so a long club name wraps instead of running under the
-   chip. "St Mary & Pope Kyrillos VI" is the name that decides the width. */
-[data-theme="matchday"] .stack:not(.one) .sl:first-child{padding-right:46px}
-[data-theme="matchday"] .stack:not(.one) .sl:first-child + .sl{padding-left:46px}
+/* The chip channel was asymmetric padding — 46px on each half's inner edge.
+   It kept names off the chip, but it moved the content box outward with
+   them: everything in the half centres on the padded box, not on the half,
+   so the crest and name sat 18px toward the outer edge. Two halves each
+   leaning away from the middle.
+
+   Padding is symmetric again, so the crest and name centre on the half. The
+   clearance is enforced where it actually belongs — on the width of the text
+   that would reach the chip. calc(100% - 74px) resolves against the content
+   box (the half less its 20px of padding), so the name can be at most
+   (half - 94px) wide and centred, leaving 47px clear of the half's inner
+   edge: half the widest chip plus a gap. The crest is 62px and needs no
+   constraint of its own. */
+[data-theme="matchday"] .stack:not(.one) .sl .who{max-width:calc(100% - 74px)}
 
 /* the chip sits on the halves rather than hovering above them: a lighter
    shadow, and a hairline so it still has an edge against a white kit */
