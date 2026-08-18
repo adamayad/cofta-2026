@@ -187,6 +187,30 @@
 [data-theme="matchday"] .pk{background:var(--card);border-radius:12px;border-bottom:none;
   margin-bottom:7px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
 
+/* ── SETTLED LAYOUT INVARIANTS ────────────────────────────────
+   Four things about the Matchday match header are decided, and they hold
+   together — changing one usually breaks another:
+
+     1. the chip is an ABSOLUTE OVERLAY, dead-centre. position:absolute,
+        top/left 50%, translate(-50%,-50%) against .stack's position:relative.
+        It is never a grid item and never in flow.
+     2. the halves SHARE ROWS via subgrid, so a wrapped name on one side does
+        not push that side's rows out of step with the other's.
+     3. SCORES ARE LEVEL. This follows from 2 and is the thing a reader
+        actually notices, so it is worth checking on its own.
+     4. content is CENTRED with SYMMETRIC padding-inline, never with
+        asymmetric padding to dodge the chip — that moves each half's content
+        box off the half's own centre.
+
+   Any change here must re-verify all four. The measurements that count, at
+   375px, on a two-line name against a one-line one (Golders Green against
+   Kidane Mihret): chip offset from card centre 0.00px on both axes and 0.00px
+   from the divider; both halves' .gl at an identical top; card the same
+   height before kick-off as after it.
+
+   NOTE: .midchip is declared twice below. The second wins and is the live
+   one; the first is an earlier version left in place. Read to the bottom
+   before concluding anything about what ships. */
 /* the centred time/minute chip, Premier League style */
 [data-theme="matchday"] .stack{position:relative}
 [data-theme="matchday"] .midchip{display:block;position:absolute;left:50%;top:50%;
