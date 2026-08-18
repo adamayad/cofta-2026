@@ -56,6 +56,15 @@ the bare domain).
 - **Any feature commit that changes architecture, conventions or workflows
   updates this file in the same commit.** A CLAUDE.md that lags the code is
   worse than none: it is confidently wrong.
+- **New views ship with their Matchday styling in the same commit, verified
+  by computed-style assertions.** Not by geometry alone and not by eye —
+  assert `getComputedStyle` values: that a grid resolves to the columns it
+  should have, that an image renders at its intended size rather than
+  inheriting a default, that stacked text is `display:block` rather than
+  running together, that a drawn element is drawn rather than a text glyph.
+  A view whose numbers line up can still be visually unfinished, and
+  "positions measured correctly" has been mistaken for "it looks right"
+  more than once here.
 - Supabase preloads `safeupdate` on API connections: any bulk
   `DELETE`/`UPDATE` inside functions needs an explicit `where true`.
 - `DROP FUNCTION` kills grants; every migration that drops re-issues

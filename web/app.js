@@ -1035,7 +1035,7 @@ function viewAwards() {
     const top = M.topRows(boards[key], 3);
     return `<div class="scard" data-award="${key}">
         <button class="sch" data-award="${key}">
-          <span class="stt">${esc(cfg.label)}</span><span class="chev">&rsaquo;</span></button>
+          <span class="stt">${esc(cfg.label)}</span><span class="chev" aria-hidden="true"></span></button>
         ${top.length ? top.map(r => previewRow(r, cfg)).join('')
                      : `<p class="snone">${cfg.empty}</p>`}
       </div>`;

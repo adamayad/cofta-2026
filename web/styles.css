@@ -430,26 +430,44 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .tclubs{margin-bottom:10px}
 .tpq{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);background:var(--card);
   border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px}
-/* stats hub: each card previews its board's top three */
-.scard{border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:6px}
+/* ── stats hub: a card previews its board's top three ────────
+   The row is a three-column grid on purpose: [crest | name | value]. As a
+   flex row the name block and the value negotiated width with each other,
+   which is fine until a church name is long. A fixed crest column and an
+   auto value column mean only the name can give way, and it gives way by
+   ellipsizing rather than by shoving the value out of its column. */
+.scard{border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:6px}
 .sch{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  width:100%;padding:12px 0 8px}
-.sch .stt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-.sch .chev{font-size:17px;line-height:1;color:var(--dim);flex:none}
-.srow{display:flex;align-items:center;gap:11px;width:100%;padding:7px 0;min-width:0}
-/* the name column is the only thing allowed to give way: min-width:0 lets it
-   shrink and ellipsize so a long church name can never push the value out of
-   its column or off the card */
-.srow .who{flex:1;min-width:0}
-.srow .who b{display:block;font-family:var(--disp);font-weight:600;font-size:15px;
-  line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.srow .who i{display:block;font-style:normal;font-size:10px;letter-spacing:.06em;
-  color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.srow .sv{flex:none;font-family:var(--num);font-weight:800;font-size:17px;
-  min-width:1.5em;text-align:right;color:var(--fg2)}
+  width:100%;padding:13px 0 9px}
+.sch .stt{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+  line-height:1}
+/* a drawn chevron, not a text glyph: a ">" inherits the body font and sits on
+   a text baseline, which is what made it read as leftover markup */
+.sch .chev{flex:none;width:7px;height:7px;margin-right:3px;
+  border-top:1.5px solid var(--dim);border-right:1.5px solid var(--dim);
+  transform:rotate(45deg)}
+
+.srow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;
+  gap:11px;width:100%;padding:9px 0;text-align:left}
+.srow + .srow{border-top:1px solid var(--line)}
+.srow .tile{width:28px;height:28px;padding:3px}
+.srow .tile img{width:22px;height:22px}
+.srow .who{min-width:0}
+.srow .who b{display:block;font-family:var(--disp);font-weight:600;font-size:14.5px;
+  line-height:1.2;letter-spacing:.005em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .who i{display:block;font-style:normal;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);margin-top:3px;line-height:1.1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sv{font-family:var(--num);font-weight:800;font-size:17px;line-height:1;
+  min-width:1.6em;text-align:right;color:var(--fg2);
+  font-variant-numeric:tabular-nums lining-nums}
+/* the pill stretches to the same column, so its right edge lands on the same
+   line as the plain numerals below it */
 .srow .sv.lead{color:var(--accfg);background:var(--acc);border-radius:999px;
-  padding:3px 9px;text-align:center}
-.snone{font-size:12px;color:var(--dim);font-style:italic;padding:2px 0 10px}
+  padding:4px 10px;text-align:center}
+.snone{font-size:12px;color:var(--dim);font-style:italic;line-height:1.6;
+  padding:2px 0 10px;max-width:60ch}
 
 /* the trophy honours strip at the top of stats */
 .honstrip{border-top:1px solid var(--line)}
