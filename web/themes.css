@@ -208,6 +208,21 @@
    from the divider; both halves' .gl at an identical top; card the same
    height before kick-off as after it.
 
+   ASSERTIONS. Verify numerically, not by eye — an earlier pass checked
+   only vertical alignment and card height and so missed a 15.76px
+   horizontal offset for several rounds. For each half, in each state
+   (pre-match, live with scorer lines, FT, penalties strip), at 375px and
+   desktop, from getBoundingClientRect():
+
+     |centre(.bdg)  - centre(half)| <= 1.5px
+     |centre(.who)  - centre(half)| <= 1.5px
+     |centre(.gl)   - centre(half)| <= 1.5px
+     |top(.gl left) - top(.gl right)| <= 1.0px      (scores share a row)
+     |centre(.midchip) - centre(.stack)| <= 1.0px   (both axes)
+
+   Last measured: worst horizontal delta 0.01px, score-row delta 0.00px,
+   chip 0.00px on both axes, at 375px and 1280px.
+
    NOTE: .midchip is declared twice below. The second wins and is the live
    one; the first is an earlier version left in place. Read to the bottom
    before concluding anything about what ships. */
@@ -423,6 +438,16 @@
     display:grid;
     grid-row:span 4;
     grid-template-rows:subgrid;
+    /* The column must be declared. Left implicit, it sized to the widest
+       item — 64px for the crest when the club name did not wrap — and
+       justify-content parked that narrow track at the start, so
+       justify-items:center centred the content inside a track that was
+       itself off-centre: (95.5 - 64) / 2 = 15.75px adrift, on exactly the
+       half whose name fitted on one line. minmax(0,1fr) makes the track
+       fill the content box, so centring in the track is centring in the
+       half. minmax(0,…) rather than 1fr so a long unbroken word cannot
+       push the track wider than its half. */
+    grid-template-columns:minmax(0,1fr);
     row-gap:0;
     justify-items:center;
     align-items:center}
