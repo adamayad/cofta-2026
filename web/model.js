@@ -282,6 +282,79 @@ export function goldenGloveBoard(teams, matches) {
  * one place that decides what "leading" means, rather than each card deciding
  * again with its own filter.
  */
+/** Every player with at least one attributed yellow. Cards logged without a
+ *  name still count on the match report; they cannot appear on a board. */
+export const yellowCardBoard = (events, players = {}) =>
+  playerBoard(events, e => e.t === 'yellow', players);
+
+/** Every player sent off. Usually empty, which is the good outcome. */
+export const redCardBoard = (events, players = {}) =>
+  playerBoard(events, e => e.t === 'red', players);
+
+/**
+ * Per-club match tallies, the base for the team boards.
+ *
+ * `played`, `for` and `against` follow the same rule the golden glove has
+ * always used, so scored and conceded always agree with each other. A clean
+ * sheet is stricter on purpose: it needs a match actually played out to full
+ * time and not forfeited, because a 3–0 awarded at a desk is a result and
+ * not a goalkeeping performance.
+ */
+function teamTally(teams, matches) {
+  const by = {};
+  for (const t of (teams || [])) by[t.id] = { team: t, played: 0, for: 0, against: 0, clean: 0 };
+  for (const m of (matches || [])) {
+    if (!m.home || !m.away || !hasStarted(m)) continue;
+    const H = by[m.home], A = by[m.away];
+    if (!H || !A) continue;
+    H.played++; A.played++;
+    H.for += m.hs; H.against += m.as;
+    A.for += m.as; A.against += m.hs;
+    if (m.status === 'full_time' && !m.ff) {
+      if (m.as === 0) H.clean++;
+      if (m.hs === 0) A.clean++;
+    }
+  }
+  return Object.values(by).filter(r => r.played > 0);
+}
+
+const byCity = (a, b) => a.team.city.localeCompare(b.team.city);
+
+/** Goals scored, most first. */
+export const goalsScoredBoard = (teams, matches) =>
+  rankRows(teamTally(teams, matches), r => r.for, { tieBreak: byCity });
+
+/** Goals conceded, fewest first — the golden glove board under its plain
+ *  name. One implementation, so the trophy and the stat can never disagree. */
+export const goalsConcededBoard = goldenGloveBoard;
+
+/** Clean sheets, most first. */
+export const cleanSheetsBoard = (teams, matches) =>
+  rankRows(teamTally(teams, matches), r => r.clean, { tieBreak: byCity });
+
+/**
+ * How many different players have scored for each club — a squad that shares
+ * its goals around against one that relies on a single striker.
+ *
+ * Counts distinct players with at least one attributed goal. Own goals are
+ * excluded: they are credited to the other side's score and belong to nobody
+ * as a scorer. A goal logged without a name cannot count either, since there
+ * is no player to be distinct from.
+ */
+export function distinctScorersBoard(teams, events, players = {}) {
+  const sets = {};
+  for (const t of (teams || [])) sets[t.id] = new Set();
+  for (const e of (events || [])) {
+    if (e.voided || e.t !== 'goal' || !e.p) continue;
+    const team = players?.[e.p]?.team;
+    if (team && sets[team]) sets[team].add(e.p);
+  }
+  const rows = (teams || [])
+    .map(t => ({ team: t, n: sets[t.id].size }))
+    .filter(r => r.n > 0);
+  return rankRows(rows, r => r.n, { tieBreak: byCity });
+}
+
 export const leaders = (board) => (board || []).filter(r => r.place === 1);
 
 /**

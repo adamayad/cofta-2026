@@ -198,13 +198,43 @@ Pragmatic, not ceremonial.
 - **No live region on the clock.** It changes every second; announcing that
   continuously is worse than announcing nothing.
 
-## Awards, leaderboards and trophies
+## Stats hub, leaderboards and trophies
 
-- Three awards, each with a full leaderboard view: golden boot (goals),
-  player of the tournament (man-of-the-match awards), golden glove (goals
-  conceded, **by club**).
+The fifth tab is **Stats** (the view id and `state.award` are still spelled
+`awards`/`award` internally — renaming them is churn for no gain).
+
+- **Eight boards**, four about players and four about clubs, each opening a
+  full leaderboard and returning to Stats:
+
+  | players | clubs |
+  |---|---|
+  | Goalscorers | Goals scored |
+  | Man of the Match | Goals conceded (`lowerIsBetter`) |
+  | Yellow cards | Clean sheets |
+  | Red cards | Different goalscorers |
+
+  `BOARDS` in `app.js` is the registry: label, whether rows are players or
+  clubs (which decides whether a row links to a profile or a club page), how
+  the number reads, and the empty state. `allBoards()` computes all eight
+  once; the three trophy keys alias the board each is decided from, so a
+  trophy and its stat can never drift apart.
+- Definitions live in `model.js` as pure tested functions. A **clean sheet**
+  needs a match played out to full time and not forfeited — a 3–0 awarded at
+  a desk is a result, not a shut-out. **Different goalscorers** counts
+  distinct players with an attributed goal, own goals excluded, since an own
+  goal belongs to nobody as a scorer. **Card boards** count attributed cards
+  only; a card logged without a name stays on the match report.
+- Empty boards are normal and say so plainly. The card boards being empty all
+  weekend is the good outcome, not a gap to apologise for.
+- An index row names the leader, but past two it says how many are level —
+  early on a dozen players share top spot on one goal, and listing them all
+  tells the reader less than the count does.
+- **Trophy winners sit at the top of Stats** as an honours strip, once
+  confirmed and not before: a leader is not a winner, and announcing one
+  would be the loudest thing on a page whose job is the boards. One crest
+  only when every winner shares a club.
 - `rankRows()` in `model.js` is standard competition ranking — 1, 2, 2, 4,
-  not dense 1, 2, 2, 3. `lowerIsBetter` flips it for the glove. `leaders()`
+  not dense 1, 2, 2, 3. `lowerIsBetter` flips it for conceded. `leaders()`
   is the single definition of "top of a board"; `decidedByManagers()` holds
   the tie rule the app cannot resolve on its own.
 - Leading is not winning. `trophy_awards` + `set_trophy(p_trophy, p_players)`
@@ -224,11 +254,12 @@ Pragmatic, not ceremonial.
 
 - Feature-complete and load-tested: 1,000 concurrent spectators, 0 failures,
   p95 58ms on free tier. CDN layer deliberately not built (not needed).
-- **A rehearsal is part-played — the tournament is NOT reset.** Both groups
-  are complete (12 at full time), SF1 is played, SF2 and the final are still
-  `scheduled`. 8 goals logged, no cards, no shoot-outs, no trophies
-  confirmed. Because `groupStageComplete()` is true the app opens on Sunday.
-  `reset_tournament()` from Organiser → Testing returns it to the baseline.
+- **Rehearsals are running against the live project**, so match state moves
+  between sessions — goals, cards, shoot-outs and confirmed trophies appear
+  and vanish. Do not treat any snapshot of it written here as current; query
+  it. `reset_tournament()` from Organiser → Testing returns the baseline.
+  What is durable: all 15 fixtures exist, both groups plus three knockouts,
+  and the app opens on Sunday whenever `groupStageComplete()` is true.
 - Dummy squads (116 active players across all 8 clubs) and placeholder
   managers (all 8 set) are **deliberately live** so rehearsals have something
   to attribute goals to. Clear with

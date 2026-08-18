@@ -772,17 +772,17 @@ function backLabel(fallback) {
   if (!prev) {
     const [kind, arg] = String(fallback).split(':');
     if (kind === 'sqteam') return cityOf(arg) || 'Squad';
-    return arg === 'awards' ? 'Awards' : 'All clubs';
+    return arg === 'awards' ? 'Stats' : 'All clubs';
   }
   if (prev.view === 'match') {
     const mm = resolvedMatches().find(x => x.id === prev.matchId);
     return mm ? `${cityOf(mm.home)} v ${cityOf(mm.away)}` : 'Match';
   }
-  if (prev.view === 'award') return M.trophyLabel(prev.award);
+  if (prev.view === 'award') return BOARDS[boardKey(prev.award)]?.label ?? 'Stats';
   if (prev.view === 'squads' && prev.sq.player) return playerName(prev.sq.player) ?? 'Player';
   if (prev.view === 'squads' && prev.sq.team) return cityOf(prev.sq.team) || 'Squad';
   return { fixtures: 'Fixtures', live: 'Live now', squads: 'All clubs',
-           tables: 'Tables', awards: 'Awards', admin: 'Organiser' }[prev.view] ?? 'Back';
+           tables: 'Tables', awards: 'Stats', admin: 'Organiser' }[prev.view] ?? 'Back';
 }
 
 const backButton = (fallback) =>
@@ -890,114 +890,157 @@ function viewSquads() {
       tournament record builds itself as the weekend goes on.</p>`;
 }
 
-/* ── awards ──────────────────────────────────────────────── */
-/** All three boards, computed once and shared by the cards, the leaderboards
- *  and the organiser's confirmation panel. */
-function awardBoards() {
+/* ── stats ───────────────────────────────────────────────── */
+/**
+ * Every board, computed once and shared by the Stats index, the full board
+ * views and the organiser's trophy panel. The three trophy keys alias the
+ * board each is decided from, so `boards[trophyKey]` keeps working and a
+ * trophy can never drift apart from the stat that decides it.
+ */
+function allBoards() {
   const byId = Object.fromEntries(state.players.map(p => [p.id, p]));
+  const teamsArr = Object.values(state.teams);
+  const ms = resolvedMatches();
+  const goals = M.goldenBootBoard(state.events, byId);
+  const motm  = M.playerOfTournamentBoard(state.events, byId);
+  const conceded = M.goldenGloveBoard(teamsArr, ms);
   return {
-    golden_boot: M.goldenBootBoard(state.events, byId),
-    player_of_tournament: M.playerOfTournamentBoard(state.events, byId),
-    golden_glove: M.goldenGloveBoard(Object.values(state.teams), resolvedMatches()),
+    goals, motm, conceded,
+    yellow:  M.yellowCardBoard(state.events, byId),
+    red:     M.redCardBoard(state.events, byId),
+    scored:  M.goalsScoredBoard(teamsArr, ms),
+    clean:   M.cleanSheetsBoard(teamsArr, ms),
+    scorers: M.distinctScorersBoard(teamsArr, state.events, byId),
+    golden_boot: goals, player_of_tournament: motm, golden_glove: conceded,
   };
 }
 
-const AWARD_UNIT = {
-  golden_boot: (n) => `${n} goal${n === 1 ? '' : 's'}`,
-  player_of_tournament: (n) => `${n} man of the match award${n === 1 ? '' : 's'}`,
-  golden_glove: (n) => `${n} conceded`,
+/** What each board is called, whether its rows are players or clubs (which
+ *  decides what a row links to), how its number reads, and what to say when
+ *  it is empty. The card boards being empty all weekend is the good outcome,
+ *  so they say so rather than apologising. */
+const BOARDS = {
+  goals: { of: 'players', label: 'Goalscorers',
+    unit: n => `${n} goal${n === 1 ? '' : 's'}`,
+    empty: 'No goals have been attributed to a named player yet.',
+    foot: 'Every player with a goal to their name. A goal logged without a scorer still counts on the scoreboard, but cannot appear here.' },
+  motm: { of: 'players', label: 'Man of the Match',
+    unit: n => `${n} award${n === 1 ? '' : 's'}`,
+    empty: 'No man of the match awards have been given yet.',
+    foot: 'Every player with a man of the match award.' },
+  yellow: { of: 'players', label: 'Yellow cards',
+    unit: n => `${n} yellow${n === 1 ? '' : 's'}`,
+    empty: 'Nobody has been booked. Long may it last.',
+    foot: 'Bookings attributed to a named player. A card logged without a name stays on the match report.' },
+  red: { of: 'players', label: 'Red cards',
+    unit: n => `${n} red${n === 1 ? '' : 's'}`,
+    empty: 'Nobody has been sent off.',
+    foot: 'Dismissals attributed to a named player.' },
+  scored: { of: 'teams', label: 'Goals scored',
+    unit: n => `${n} scored`,
+    empty: 'No matches have been played yet.',
+    foot: 'Goals scored by club, most first.' },
+  conceded: { of: 'teams', label: 'Goals conceded',
+    unit: n => `${n} conceded`,
+    empty: 'No matches have been played yet.',
+    foot: 'Goals conceded by club, fewest first. This is the golden glove board — the trophy itself goes to a goalkeeper, which is why an organiser names the winner rather than this table doing it.' },
+  clean: { of: 'teams', label: 'Clean sheets',
+    unit: n => `${n} clean sheet${n === 1 ? '' : 's'}`,
+    empty: 'No clean sheets yet.',
+    foot: 'Matches played out to full time without conceding. A forfeit is a result, not a shut-out, and does not count.' },
+  scorers: { of: 'teams', label: 'Different goalscorers',
+    unit: n => `${n} scorer${n === 1 ? '' : 's'}`,
+    empty: 'No goals have been attributed to a named player yet.',
+    foot: 'How many different players have scored for each club — a squad sharing its goals around against one that relies on a single striker. Own goals belong to nobody and are excluded.' },
 };
+
+/** A trophy key routes to the board it is decided from. */
+const BOARD_ALIAS = { golden_boot: 'goals', player_of_tournament: 'motm', golden_glove: 'conceded' };
+const boardKey = (k) => BOARD_ALIAS[k] ?? k;
+
+const PLAYER_BOARDS = ['goals', 'motm', 'yellow', 'red'];
+const TEAM_BOARDS   = ['scored', 'conceded', 'clean', 'scorers'];
 
 /** Confirmed winners of one trophy, as a display string. */
 const wonNames = (key) =>
   (state.trophies[key] || []).map(id => playerName(id) ?? 'Unknown player').join(' & ');
 
+/**
+ * The honours strip, at the top of Stats once trophies are confirmed.
+ *
+ * Nothing before that: a leader is not a winner, and a strip announcing one
+ * would be the loudest thing on a page whose whole job is the boards. One
+ * crest only when every winner shares a club — a shared trophy across two
+ * clubs has no single crest to show.
+ */
+function honoursStrip() {
+  const won = M.TROPHIES.filter(([k]) => (state.trophies[k] || []).length);
+  if (!won.length) return '';
+  const rows = won.map(([key, label]) => {
+    const ids = state.trophies[key];
+    const clubs = [...new Set(ids.map(id => state.players.find(p => p.id === id)?.team).filter(Boolean))];
+    const club = clubs.length === 1 ? clubs[0] : null;
+    return `<button class="hon" data-player="${ids[0]}">
+        <span class="ht">${esc(label)}</span>
+        <span class="hbody">
+          ${club ? `<span class="tile" style="--c:${colOf(club)}"><img src="${crest(club)}" alt=""></span>` : ''}
+          <span class="who"><b>${esc(wonNames(key))}</b>
+            <i>${esc(club ? cityOf(club) : 'Shared across clubs')}</i></span>
+          ${ids.length > 1 ? '<span class="hsh">shared</span>' : ''}
+        </span></button>`;
+  }).join('');
+  return `<div class="sect">Trophies</div><div class="honstrip">${rows}</div>`;
+}
+
 function viewAwards() {
   const teamsArr = Object.values(state.teams);
   const ms = resolvedMatches();
-  if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
+  if (!teamsArr.length) return '<p class="empty">Loading…</p>';
 
-  const anyPlayed = ms.some(M.hasStarted);
+  if (!ms.some(M.hasStarted)) return `<div class="sect">Stats</div>
+    <p class="empty">Nothing to count yet. Every board fills in as matches are played.</p>`;
 
-  if (!anyPlayed) return `<div class="sect">Awards</div>
-    <p class="empty">Nothing decided yet. The golden boot, player of the tournament
-      and golden glove fill in as matches are played.</p>`;
+  const boards = allBoards();
 
-  const boards = awardBoards();
-
-  // The whole card is the button now: it opens the full leaderboard rather
-  // than jumping straight to whoever leads it, which was the old behaviour
-  // and left no way at all to see who came second.
-  // Once a trophy is confirmed the winners ARE the card. Printing the computed
-  // leader beside them only asked the reader to work out why the two
-  // disagreed \u2014 and for the glove they always disagree, its board being clubs
-  // and its trophy a goalkeeper.
-  const card = (key, title, lead, foot) => {
-    const won = state.trophies[key] || [];
-    if (won.length) {
-      // the winners' own tally, where the board has one and they agree on it
-      const counts = won.map(id => (boards[key] || []).find(r => r.item.id === id)?.score);
-      const agreed = counts.every(c => c != null && c === counts[0]);
-      const stat = key !== 'golden_glove' && agreed ? AWARD_UNIT[key](counts[0]) : '';
-      lead = `<p class="an">${esc(wonNames(key))}</p>`
-           + (stat ? `<p class="ac tnum">${stat}</p>` : '');
-      foot = won.length > 1 ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '';
-    }
-    return `<button class="award ${won.length ? 'won' : ''}" data-award="${key}">
-        <span class="at">${title}</span>${lead}
-        ${foot ? `<p class="af">${foot}</p>` : ''}
-        <span class="more">Full leaderboard \u2192</span></button>`;
+  // Early on, a dozen players can be joint top on one goal. Naming them all
+  // on a summary row is unreadable and tells you less than the count does,
+  // so past a pair the row says how many are level and the board itself
+  // lists them.
+  const link = (key) => {
+    const b = BOARDS[key], top = M.leaders(boards[key]);
+    const names = b.of === 'players' ? top.map(r => r.item.name) : top.map(r => r.item.team.city);
+    const who = !top.length ? null
+      : names.length <= 2 ? names.join(' & ')
+      : `${names.length} ${b.of === 'players' ? 'players' : 'clubs'} level`;
+    return `<button class="brd" data-award="${key}">
+        <span class="bt">${esc(b.label)}</span>
+        <span class="bl">${who ? esc(who) : '<i class="dim">nothing yet</i>'}</span>
+        <span class="bv tnum">${top.length ? esc(b.unit(top[0].score)) : ''}</span></button>`;
   };
 
-  const leaders = (key) => M.leaders(boards[key]);
-  const bootTop = leaders('golden_boot');
-  const boot = bootTop.length
-    ? card('golden_boot', 'Golden boot',
-        `<p class="an">${esc(bootTop.map(r => r.item.name).join(' & '))}</p>
-         <p class="ac tnum">${AWARD_UNIT.golden_boot(bootTop[0].score)}</p>`,
-        bootTop.length > 1 ? 'Shared \u2014 a duplicate trophy is bought for the joint winner.' : '')
-    : card('golden_boot', 'Golden boot', '<p class="an dim">No goals attributed yet</p>',
-        'Goals count towards this only when a scorer is named.');
-
-  const potTop = leaders('player_of_tournament');
-  const pot = potTop.length
-    ? card('player_of_tournament', 'Player of the tournament',
-        `<p class="an">${esc(potTop.map(r => r.item.name).join(' & '))}</p>
-         <p class="ac tnum">${AWARD_UNIT.player_of_tournament(potTop[0].score)}</p>`,
-        potTop.length > 1 ? 'Level on awards.' : '')
-    : card('player_of_tournament', 'Player of the tournament',
-        '<p class="an dim">Not yet awarded</p>',
-        'Decided by the most man of the match awards.');
-
-  const gloveTop = leaders('golden_glove');
-  const glove = gloveTop.length
-    ? card('golden_glove', 'Golden glove',
-        `<p class="an">${esc(gloveTop.map(r => r.item.team.city).join(' & '))}</p>
-         <p class="ac tnum">${AWARD_UNIT.golden_glove(gloveTop[0].score)} in
-           ${gloveTop[0].item.played} match${gloveTop[0].item.played === 1 ? '' : 'es'}</p>`,
-        M.decidedByManagers(boards.golden_glove)
-          ? 'Level on goals conceded \u2014 decided by the church managers.'
-          : 'The trophy itself goes to that club\u2019s goalkeeper.')
-    : card('golden_glove', 'Golden glove', '<p class="an dim">No matches played yet</p>', '');
-
-  return `<div class="sect">Awards</div>${boot}${pot}${glove}
-    <p class="note">Tap any award for its full leaderboard.</p>
+  return `${honoursStrip()}
+    <div class="sect">Players</div>${PLAYER_BOARDS.map(link).join('')}
+    <div class="sect">Teams</div>${TEAM_BOARDS.map(link).join('')}
     ${trophySection(boards, teamsArr, ms)}`;
 }
 
-/* \u2500\u2500 one award's leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* ── one board in full ────────────────────────────────────── */
 function viewAwardBoard() {
-  const key = state.award;
-  if (!Object.values(state.teams).length) return '<p class="empty">Loading\u2026</p>';
-  if (!M.TROPHIES.some(([k]) => k === key)) {   // unknown award \u2014 nothing to show
+  if (!Object.values(state.teams).length) return '<p class="empty">Loading…</p>';
+  const key = boardKey(state.award);
+  const cfg = BOARDS[key];
+  if (!cfg) {                       // unknown board, e.g. a stale history entry
     state.view = 'awards'; state.award = null;
     return viewAwards();
   }
 
-  const board = awardBoards()[key];
-  const won = state.trophies[key] || [];
+  const board = allBoards()[key];
+
+  // A board that decides a trophy says so once the trophy is confirmed.
+  const trophyKey = M.TROPHIES.map(([k]) => k).find(k => boardKey(k) === key);
+  const won = trophyKey ? (state.trophies[trophyKey] || []) : [];
   const confirmed = won.length
-    ? `<div class="banner conf">Trophy confirmed \u2014 ${esc(wonNames(key))}${
+    ? `<div class="banner conf">${esc(M.trophyLabel(trophyKey))} — ${esc(wonNames(trophyKey))}${
         won.length > 1 ? ' (shared)' : ''}.</div>`
     : '';
 
@@ -1006,12 +1049,12 @@ function viewAwardBoard() {
   const rank = (r) => `<span class="pl tnum ${r.joint ? 'joint' : ''}">${
     r.joint ? '=' : ''}${r.place}</span>`;
 
-  const rows = key === 'golden_glove'
+  const rows = cfg.of === 'teams'
     ? board.map(r => `<button class="lbr" data-team="${r.item.team.id}">
         ${rank(r)}
         <span class="tile" style="--c:${r.item.team.colour}"><img src="${crest(r.item.team.id)}" alt=""></span>
         <span class="who"><b>${esc(r.item.team.name)}</b>
-          <i>${esc(r.item.team.city)} \u00b7 ${r.item.played} played</i></span>
+          <i>${esc(r.item.team.city)}${r.item.played != null ? ` · ${r.item.played} played` : ''}</i></span>
         <span class="lbn tnum">${r.score}</span></button>`).join('')
     : board.map(r => `<button class="lbr" data-player="${r.item.id}">
         ${rank(r)}
@@ -1020,27 +1063,15 @@ function viewAwardBoard() {
           <i>${esc(cityOf(r.item.team))}</i></span>
         <span class="lbn tnum">${r.score}</span></button>`).join('');
 
-  const empty = {
-    golden_boot: 'No goals have been attributed to a named player yet.',
-    player_of_tournament: 'No man of the match awards have been given yet.',
-    golden_glove: 'No matches have been played yet.',
-  }[key];
-
-  const foot = {
-    golden_boot: 'Every player with a goal to their name. A goal logged without a scorer still counts on the scoreboard, but cannot appear here.',
-    player_of_tournament: 'Every player with a man of the match award.',
-    golden_glove: 'Goals conceded by club, fewest first. The trophy itself goes to a goalkeeper, which is why an organiser names the winner rather than this table doing it.',
-  }[key];
-
   return `${backButton('view:awards')}
-    <div class="sect">${esc(M.trophyLabel(key))}</div>
+    <div class="sect">${esc(cfg.label)}</div>
     ${confirmed}
     ${board.length
-      ? `<div class="lb">${rows}</div><p class="note">${foot}</p>`
-      : `<p class="empty">${empty}</p>`}`;
+      ? `<div class="lb">${rows}</div><p class="note">${cfg.foot}</p>`
+      : `<p class="empty">${cfg.empty}</p>`}`;
 }
 
-/* \u2500\u2500 confirming the trophies (organisers) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+/* -- confirming the trophies (organisers) ----------------- */
 /**
  * All three trophies are presented to players \u2014 including the golden glove,
  * whose leaderboard is clubs, because a conceded column cannot name the

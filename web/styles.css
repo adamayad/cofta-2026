@@ -430,3 +430,26 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .tclubs{margin-bottom:10px}
 .tpq{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);background:var(--card);
   border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px}
+
+/* stats hub: one tappable row per board */
+.brd{display:grid;grid-template-columns:1fr auto;grid-template-areas:"t v" "l v";
+  width:100%;gap:2px 12px;align-items:center;padding:12px 0;
+  border-bottom:1px solid var(--line)}
+.brd .bt{grid-area:t;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.brd .bl{grid-area:l;font-family:var(--disp);font-weight:600;font-size:16px;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brd .bl .dim{font-style:normal;font-weight:400;font-size:14px;color:var(--dim)}
+.brd .bv{grid-area:v;font-family:var(--num);font-weight:800;font-size:15px;
+  color:var(--acc);white-space:nowrap}
+
+/* the trophy honours strip at the top of stats */
+.honstrip{border-top:1px solid var(--line)}
+.hon{display:block;width:100%;padding:12px 0;border-bottom:1px solid var(--line)}
+.hon .ht{display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--acc)}
+.hon .hbody{display:flex;align-items:center;gap:11px;margin-top:6px}
+.hon .who{flex:1;min-width:0}
+.hon .who b{display:block;font-family:var(--disp);font-weight:600;font-size:16px}
+.hon .who i{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:1px}
+.hon .hsh{flex:none;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim)}

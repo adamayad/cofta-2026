@@ -313,6 +313,118 @@ test('groupStageComplete is false with no fixtures at all', () => {
   eq(M.groupStageComplete([{ stage: 'A', status: 'full_time' }]), false, 'no group B');
 });
 
+/* ── card boards ─────────────────────────────────────────── */
+test('yellowCardBoard and redCardBoard count only their own attributed cards', () => {
+  const evts = [
+    { t: 'yellow', p: 'p1' }, { t: 'yellow', p: 'p1' }, { t: 'yellow', p: 'p2' },
+    { t: 'yellow', p: 'p3', voided: true },
+    { t: 'yellow', p: null },              // unattributed: on the report, not the board
+    { t: 'red', p: 'p2' },
+    { t: 'goal', p: 'p1' },
+  ];
+  const y = M.yellowCardBoard(evts, PLAYERS);
+  eq(y.map(x => x.item.id), ['p1', 'p2'], 'yellow order');
+  eq(y.map(x => x.score), [2, 1], 'yellow counts');
+  const r = M.redCardBoard(evts, PLAYERS);
+  eq(r.map(x => x.item.id), ['p2'], 'red board');
+  eq(r.map(x => x.score), [1], 'red count');
+});
+
+test('card boards are empty when nobody has been booked', () => {
+  eq(M.yellowCardBoard([], PLAYERS), [], 'no yellows');
+  eq(M.redCardBoard([{ t: 'goal', p: 'p1' }], PLAYERS), [], 'no reds');
+});
+
+/* ── team boards ─────────────────────────────────────────── */
+/* Ashford keep two clean sheets, Bexley one, Croydon none. The fourth match
+   is a forfeit: a result, but nobody kept anything out, so it must not earn
+   Dover a clean sheet even though the awarded score reads 3-0. */
+const TT_MATCHES = [
+  { home: 'a', away: 'b', hs: 1, as: 0, status: 'full_time' },
+  { home: 'a', away: 'c', hs: 2, as: 0, status: 'full_time' },
+  { home: 'b', away: 'c', hs: 3, as: 0, status: 'full_time' },
+  { home: 'd', away: 'c', hs: 3, as: 0, status: 'full_time', ff: 'away' },
+  { home: 'a', away: 'd', hs: 5, as: 5, status: 'scheduled' },   // not played
+];
+
+test('cleanSheetsBoard counts full-time shut-outs, most first', () => {
+  const r = M.cleanSheetsBoard(GTEAMS, TT_MATCHES);
+  // Ashford 2, Bexley 1, then Croydon and Dover level on 0 — tie-broken by
+  // city, so Croydon precedes Dover and both are third.
+  eq(r.map(x => x.item.team.id), ['a', 'b', 'c', 'd'], 'order');
+  eq(r.map(x => x.score), [2, 1, 0, 0], 'clean sheets');
+  eq(places(r), [1, 2, 3, 3], 'places');
+});
+
+test('cleanSheetsBoard does not award a forfeit as a clean sheet', () => {
+  const r = M.cleanSheetsBoard(GTEAMS, TT_MATCHES);
+  const dover = r.find(x => x.item.team.id === 'd');
+  eq(dover.score, 0, 'Dover won 3-0 by forfeit and kept nothing out');
+  // the same fixture played out properly would count
+  const played = TT_MATCHES.map(m => (m.ff ? { ...m, ff: null } : m));
+  eq(M.cleanSheetsBoard(GTEAMS, played).find(x => x.item.team.id === 'd').score, 1, 'played out');
+});
+
+test('cleanSheetsBoard ignores matches that have not started', () => {
+  const r = M.cleanSheetsBoard(GTEAMS, TT_MATCHES);
+  eq(r.some(x => x.item.team.id === 'd' && x.item.played > 1), false, 'scheduled match not counted');
+});
+
+test('goalsScoredBoard ranks most scored first and agrees with conceded', () => {
+  const s = M.goalsScoredBoard(GTEAMS, TT_MATCHES);
+  const c = M.goalsConcededBoard(GTEAMS, TT_MATCHES);
+  const total = (b, k) => b.reduce((t, r) => t + r.item[k], 0);
+  eq(total(s, 'for'), total(c, 'against'), 'every goal scored is a goal conceded');
+  // Ashford, Bexley and Dover all on 3, Croydon on none
+  eq(s.map(x => x.item.team.id), ['a', 'b', 'd', 'c'], 'order');
+  eq(s.map(x => x.score), [3, 3, 3, 0], 'goals scored');
+  eq(places(s), [1, 1, 1, 4], 'a three-way joint first is followed by fourth');
+});
+
+test('goalsConcededBoard is the golden glove board under another name', () => {
+  eq(M.goalsConcededBoard, M.goldenGloveBoard, 'same function, so they cannot disagree');
+});
+
+/* ── different goalscorers ───────────────────────────────── */
+const DS_TEAMS = [
+  { id: 'stm', city: 'Kensington' }, { id: 'cro', city: 'Croydon' },
+  { id: 'bri', city: 'Brighton' },   { id: 'gg',  city: 'Golders Green' },
+];
+const DS_EVENTS = [
+  { t: 'goal', p: 'p1' }, { t: 'goal', p: 'p1' }, { t: 'goal', p: 'p1' },  // one man, three goals
+  { t: 'goal', p: 'p2' }, { t: 'goal', p: 'p3' },                          // two clubs, one each
+  { t: 'goal', p: 'p4' },
+  { t: 'goal', p: 'p2', voided: true },
+  { t: 'goal', p: null },                       // no name: cannot be distinct from anyone
+  { t: 'own_goal', p: 'p4' },                   // credited to the other side, nobody's goal
+  { t: 'yellow', p: 'p1' },
+];
+
+test('distinctScorersBoard counts players, not goals', () => {
+  const r = M.distinctScorersBoard(DS_TEAMS, DS_EVENTS, PLAYERS);
+  const n = Object.fromEntries(r.map(x => [x.item.team.id, x.score]));
+  eq(n.stm, 1, 'Kensington: three goals from one player is one scorer');
+  eq(n.cro, 1, 'Croydon');
+  eq(n.bri, 1, 'Brighton');
+  eq(n.gg, 1, 'Golders Green');
+});
+
+test('distinctScorersBoard excludes own goals and unattributed goals', () => {
+  const only = M.distinctScorersBoard(DS_TEAMS,
+    [{ t: 'own_goal', p: 'p1' }, { t: 'goal', p: null }], PLAYERS);
+  eq(only, [], 'neither creates a scorer');
+});
+
+test('distinctScorersBoard ranks more scorers higher and omits clubs with none', () => {
+  const evts = [
+    { t: 'goal', p: 'p1' },                       // stm: 1
+    { t: 'goal', p: 'p2' }, { t: 'goal', p: 'p3' } // cro, bri: 1 each
+  ];
+  const r = M.distinctScorersBoard(DS_TEAMS, evts, PLAYERS);
+  eq(r.length, 3, 'Golders Green absent, having no scorer');
+  eq(places(r), [1, 1, 1], 'all level on one');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };
