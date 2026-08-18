@@ -25,14 +25,20 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever.
+  old devices keep stale copies forever. Currently `cofta-v28`.
 
 ## Workflow
 
 - The repo is the source of truth and **git is the delivery path**: clone,
-  branch or commit on `main`, push. Manual "Add files via upload" through the
-  GitHub web UI is history, not practice — every commit since `74b896f`
-  arrived this way.
+  branch or commit on `main`, push.
+- **Do not upload assets through the GitHub web UI.** It has been done
+  repeatedly and it costs every time: it creates `Add files via upload`
+  commits that diverge from work in progress (rebase onto them, never force
+  over them), and it lands cache-first assets **without bumping `VERSION`**,
+  so the new file deploys and no device already holding the old VERSION will
+  ever fetch it. Put files into `web/crests/` in the repo instead. If an
+  upload has already happened: `git fetch`, check whether it touched a cached
+  asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
   currently `0001` … `0018`. Apply to the live DB via the Supabase dashboard
@@ -83,13 +89,114 @@ the bare domain).
   phone boots from its cached snapshot before the first poll, so after a
   `reset_tournament()` a one-way rule would strand it on the wrong day.
   Choosing a day pins it (`state.dayPinned`).
-- Themes: token overrides in `themes.css` keyed on `[data-theme]`.
-  **Matchday is the public theme.** The other four are kept as a working
-  fallback and the switcher is only rendered when signed in (either role);
-  spectators never see it. Default is matchday, a stored choice still wins.
-  Club `colour` + `text_colour` come from the DB.
+- **`themes.css` contains dead declarations overridden further down.**
+  `.sl .bdg` declares a white pill near the top; `.midchip` is declared
+  twice. Only the last declaration ships. Both have been reported as
+  regressions by reading the file rather than the computed style — check
+  DevTools, or the guard comments, before concluding anything.
 - Never put credentials in the repo or chat. The publishable key in `api.js`
   is safe by design. Pitch passwords: set in Supabase dashboard only.
+
+## Themes
+
+**Matchday is locked as the public theme.** Token overrides live in
+`themes.css` keyed on `[data-theme]`; club `colour` and `text_colour` come
+from the DB.
+
+The other four (Programme, Broadcast, Terrace, Swiss) are kept deliberately
+as a working fallback and stay selectable, but the Appearance switcher only
+renders when someone is **signed in**, either role — spectators never see it.
+Default is matchday; an explicitly stored choice still wins.
+
+Only Matchday needs to be beautiful. The other four need to render sanely,
+which is what the cross-theme sweep at the end of a visual change is for.
+
+## Matchday match header: settled layout
+
+Four invariants, and they hold together — changing one usually breaks
+another. They are stated in full above the rules in `themes.css` under the
+marker **`SETTLED LAYOUT INVARIANTS`**, with the numeric assertions and
+tolerances that confirm them.
+
+1. **The halves share rows via subgrid.** `.stack` owns four rows (crest,
+   name+city, score, scorer lines); each `.sl` spans all four with
+   `grid-template-rows:subgrid`, so a wrapped name on one side cannot push
+   that side out of step with the other and the scores stay on one line.
+   Behind `@supports`; without subgrid the flex column still applies and
+   degrades to the previous behaviour.
+2. **The chip is an absolute overlay, dead-centre.** Never a grid item, never
+   in flow, positioned against `.stack`'s `position:relative`.
+3. **Content is centred with symmetric `padding-inline`**, never asymmetric
+   padding to dodge the chip — that moves each half's content box off the
+   half's own centre. `.sl` must also declare
+   `grid-template-columns:minmax(0,1fr)`: left implicit, the track sizes to
+   the widest item and sits at the start, which put content 15.75px adrift on
+   whichever half's name happened not to wrap.
+4. **No scores before kick-off.** A scheduled match shows crest and club
+   only; the score row collapses and symmetric vertical padding holds the
+   card at the height it will have once the clock starts, so nothing jumps at
+   kick-off.
+
+Spacing inside a half is a **margin per cell, not a row-gap** — a gap is
+charged even when the track beside it is empty, which made the pre-match card
+grow 18px.
+
+**Verify numerically, not by eye.** An earlier pass checked only vertical
+alignment and card height and so missed a 15.76px horizontal offset for
+several rounds. The assertions are in the comment; run them from a DOM
+against `getBoundingClientRect()`, at 375px and desktop, in every state
+(pre-match, live with scorer lines, FT, penalties strip).
+
+## Crests and icons
+
+- **Crest presentation is settled**: the crest alone on the club colour, one
+  soft drop shadow, **no plates, no rings, no contours**, on the split header
+  and both phead club/player headers. Stated in `themes.css` under the marker
+  **`CREST PRESENTATION IS SETTLED`**, which an instruction must name in
+  order to change it. It has been reverted to this state more than once.
+- **Separation problems are fixed in the asset, not in CSS.** Where a crest
+  does not read against its own club colour, recut the artwork — `smpk.webp`
+  carries its own ring and hairline edge for exactly this reason. A CSS
+  filter has to be tuned per surface and gets reverted; one asset is correct
+  everywhere it appears.
+- Crests are **224×224** (10–18KB each). The header draws them at 62px CSS,
+  so 224px is 3.6× — retina-true on a 3× phone, where the old 112px cuts were
+  a 1.8× upscale and visibly soft. Fixtures tiles draw at 24px and are
+  heavily oversampled; not worth maintaining a second size.
+- `hove.webp` is Kidane Mihret's crest, not a Hove one: the club changed and
+  the internal id did not. Still the placeholder KM monogram — real artwork
+  pending, spelling to confirm.
+- **PWA icons** (`icon-192`, `icon-512`, `icon-maskable`, `apple-touch-icon`)
+  are in the Matchday language: the accent field `#38003c` carrying a white
+  COFTA wordmark in Big Shoulders Display, nothing else — at 60px on a home
+  screen there is room for one idea. Corner treatment differs by purpose:
+  192/512 carry their own 22% rounding since "any" icons are shown as
+  supplied; maskable is full-bleed square with the mark inside the 80% safe
+  circle; apple-touch is full-bleed and fully opaque, because iOS applies its
+  own squircle and fills any transparency it finds.
+
+## Accessibility
+
+Pragmatic, not ceremonial.
+
+- Club blocks on a match header are real `<button>`s. A div with a click
+  handler cannot be reached by keyboard and announces nothing.
+- Icon-only controls carry `aria-label`: the ± in both shoot-out panels and
+  the × on a trophy winner chip. Without it a screen reader offers several
+  identical buttons.
+- **Crests keep `alt=""`.** Every crest in this app sits directly beside the
+  club's own name, so giving the image the name too makes a screen reader say
+  it twice. These are not the elements carrying the meaning.
+- Focus rings cover buttons, inputs, selects, textareas, links and anything
+  with a tabindex. The split-colour header takes a white ring — the
+  near-black purple accent disappears into a club's own colour.
+- Matchday's `--dim` is `#65697b`, the smallest step that clears AA on
+  **both** the white cards and the grey page background. The obvious lighter
+  value passed on cards and failed at 4.24:1 on the page, which is where most
+  of the small text actually sits.
+- `prefers-reduced-motion` is respected globally.
+- **No live region on the clock.** It changes every second; announcing that
+  continuously is worse than announcing nothing.
 
 ## Awards, leaderboards and trophies
 
@@ -113,18 +220,21 @@ the bare domain).
 - `reset_tournament()` clears `trophy_awards` along with events, shoot-outs
   and overrides.
 
-## Current state (mid-August 2026)
+## Current state (18 August 2026)
 
 - Feature-complete and load-tested: 1,000 concurrent spectators, 0 failures,
   p95 58ms on free tier. CDN layer deliberately not built (not needed).
-- **The tournament is reset** — all 15 matches `scheduled`, no events, no
-  trophies. This is the rehearsal baseline.
-- Dummy squads (14/club) and placeholder managers are **deliberately still in
-  place** so rehearsals have something to attribute goals to. Clear with
+- **A rehearsal is part-played — the tournament is NOT reset.** Both groups
+  are complete (12 at full time), SF1 is played, SF2 and the final are still
+  `scheduled`. 8 goals logged, no cards, no shoot-outs, no trophies
+  confirmed. Because `groupStageComplete()` is true the app opens on Sunday.
+  `reset_tournament()` from Organiser → Testing returns it to the baseline.
+- Dummy squads (116 active players across all 8 clubs) and placeholder
+  managers (all 8 set) are **deliberately live** so rehearsals have something
+  to attribute goals to. Clear with
   `update public.players set active=false where true;` before entering real
   lists (paste-in screen: Organiser → Squads).
-- Kidane Mihret replaced Hove (internal id stays `hove`); real crest pending
-  (placeholder KM monogram at `web/crests/hove.webp`); confirm spelling.
+- 3 admin accounts exist.
 - Waiting on association: final draw, timetable, squads, 2026 rules
   (2025 rules implemented meanwhile).
 
@@ -153,6 +263,11 @@ and runs against the live project.
 Any change to rules, ordering or the clock should come with a test beside it;
 any change to `app.js` should at minimum be **executed** (not just parsed)
 against a DOM before shipping — a module-evaluation crash ships as an
-infinite "Loading…" screen. Visual work should be checked at 375px as well as
-desktop, in Matchday first and then quickly across the other four to confirm
-nothing regressed.
+infinite "Loading…" screen.
+
+Visual work is checked at **375px and desktop**, in Matchday first and then
+across the other four to confirm nothing regressed. For anything touching the
+match header, run the assertions under `SETTLED LAYOUT INVARIANTS` and print
+the measured deltas. "Looks right" has been wrong in both directions here — a
+real regression missed for several rounds, and regressions reported that
+measurement showed did not exist.
