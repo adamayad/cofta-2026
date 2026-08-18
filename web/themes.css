@@ -327,3 +327,20 @@
   border-radius:0 0 16px 16px;box-shadow:0 2px 6px rgba(18,20,40,.14)}
 [data-theme="matchday"] .stack:has(+ .pnstrip){
   border-bottom-left-radius:0;border-bottom-right-radius:0}
+
+/* ── Matchday: the header before kick-off ─────────────────────
+   A scheduled half has no score row, so it is short by exactly the score
+   (46px) plus the column gap (9px). Blanking the cell instead of dropping it
+   kept the height but left all 55px hanging below the club name, which put
+   the crest and name above centre — the regression this fixes.
+
+   The 55px is given back as symmetric padding instead: same total height as
+   a started half, so the card does not resize when the scores appear, and
+   the content sits centred. Padding rather than a translate or a centred
+   flex box on purpose — both halves keep the same padding-top, so their
+   crests stay on one line even when one club's name wraps and the other's
+   does not. min-height is a floor for the shortest possible pairing. */
+[data-theme="matchday"] .stack.pre .sl{
+  padding-top:calc(18px + 27px);
+  padding-bottom:calc(16px + 28px);
+  min-height:191px}

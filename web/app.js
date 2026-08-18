@@ -313,12 +313,13 @@ function viewMatch() {
    */
   const side = (id, score, other, sideKey) => {
     const attrs = `class="sl ${lead(score, other)}" style="--c:${colOf(id)};--tc:${txtOf(id)}"`;
-    // Nobody has scored yet, so nothing should say 0. A blank cell rather than
-    // no cell: the header is then exactly as tall before kick-off as after it,
-    // and the centre chip does not jump when the clock starts.
-    const scoreCell = started
-      ? `<span class="gl tnum">${score}</span>`
-      : '<span class="gl tnum" aria-hidden="true">&nbsp;</span>';
+    // Nobody has scored yet, so nothing should say 0. The cell is omitted
+    // rather than blanked: a blank one still sat at the bottom of the column
+    // and pushed the crest and name above centre. The height it would have
+    // occupied is given back as symmetric padding in themes.css, so the card
+    // is the same size before kick-off as after it and the content is centred
+    // rather than hanging off the top.
+    const scoreCell = started ? `<span class="gl tnum">${score}</span>` : '';
     const inner = `
       ${id ? `<span class="bdg"><img src="${crest(id)}" alt=""></span>` : '<span class="bdg"></span>'}
       <span class="who"><b>${esc(nameOf(id))}</b><i>${esc(cityOf(id))}</i></span>
@@ -361,7 +362,7 @@ function viewMatch() {
     : '<div class="empty">Nothing to report yet.</div>';
 
   return `<button class="back" data-view="${state.from}">&larr; ${state.from === 'live' ? 'Live now' : 'All fixtures'}</button>
-    <div class="stack">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}
+    <div class="stack ${scheduled ? 'pre' : ''}">${side(m.home, hs, as, 'home')}${side(m.away, as, hs, 'away')}
       <span class="midchip ${M.isLive(m) ? 'live' : ''}" id="midchip">${
         m.ff ? 'FT'
         : !M.hasStarted(m) ? esc(m.kickoff)
