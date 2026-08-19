@@ -54,7 +54,7 @@ const state = {
   sq: { team: null, player: null },
   award: null,         // which leaderboard is open, while view === 'award'
   hist: [],            // pages to come back to, newest last
-  admin: false, role: null, squadTeam: null, editor: null,
+  admin: false, role: null, roleVerified: false, squadTeam: null, editor: null,
   lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
   trophyPick: null,    // the organiser's working set, before confirming
@@ -143,6 +143,29 @@ function applySnap(snap) {
   if (!state.dayPinned) state.day = M.groupStageComplete(state.matches) ? 2 : 1;
 }
 
+/**
+ * Settle the role against the server once the network is back.
+ *
+ * A role adopted from cache is a guess, and a guess has to be checked. This
+ * runs after the first poll that succeeds, and again on any `online` event,
+ * where `force` re-asks even if we already believed ourselves verified —
+ * that transition is the moment a revocation would land.
+ *
+ * Downgrades are silent and immediate; the controls simply stop being there.
+ */
+async function reverifyRole(force = false) {
+  if (!api.isSignedIn()) return;
+  if (state.roleVerified && !force) return;
+  try {
+    const seen = await api.checkRole();
+    const changed = seen.admin !== state.admin || seen.role !== state.role;
+    state.admin = seen.admin;
+    state.role = seen.role;
+    state.roleVerified = true;
+    if (changed) render();
+  } catch { /* still offline — the remembered role stands until it is not */ }
+}
+
 async function poll() {
   const sent = Date.now();
   try {
@@ -152,6 +175,7 @@ async function poll() {
     try { localStorage.setItem('cofta.snap.v1', JSON.stringify(snap)); } catch {}
     state.lastFetch = Date.now();
     state.error = null;
+    reverifyRole();          // the network answered, so the role can be settled
   } catch (e) {
     state.error = e.message;
   }
@@ -1677,8 +1701,9 @@ document.addEventListener('click', async (ev) => {
     $('autherr').textContent = '';
     try {
       await api.signIn(email, pw);
-      state.admin = !!(await api.amAdmin());
-      state.role = state.admin ? await api.myRole().catch(() => null) : null;
+      const seen = await api.checkRole();   // also remembers it for an offline boot
+      state.admin = seen.admin; state.role = seen.role;
+      state.roleVerified = true;
       if (!state.admin) { $('autherr').textContent = 'Signed in, but this account is not an organiser.'; }
       state.view = state.admin ? 'fixtures' : 'admin';
       await poll();
@@ -1686,7 +1711,7 @@ document.addEventListener('click', async (ev) => {
     return;
   }
 
-  if (t.id === 'signout') { api.signOut(); state.admin = false; state.role = null; render(); return; }
+  if (t.id === 'signout') { api.signOut(); state.admin = false; state.role = null; state.roleVerified = false; render(); return; }
 });
 
 // Player search: filters the visible list as you type. Action rows (own
@@ -1741,11 +1766,22 @@ document.addEventListener('change', (ev) => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
+  // Who are we? Ask the server, and if the network cannot answer, fall back
+  // to the last answer it gave. Failing closed here looked safe and was not:
+  // it signed an organiser out of their own controls during precisely the
+  // outage the offline queue was built for. The trust is cosmetic — every
+  // write is still checked server-side when the queue drains.
   if (api.isSignedIn()) {
     try {
-      state.admin = !!(await api.amAdmin());
-      state.role = state.admin ? await api.myRole() : null;
-    } catch { state.admin = false; state.role = null; }
+      const seen = await api.checkRole();
+      state.admin = seen.admin; state.role = seen.role;
+      state.roleVerified = true;
+    } catch {
+      const remembered = api.cachedRole();
+      state.admin = !!remembered?.admin;
+      state.role = remembered?.role ?? null;
+      state.roleVerified = false;
+    }
   }
   await poll();
   setInterval(poll, POLL_MS);
@@ -1753,4 +1789,7 @@ document.addEventListener('change', (ev) => {
   // keep the session alive across a long matchday
   setInterval(() => { if (api.isSignedIn()) api.refreshSession().catch(() => {}); }, 45 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  // coming back onto signal is the moment to settle an optimistically adopted
+  // role, and the moment a revocation made during the outage should bite
+  window.addEventListener('online', () => { reverifyRole(true); poll(); });
 })();

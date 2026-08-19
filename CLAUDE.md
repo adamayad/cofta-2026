@@ -21,11 +21,13 @@ the bare domain).
   spectators poll a single `snapshot()` RPC every 5s. RLS on everything.
 - **Auth**: username-style accounts on reserved domain (`pitch1@cofta.example`).
   Roles: `organiser` (full, incl. reset and trophies) vs `pitch`. Allowlist
-  table + trigger grants roles on user creation.
+  table + trigger grants roles on user creation. The last confirmed role is
+  cached in `localStorage` (`cofta.role.v1`) so an offline boot still renders
+  the organiser's controls — see **Offline role trust** below.
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v28`.
+  old devices keep stale copies forever. Currently `cofta-v33`.
 
 ## Workflow
 
@@ -304,6 +306,34 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 3. Before the weekend: venue dry run on real phones, Amani's organiser
    account (allowlisted, user not yet created), poster with QR.
 
+## Offline role trust
+
+Found in a venue drill: an organiser's phone restarting on a dead signal came
+up as a spectator. The boot-time role check is a network call, and a failed
+network call is indistinguishable from "not an admin" — so failing closed,
+which looked like the safe choice, locked an organiser out of their controls
+during exactly the outage the offline queue exists for.
+
+So the answer is remembered:
+
+- `api.checkRole()` is the **only** door to `is_admin` / `my_role`. It writes
+  what the server said to `cofta.role.v1`. The individual wrappers were
+  deleted on purpose, so no future caller can check the role without
+  refreshing the cache.
+- `boot()` asks the server first. Only if that throws does it adopt the
+  cached role, leaving `state.roleVerified = false`.
+- `reverifyRole()` settles it: after the first poll that succeeds, and again
+  on any `online` event (with `force`, since that transition is where a
+  revocation lands). Agreement refreshes the cache; disagreement downgrades
+  the UI immediately.
+- `signOut()` removes the cache with the session, or the next person to open
+  that phone inherits the last organiser's buttons.
+
+**The trust is cosmetic.** It decides which buttons render, nothing else.
+Every write still goes through an RPC that checks the role in the database,
+so a revoked admin can tap whatever they like and the queue fails those
+events on drain — which is the correct outcome, not a leak.
+
 ## Verification habits
 
 Pure logic lives in `model.js` precisely so it can be tested headlessly.
@@ -315,7 +345,10 @@ node tests/model_test.mjs
 `tests/model_test.mjs` covers the ranking and trophy helpers and is plain ESM
 with no imports beyond `model.js`, so it also runs in a browser when no node
 is installed. `tests/write_path_test.sql` covers the five database guarantees
-and runs against the live project.
+and runs against the live project. `tests/boot_drill.html` covers what
+model.js cannot — what `app.js` decides at boot when the network will not
+answer — by stubbing `fetch` and asserting the rendered controls. Serve the
+repo root and open it, plus `?mode=nosession`; read `__drillSummary`.
 
 Any change to rules, ordering or the clock should come with a test beside it;
 any change to `app.js` should at minimum be **executed** (not just parsed)

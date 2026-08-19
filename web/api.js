@@ -49,7 +49,41 @@ export async function signIn(username, password) {
   return data;
 }
 
-export function signOut() { setSession(null); }
+/* ── the last role the server confirmed ──────────────────── */
+/**
+ * An organiser's phone restarting during an outage is exactly when the
+ * offline queue matters most, and it was exactly when the app dropped them
+ * into the spectator view: the boot-time role check is a network call, and a
+ * failed network call is indistinguishable from "not an admin".
+ *
+ * So the answer is remembered. This is UI trust only — it decides which
+ * buttons render, nothing else. Every write still goes through an RPC that
+ * checks the role in the database, so a revoked admin can tap all they like
+ * and the queue will fail those events on drain, which is what should happen.
+ */
+const ROLE_KEY = 'cofta.role.v1';
+
+export function cachedRole() {
+  try { return JSON.parse(localStorage.getItem(ROLE_KEY) || 'null'); }
+  catch { return null; }
+}
+
+/** Ask the server who we are and remember the answer. Throws when the network
+ *  is down, which is the case the cache exists for. */
+export async function checkRole() {
+  const admin = !!(await rpc('is_admin', {}, true));
+  const role  = admin ? await rpc('my_role', {}, true) : null;
+  const seen  = { admin, role };
+  try { localStorage.setItem(ROLE_KEY, JSON.stringify(seen)); } catch {}
+  return seen;
+}
+
+export function signOut() {
+  setSession(null);
+  // the remembered role goes with the session, or the next person to open
+  // this phone inherits the last organiser's buttons
+  try { localStorage.removeItem(ROLE_KEY); } catch {}
+}
 
 /** Access tokens expire after an hour. Refresh quietly so a matchday
  *  session never dies mid-half. */
@@ -143,5 +177,6 @@ export const setTrophy = (trophy, playerIds) =>
 export const setSlot = (slot, teamId) =>
   rpc('set_slot', { p_slot: slot, p_team: teamId }, true);
 
-export const amAdmin = () => rpc('is_admin', {}, true);
-export const myRole = () => rpc('my_role', {}, true);
+// is_admin/my_role are deliberately not exported individually: checkRole() is
+// the only door, so no future caller can check the role without refreshing the
+// cache that an offline boot depends on.

@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA boot drill</title>
+<link rel="stylesheet" href="../web/styles.css"><link rel="stylesheet" href="../web/themes.css">
+<!--
+  Boot drill — the offline organiser.
+
+  model.js is tested headlessly; this covers the one thing it cannot, which is
+  what app.js decides at boot when the network will not answer. Found in a
+  venue drill: an organiser's phone restarting on a dead signal came up as a
+  spectator, because a failed role check is indistinguishable from "not an
+  admin". The fix remembers the last confirmed role; these are its guardrails.
+
+  Serve the repo root (scratchpad/serve.ps1) and open:
+      /tests/boot_drill.html                 offline boot, then recovery
+      /tests/boot_drill.html?mode=nosession  stale cache with no session
+  Read globalThis.__drillSummary when it appears. Every assertion must pass;
+  a failure here means an organiser loses their controls, or a spectator
+  gains them.
+-->
+<script>
+const MODE = new URLSearchParams(location.search).get('mode') || 'recovery';
+localStorage.clear();
+// a signed-in organiser whose last check succeeded, exactly as a real phone
+// would have it after any successful session
+if (MODE !== 'nosession') {
+  localStorage.setItem('cofta.session.v1', JSON.stringify({ access_token: 'drill', refresh_token: 'drill' }));
+}
+localStorage.setItem('cofta.role.v1', JSON.stringify({ admin: true, role: 'organiser' }));
+
+const EMPTY_SNAP = { now: new Date().toISOString(), teams: [], players: [], matches: [],
+  events: [], slots: {}, ties: [], trophies: {}, history: [] };
+
+// 'down' rejects like a dead radio; 'revoked' answers, and says no.
+window.__net = 'down';
+window.__calls = [];
+window.fetch = (url) => {
+  window.__calls.push(String(url));
+  if (window.__net === 'down') return Promise.reject(new TypeError('Failed to fetch'));
+  const body = String(url).includes('/rpc/snapshot') ? EMPTY_SNAP : false;
+  return Promise.resolve(new Response(JSON.stringify(body),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }));
+};
+
+const probe = () => ({
+  signout: !!document.getElementById('signout'),
+  reset:   !!document.querySelector('[data-reset]'),
+  signin:  !!document.getElementById('signin'),
+  roleChecks: window.__calls.filter(u => u.includes('is_admin')).length,
+});
+
+const results = [];
+const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+window.addEventListener('load', async () => {
+  await wait(1000);                       // boot's own poll has failed by now
+  document.getElementById('nav-admin').click();
+  await wait(200);
+  const booted = probe();
+
+  if (MODE === 'nosession') {
+    check('no session: cached role is ignored', !booted.signout && !booted.reset, booted);
+    check('no session: sign-in form is shown', booted.signin, booted);
+    check('no session: the role is never even asked for', booted.roleChecks === 0, booted);
+  } else {
+    check('offline boot: the network was tried first', booted.roleChecks === 1, booted);
+    check('offline boot: organiser controls render', booted.signout, booted);
+    check('offline boot: organiser-only reset renders', booted.reset, booted);
+    check('offline boot: no sign-in form', !booted.signin, booted);
+
+    window.__net = 'revoked';             // signal returns; the server says no
+    window.dispatchEvent(new Event('online'));
+    await wait(700);
+    const after = probe();
+    check('recovery: the role was re-checked', after.roleChecks === 2, after);
+    check('recovery: controls are withdrawn', !after.signout && !after.reset, after);
+    check('recovery: sign-in form returns', after.signin, after);
+    check('recovery: the cache is corrected, not left stale',
+      localStorage.getItem('cofta.role.v1') === JSON.stringify({ admin: false, role: null }),
+      localStorage.getItem('cofta.role.v1'));
+  }
+
+  const summary = { mode: MODE, total: results.length,
+    failures: results.filter(r => !r.ok).length, results };
+  globalThis.__drillSummary = summary;
+  // the app keeps polling and re-rendering #body, so the report sits outside it
+  const out = document.createElement('pre');
+  out.id = 'drill-report';
+  out.style.cssText = 'padding:12px;white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace';
+  out.textContent = `boot drill — ${summary.mode}\n\n` +
+    results.map(r => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.name}`).join('\n') +
+    `\n\n${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script></head>
+<body data-theme="matchday">
+<div class="app">
+  <header class="hd"><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-admin" data-view="admin">Organiser</button>
+  </nav>
+  <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
+</div>
+<script type="module" src="../web/app.js"></script>
+</body></html>
