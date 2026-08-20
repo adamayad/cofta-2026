@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v40`.
+  old devices keep stale copies forever. Currently `cofta-v41`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0023`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0024`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -519,9 +519,17 @@ different churches share a name — Golders Green and Birmingham are both
 "St Mary & Archangel Michael" — so uniqueness is on `(canonical_name, city)`,
 which is the whole reason the city is a column rather than part of the string.
 
-Where a source never recorded a church name (Newcastle, the historical Hove,
-the joint Liverpool & Bolton entry) the source string stands and the city is
-null. Inventing one would break the archive's first rule.
+Newcastle, Hove and Liverpool were named by Adam in 0024 — St George &
+St Athanasius, Archangel Michael and St Mary & St Cyril. Until then they
+carried bare place names with a null city, because inventing a church name
+would have broken the archive's first rule; a person who knows is not
+inference.
+
+**Liverpool & Bolton is the one row with no single church name.** It is a
+joint side of two churches, so renaming it to either would be wrong and
+stacking both on the primary line runs to 45 characters and truncates on a
+fixture row. The team keeps its own name and `display.joint` records the two
+churches, which `archSubtitle()` renders on its cabinet.
 
 **Eight clubs off the circuit have confirmed colours**, stored in their
 `display` jsonb rather than computed:

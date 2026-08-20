@@ -1494,6 +1494,23 @@ function archCrest(t, size = 28, cat = null) {
 const archTeam = (id) => state.archive?.teamById?.[id] ?? null;
 
 /**
+ * The small line under a club's name on its cabinet.
+ *
+ * Liverpool & Bolton is the one row in the archive with no single church
+ * name — it is a joint side of two churches — so it names both here rather
+ * than pretending to be either. Stacking them on the primary line instead
+ * would run to 45 characters and truncate on a fixture row.
+ */
+function archSubtitle(t) {
+  const joint = t.display?.joint;
+  if (Array.isArray(joint) && joint.length) {
+    return 'Joint team — '
+      + joint.map(c => `${c.name}, ${c.city}`).join(' and ');
+  }
+  return t.parent_club ? `B team of ${t.parent_club}` : 'Archive record';
+}
+
+/**
  * A club's name for display, and the ONLY way History is allowed to render
  * one.
  *
@@ -2049,8 +2066,7 @@ function viewArchTeam() {
     <div class="stack one"><div class="sl phead cabhead">
       <span class="bdg">${archCrest(t, 62)}</span>
       <span class="who"><b>${archTeamName(t.id)}</b>
-        <i class="cabsub">${esc(t.parent_club
-          ? `B team of ${t.parent_club}` : 'Archive record')}</i></span>
+        <i class="cabsub">${esc(archSubtitle(t))}</i></span>
     </div></div>
     ${cabinetBody(t.id)}`;
 }
