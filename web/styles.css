@@ -316,6 +316,12 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 
 /* player stats */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+/* Five tiles once assists joined them. At 375px five equal columns leave
+   ~61px each, so the longest label wraps to two lines and the grid rows
+   equalise the heights — which is why the tiles stay aligned. */
+.stats.five{grid-template-columns:repeat(5,1fr);gap:6px}
+.stats.five .stat{padding:10px 5px}
+.stats.five .stat b{font-size:21px}
 .stat{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);
   padding:11px 8px;text-align:center}
 .stat i{display:block;font-style:normal;font-size:8.5px;letter-spacing:.14em;
@@ -632,3 +638,33 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .gaps{margin:6px 0 0;padding-left:20px}
 .gaps li{font-size:12.5px;color:var(--dim);line-height:1.55;margin-bottom:5px}
 .note.src{font-style:italic}
+
+/* Goal editor: two labelled lists, scored by then assisted by. */
+.pksub{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--dim);margin:14px 0 7px}
+.pksub:first-of-type{margin-top:0}
+
+/* The assist on a match-report line: present, secondary, and tappable
+   through to the player, without competing with the scorer's name. */
+.asst{color:var(--dim);font-size:12.5px;white-space:nowrap}
+.asst .plink{font-weight:500;color:var(--dim);text-decoration:underline;
+  text-decoration-color:var(--line2);text-underline-offset:2px}
+
+/* Organiser lives in the masthead, not the tab row.
+   The nav still scrolls at 375px (six labels measure 440px against a 375px
+   viewport), but Organiser is the one tab spectators never need, so it moves
+   out of the row rather than competing for space in it.
+   Muted while signed out, tinted with a dot once signed in — an organiser
+   should be able to tell at a glance whether this phone is still theirs. */
+.hd{position:relative}
+.gear{position:absolute;top:16px;right:12px;width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;border-radius:11px;
+  color:var(--dim);transition:color .18s,background .18s}
+.gear:active{background:var(--card)}
+.gear .gdot{display:none}
+.gear.in{color:var(--acc)}
+.gear.in .gdot{display:block;position:absolute;top:7px;right:7px;
+  width:7px;height:7px;border-radius:50%;background:var(--acc)}
+.gear.on{color:var(--acc);background:var(--card)}
+/* the masthead title must not run under the control */
+.hd h1,.hd .assoc{padding-right:46px}

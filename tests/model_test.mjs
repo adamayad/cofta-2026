@@ -133,6 +133,47 @@ test('goldenBootBoard carries the club through for linking', () => {
   eq(r[0].item.team, 'stm', 'team id');
 });
 
+/* ── assists ──────────────────────────────────────────────
+   An assist hangs off a goal and credits a different player from the one who
+   scored it, so the tally must key on the assist, never on the scorer. The
+   database refuses a self-assist and refuses an assist on anything but a
+   goal; these cases prove the client agrees. */
+const ASSISTED = [
+  { t: 'goal', p: 'p1', a: 'p2' },
+  { t: 'goal', p: 'p1', a: 'p2' },
+  { t: 'goal', p: 'p3', a: 'p2' },
+  { t: 'goal', p: 'p2', a: 'p1' },
+  { t: 'goal', p: 'p4' },                          // scored, nobody assisted
+  { t: 'goal', p: 'p1', a: 'p3', voided: true },   // undone, must not count
+  { t: 'yellow', p: 'p1', a: 'p3' },               // not a goal, cannot assist
+];
+
+test('assistsBoard credits the assister, not the scorer', () => {
+  const r = M.assistsBoard(ASSISTED, PLAYERS);
+  eq(r.map(x => x.item.id), ['p2', 'p1'], 'order');
+  eq(r.map(x => x.score), [3, 1], 'assist counts');
+  eq(places(r), [1, 2], 'places');
+});
+
+test('assistsBoard ignores voided goals, unassisted goals and non-goals', () => {
+  const r = M.assistsBoard(ASSISTED, PLAYERS);
+  eq(r.find(x => x.item.id === 'p3'), undefined, 'p3 only assisted a voided goal and a card');
+  eq(r.reduce((n, x) => n + x.score, 0), 4, 'four assists counted in total');
+});
+
+test('assistsBoard leaves the goalscorer board untouched', () => {
+  const goals = M.goldenBootBoard(ASSISTED, PLAYERS);
+  // p2, p3 and p4 are level on one goal, so they order by name:
+  // Abanoub Adel (p3), Andrew Ramzy (p2), Kirollos Y (p4).
+  eq(goals.map(x => x.item.id), ['p1', 'p3', 'p2', 'p4'], 'scorers ranked on goals');
+  eq(goals.map(x => x.score), [2, 1, 1, 1], 'an assist is never a goal');
+  eq(places(goals), [1, 2, 2, 2], 'three joint second');
+});
+
+test('assistsBoard with nothing assisted is empty', () => {
+  eq(M.assistsBoard([{ t: 'goal', p: 'p1' }], PLAYERS).length, 0, 'no rows');
+});
+
 test('goldenBootBoard with no goals at all is empty', () => {
   eq(M.goldenBootBoard([], PLAYERS), [], 'empty board');
 });

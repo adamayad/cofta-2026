@@ -74,7 +74,7 @@ window.addEventListener('load', async () => {
 </script></head>
 <body data-theme="matchday">
 <div class="app">
-  <header class="hd"><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <header class="hd"><button id="nav-admin" class="gear" data-view="admin" aria-label="Organiser"></button><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
   <nav class="nav">
     <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
     <button id="nav-live" data-view="live">Live</button>
@@ -82,7 +82,6 @@ window.addEventListener('load', async () => {
     <button id="nav-tables" data-view="tables">Tables</button>
     <button id="nav-awards" data-view="awards">Stats</button>
     <button id="nav-history" data-view="history">History</button>
-    <button id="nav-admin" data-view="admin">Organiser</button>
   </nav>
   <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
 </div>

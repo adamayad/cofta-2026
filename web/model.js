@@ -233,13 +233,19 @@ export function rankRows(items, scoreOf, { lowerIsBetter = false, tieBreak } = {
   return out;
 }
 
-/** Count one kind of event per player, ranked. Players with none are absent
- *  — a leaderboard of nobodies on nought helps no one. */
-function playerBoard(events, pred, players) {
+/**
+ * Count one kind of event per player, ranked. Players with none are absent
+ * — a leaderboard of nobodies on nought helps no one.
+ *
+ * `keyOf` says which player the row belongs to. That is the event's own
+ * player for everything except assists, which credit `e.a` instead.
+ */
+function playerBoard(events, pred, players, keyOf = (e) => e.p) {
   const tally = {};
   for (const e of (events || [])) {
-    if (e.voided || !e.p || !pred(e)) continue;
-    tally[e.p] = (tally[e.p] || 0) + 1;
+    const id = keyOf(e);
+    if (e.voided || !id || !pred(e)) continue;
+    tally[id] = (tally[id] || 0) + 1;
   }
   const rows = Object.entries(tally).map(([id, n]) => ({
     id, n,
@@ -252,6 +258,16 @@ function playerBoard(events, pred, players) {
 /** Every player with at least one attributed goal. */
 export const goldenBootBoard = (events, players = {}) =>
   playerBoard(events, e => e.t === 'goal', players);
+
+/**
+ * Every player credited with at least one assist.
+ *
+ * An assist only ever hangs off a goal — the database enforces that, and
+ * refuses to let a scorer assist themselves — so this counts goals by the
+ * player named in the assist field, not the one who scored.
+ */
+export const assistsBoard = (events, players = {}) =>
+  playerBoard(events, e => e.t === 'goal' && e.a, players, e => e.a);
 
 /** Every player with at least one man-of-the-match award. */
 export const playerOfTournamentBoard = (events, players = {}) =>

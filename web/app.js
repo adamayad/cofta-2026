@@ -473,8 +473,15 @@ function eventText(x, m) {
   const who = x.s === 'home' ? m.home : m.away;
   const nm = x.p ? playerName(x.p) : null;
   const by = nm ? `<b class="plink" data-player="${x.p}">${esc(nm)}</b>` : null;
+  // The assist rides on the match report only. The scorer lines under the
+  // score stay goals-only: that column is the scoreline's own summary, and
+  // two names per goal would double its height for a secondary fact.
+  const an = x.t === 'goal' && x.a ? playerName(x.a) : null;
+  const assist = an
+    ? ` <span class="asst">assist: <button class="plink" data-player="${x.a}">${esc(an)}</button></span>`
+    : '';
   switch (x.t) {
-    case 'goal':     return by ? `${by} <i>(${esc(cityOf(who))})</i>` : `<b>${esc(nameOf(who))}</b> score`;
+    case 'goal':     return (by ? `${by} <i>(${esc(cityOf(who))})</i>` : `<b>${esc(nameOf(who))}</b> score`) + assist;
     case 'own_goal': return `Own goal \u2014 ${by ?? `<b>${esc(nameOf(who))}</b>`}`;
     case 'yellow':   return `${by ? by + ' &mdash; ' : ''}yellow card`;
     case 'red':      return `${by ? by + ' &mdash; ' : ''}<b>sent off</b>`;
@@ -516,16 +523,37 @@ function editorPanel(m) {
             value="${esc(state.editor.minute)}" style="max-width:9em"></div>
       </div>`;
 
+  // Assists exist on goals only — never on an own goal, where there is
+  // nobody to credit, and never on a card. The scorer is excluded from their
+  // own assist list because the database rejects a self-assist outright.
+  const asel = state.editor.assist;
+  const assistOptions = squad.filter(p => p.id !== sel);
+  const assistSection = ev.t !== 'goal' ? '' : `
+      <div class="pksub">Assisted by</div>
+      ${assistOptions.length > 6
+        ? `<input id="pkqa" type="search" placeholder="Search players" autocomplete="off"
+             autocapitalize="none" spellcheck="false" style="margin-bottom:9px">` : ''}
+      <div class="pklist">
+        <button class="pk ${asel == null ? 'on' : ''}" data-edassist="none">
+          <span class="no"></span><span>No assist</span></button>
+        ${assistOptions.map(p => `<button class="pk ${asel === p.id ? 'on' : ''}"
+            data-edassist="${p.id}">
+            ${p.no != null ? `<span class="no tnum">${p.no}</span>` : '<span class="no"></span>'}
+            <span>${esc(p.name)}</span></button>`).join('')}
+      </div>`;
+
   return `<div class="picker">
       <div class="pkhd"><span>${label}</span>
         <button data-edcancel="1">Cancel</button></div>
       ${minuteField}
+      ${ev.t === 'goal' ? '<div class="pksub">Scored by</div>' : ''}
       ${search}
       <div class="pklist">
         <button class="pk ${sel == null ? 'on' : ''}" data-edpick="none">
           <span class="no"></span><span>No player recorded</span></button>
         ${names}
       </div>
+      ${assistSection}
       <button class="act" data-edsave="1">Save changes</button>
     </div>`;
 }
@@ -834,6 +862,8 @@ function statsFor(pid) {
     y:     mine.filter(e => e.t === 'yellow').length,
     r:     mine.filter(e => e.t === 'red').length,
     motm:  mine.filter(e => e.t === 'motm').length,
+    // An assist is on somebody else's goal, so it is never in `mine`.
+    assists: state.events.filter(e => e.t === 'goal' && e.a === pid).length,
   };
 }
 
@@ -877,8 +907,9 @@ function viewSquads() {
         ${sus.misses ? `\u2014 misses the ${esc(M.stageLabel(sus.misses))} fixture` : ''}.</div>` : ''}
       ${honours}
       <div class="sect">This tournament</div>
-      <div class="stats">
+      <div class="stats five">
         <div class="stat"><i>Goals</i><b class="tnum">${st.goals.length}</b></div>
+        <div class="stat"><i>Assists</i><b class="tnum">${st.assists}</b></div>
         <div class="stat"><i>Man of match</i><b class="tnum">${st.motm}</b></div>
         <div class="stat"><i>Yellow</i><b class="tnum">${st.y}</b></div>
         <div class="stat"><i>Red</i><b class="tnum">${st.r}</b></div>
@@ -944,6 +975,7 @@ function allBoards() {
   const conceded = M.goldenGloveBoard(teamsArr, ms);
   return {
     goals, motm, conceded,
+    assists: M.assistsBoard(state.events, byId),
     yellow:  M.yellowCardBoard(state.events, byId),
     red:     M.redCardBoard(state.events, byId),
     scored:  M.goalsScoredBoard(teamsArr, ms),
@@ -961,6 +993,9 @@ const BOARDS = {
   goals: { of: 'players', label: 'Goalscorers',
     empty: 'No goals have been attributed to a named player yet.',
     foot: 'Every player with a goal to their name. A goal logged without a scorer still counts on the scoreboard, but cannot appear here.' },
+  assists: { of: 'players', label: 'Assists',
+    empty: 'No assists have been recorded yet.',
+    foot: 'The pass that made the goal, where one was recorded. Assists are entered after the fact by editing the goal, so this board fills in behind the scoreline rather than alongside it — an empty row here means nobody has been credited yet, not that nobody set anything up.' },
   motm: { of: 'players', label: 'Man of the Match',
     empty: 'No man of the match awards have been given yet.',
     foot: 'Every player with a man of the match award.' },
@@ -988,7 +1023,7 @@ const BOARDS = {
 const BOARD_ALIAS = { golden_boot: 'goals', player_of_tournament: 'motm', golden_glove: 'conceded' };
 const boardKey = (k) => BOARD_ALIAS[k] ?? k;
 
-const PLAYER_BOARDS = ['goals', 'motm', 'yellow', 'red'];
+const PLAYER_BOARDS = ['goals', 'assists', 'motm', 'yellow', 'red'];
 const TEAM_BOARDS   = ['scored', 'conceded', 'clean', 'scorers'];
 
 /** Confirmed winners of one trophy, as a display string. */
@@ -1743,8 +1778,12 @@ function render() {
                : state.view === 'award' ? 'awards'
                : (state.view === 'histcomp' || state.view === 'histed') ? 'history'
                : state.view;
-  ['fixtures', 'live', 'squads', 'tables', 'awards', 'history', 'admin'].forEach(v =>
+  ['fixtures', 'live', 'squads', 'tables', 'awards', 'history'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
+  // The Organiser control is a masthead icon rather than a tab: lit when its
+  // page is open, tinted whenever this phone is signed in.
+  $('nav-admin')?.classList.toggle('on', navFor === 'admin');
+  $('nav-admin')?.classList.toggle('in', api.isSignedIn());
 
   const body =
     state.view === 'fixtures' ? viewFixtures() :
@@ -1788,7 +1827,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -1962,7 +2001,10 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.edit) {
     const ev = state.events.find(x => x.id === t.dataset.edit);
     if (!ev) return;
-    state.editor = { id: ev.id, player: ev.p ?? null,
+    // The editor opens on what is already recorded, assist included, so a
+    // save that only corrects a minute puts the same assist back rather than
+    // clearing it \u2014 edit_event is a full replace on the server.
+    state.editor = { id: ev.id, player: ev.p ?? null, assist: ev.a ?? null,
                      minute: String(ev.min || '').replace(/[\u2032']/g, '') };
     render(); return;
   }
@@ -1971,6 +2013,19 @@ document.addEventListener('click', async (ev) => {
     const box = $('edmin');
     if (box) state.editor.minute = box.value.trim();   // keep what was typed
     state.editor.player = t.dataset.edpick === 'none' ? null : t.dataset.edpick;
+    // Nobody can assist their own goal, so choosing a scorer who is already
+    // the assister drops the assist rather than saving something the
+    // database will reject.
+    if (state.editor.assist && state.editor.assist === state.editor.player) {
+      state.editor.assist = null;
+    }
+    render(); return;
+  }
+
+  if (t.dataset.edassist) {
+    const box = $('edmin');
+    if (box) state.editor.minute = box.value.trim();
+    state.editor.assist = t.dataset.edassist === 'none' ? null : t.dataset.edassist;
     render(); return;
   }
 
@@ -1984,11 +2039,17 @@ document.addEventListener('click', async (ev) => {
     }
     if (!minute) minute = '40';
     const ed = state.editor;
+    const target = state.events.find(x => x.id === ed.id);
+    // An assist belongs to a goal and to a named scorer. Anything else is
+    // sent as null rather than letting the server reject the whole edit.
+    const assist = (target?.t === 'goal' && ed.player && ed.assist !== ed.player)
+      ? ed.assist : null;
     // optimistic: the report and scorer lines update instantly
-    const ev = state.events.find(x => x.id === ed.id);
-    if (ev) { ev.min = minute + '\u2032'; ev.p = ed.player; }
+    if (target) { target.min = minute + '\u2032'; target.p = ed.player; target.a = assist; }
+    // Full replace, so the assist currently on screen is always sent back \u2014
+    // correcting a minute must never silently drop it.
     queue.add(api.uuid(), 'edit_event',
-      { p_event: ed.id, p_player: ed.player, p_minute: minute + '\u2032' });
+      { p_event: ed.id, p_player: ed.player, p_minute: minute + '\u2032', p_assist: assist });
     state.editor = null;
     render(); return;
   }
@@ -2158,14 +2219,19 @@ document.addEventListener('click', async (ev) => {
 // Player search: filters the visible list as you type. Action rows (own
 // goal, no-player) stay visible whatever the query.
 document.addEventListener('input', (ev) => {
-  const list = ev.target.closest('.picker')?.querySelector('.pklist');
+  // The goal editor has two lists — scored by, then assisted by — so a search
+  // box filters the list immediately after it, not merely the first one in
+  // the picker. Everything else has a single list and falls back to that.
+  const list = ev.target.nextElementSibling?.classList?.contains('pklist')
+    ? ev.target.nextElementSibling
+    : ev.target.closest('.picker')?.querySelector('.pklist');
   if (!list) return;
 
-  if (ev.target.id === 'pkq') {
+  if (ev.target.id === 'pkq' || ev.target.id === 'pkqa') {
     const q = ev.target.value.trim().toLowerCase();
     for (const b of list.querySelectorAll('.pk')) {
       const isAction = b.dataset.pick === 'own' || b.dataset.pick === 'skip'
-        || b.dataset.edpick === 'none';
+        || b.dataset.edpick === 'none' || b.dataset.edassist === 'none';
       b.style.display = (isAction || !q || b.textContent.toLowerCase().includes(q))
         ? '' : 'none';
     }

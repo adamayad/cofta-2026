@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v35`.
+  old devices keep stale copies forever. Currently `cofta-v36`.
 
 ## Workflow
 
@@ -84,9 +84,11 @@ the bare domain).
   already implies a knockout tie and needs no second guard in the client.
 - Suspensions: two yellows in separate matches (per phase: group/KO don't
   combine) or a red → miss the club's own next fixture.
-- The nav is **seven tabs** and scrolls horizontally below 768px rather than
-  wrapping. Moving Organiser to a masthead icon is still outstanding from an
-  earlier package and would relieve the crowding.
+- The nav is **six tabs** and scrolls horizontally below 768px rather than
+  wrapping. **Organiser is not a tab** — it is a shield button in the
+  masthead top-right (`.gear`, `aria-label="Organiser"`), muted while signed
+  out and accent-tinted with a dot once signed in. It still carries
+  `data-view="admin"`, so every existing route works unchanged.
 - The click handler is one delegated listener; **every tappable element's
   data-attribute must be in the `closest()` selector list** or it is dead.
   All club/player links are real `<button>`s (mobile tap reliability, and a
@@ -311,6 +313,30 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 3. Before the weekend: venue dry run on real phones, Amani's organiser
    account (allowlisted, user not yet created), poster with QR.
 
+## Assists
+
+`match_events.assist_player` (0019). An assist hangs off the goal it created
+rather than living in a table of its own, because attribution is a second
+pass and must never gate the score moving.
+
+- **`edit_event` is a FULL REPLACE.** The client therefore sends the assist it
+  is currently showing on *every* edit, or correcting a minute would silently
+  clear the assist beside it. That failure is invisible from the UI, which is
+  why `tests/assist_drill.html` asserts the payload of a minute-only edit.
+- Assists exist on **goals only** — never an own goal, where there is nobody
+  to credit, never a card. The editor shows no assist section for anything
+  else, and the database refuses the rest.
+- **Nobody assists their own goal.** The picker excludes the selected scorer,
+  and changing the scorer to the current assister drops the assist rather
+  than sending something the database will reject.
+- **The scorer lines under the score stay goals-only.** The assist appears on
+  the match report (`.asst`, muted, linking to the player) — that column is
+  the scoreline's summary, and two names per goal would double its height for
+  a secondary fact.
+- `assistsBoard()` keys on the assist, not the scorer: `playerBoard()` takes a
+  `keyOf` for exactly this. Assists is the second of five **player** boards on
+  Stats, and the fifth stat tile on a player profile (`.stats.five`).
+
 ## History: the archive of previous tournaments
 
 Thirteen finished tournaments, 2022–2026, imported by `0021` from
@@ -441,6 +467,15 @@ repo root and open it, plus `?mode=nosession`; read `__drillSummary`.
 a spectator seeing zero flags is easy to measure, so that drill stubs only
 the role check, leaves every other request going to the real database, and
 asserts an organiser does see them. Read `__flagSummary`.
+`tests/assist_drill.html` drives the goal editor as an organiser and captures
+the edit_event payload instead of sending it, which is the only way to prove
+the full-replace rule holds. Read `__assistSummary`.
+
+**Computed-style assertions must disable transitions first.** `getComputedStyle`
+returns the in-flight value during a transition, and transitions are frozen
+while the browser pane is hidden — so a colour read mid-transition returns the
+*start* value indefinitely and looks exactly like a rule that is not applying.
+An hour went into `.gear.on` before that turned out to be the explanation.
 
 Any change to rules, ordering or the clock should come with a test beside it;
 any change to `app.js` should at minimum be **executed** (not just parsed)

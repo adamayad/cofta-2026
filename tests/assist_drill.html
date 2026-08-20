@@ -1,0 +1,133 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA assist drill</title>
+<link rel="stylesheet" href="../web/styles.css"><link rel="stylesheet" href="../web/themes.css">
+<!--
+  Assist drill.
+
+  edit_event is a FULL REPLACE on the server, so the client has to send the
+  assist it is currently showing on every edit — otherwise correcting a minute
+  silently clears the assist beside it. That is the failure this drill exists
+  to catch, and it is invisible from the UI.
+
+  The role check is stubbed to "organiser" so the editor renders; edit_event
+  is intercepted and captured rather than sent, so nothing reaches the live
+  database. Everything else goes to the real server.
+
+  Serve the repo root and open /tests/assist_drill.html; read
+  globalThis.__assistSummary. Needs a connection and at least one goal on the
+  live rehearsal data.
+-->
+<script>
+localStorage.clear();
+localStorage.setItem('cofta.session.v1', JSON.stringify({ access_token: 'drill', refresh_token: 'drill' }));
+
+const sent = [];
+const realFetch = window.fetch.bind(window);
+const ok = (body) => Promise.resolve(new Response(JSON.stringify(body),
+  { status: 200, headers: { 'Content-Type': 'application/json' } }));
+window.fetch = (url, opts) => {
+  const u = String(url);
+  if (u.includes('/rpc/is_admin')) return ok(true);
+  if (u.includes('/rpc/my_role'))  return ok('organiser');
+  if (u.includes('/rpc/edit_event')) {          // captured, never sent
+    try { sent.push(JSON.parse(opts.body)); } catch { sent.push(opts.body); }
+    return ok(null);
+  }
+  return realFetch(url, opts);
+};
+
+const results = [];
+const check = (name, cond, detail) => results.push({ name, ok: !!cond, detail });
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const noTransition = () => { const s = document.createElement('style');
+  s.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+  document.head.appendChild(s); };
+
+window.addEventListener('load', async () => {
+  noTransition();
+  await wait(3000);
+
+  // find a played match that has a goal on its report
+  let goalEdit = null, tries = 0;
+  const rows = [...document.querySelectorAll('[data-match]')];
+  for (const r of rows) {
+    r.click(); await wait(400); tries++;
+    const marks = [...document.querySelectorAll('.tl li .mk.goal')];
+    if (marks.length) {
+      goalEdit = marks[0].closest('li')?.querySelector('[data-edit]');
+      if (goalEdit) break;
+    }
+    document.getElementById('nav-fixtures').click(); await wait(250);
+    if (tries > 20) break;
+  }
+  check('found a goal to edit on the rehearsal data', !!goalEdit);
+
+  if (goalEdit) {
+    goalEdit.click(); await wait(350);
+    const subs = [...document.querySelectorAll('.pksub')].map(s => s.textContent.trim());
+    check('the goal editor labels both lists', subs.join('|') === 'Scored by|Assisted by', subs);
+
+    const assistBtns = [...document.querySelectorAll('[data-edassist]')];
+    check('an assist list is offered', assistBtns.length > 1, assistBtns.length);
+    check('"No assist" is the first option',
+      assistBtns[0]?.dataset.edassist === 'none' && /No assist/.test(assistBtns[0].textContent));
+
+    const scorer = document.querySelector('[data-edpick].on:not([data-edpick="none"])');
+    check('the scorer is excluded from their own assist list',
+      !scorer || !assistBtns.some(b => b.dataset.edassist === scorer.dataset.edpick),
+      scorer?.dataset.edpick);
+
+    // choose an assist and save
+    const pick = assistBtns.find(b => b.dataset.edassist !== 'none');
+    const pickedId = pick.dataset.edassist;
+    pick.click(); await wait(250);
+    check('the chosen assist is marked selected',
+      document.querySelector(`[data-edassist="${pickedId}"]`)?.classList.contains('on'));
+
+    document.querySelector('[data-edsave]').click(); await wait(600);
+    const payload = sent[sent.length - 1];
+    check('edit_event carries the assist', payload && payload.p_assist === pickedId, payload);
+    check('edit_event still carries player and minute',
+      payload && 'p_player' in payload && /′$/.test(payload.p_minute || ''), payload);
+    check('the report now shows the assist',
+      !!document.querySelector('.asst'),
+      document.querySelector('.asst')?.textContent.trim());
+
+    // re-open and save again WITHOUT touching the assist: it must survive
+    const again = document.querySelector('.tl li .mk.goal')?.closest('li')?.querySelector('[data-edit]');
+    if (again) {
+      again.click(); await wait(350);
+      check('re-opening pre-selects the stored assist',
+        document.querySelector(`[data-edassist="${pickedId}"]`)?.classList.contains('on'));
+      document.querySelector('[data-edsave]').click(); await wait(600);
+      const p2 = sent[sent.length - 1];
+      check('a minute-only edit sends the assist back, not null',
+        p2 && p2.p_assist === pickedId, p2);
+    }
+  }
+
+  const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results, sent };
+  globalThis.__assistSummary = summary;
+  const out = document.createElement('pre');
+  out.id = 'assist-report';
+  out.style.cssText = 'padding:12px;white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace';
+  out.textContent = 'assist drill\n\n'
+    + results.map(r => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.name}`).join('\n')
+    + `\n\n${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script></head>
+<body data-theme="matchday">
+<div class="app">
+  <header class="hd"><button id="nav-admin" class="gear" data-view="admin" aria-label="Organiser"></button><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-history" data-view="history">History</button>
+  </nav>
+  <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
+</div>
+<script type="module" src="../web/app.js"></script>
+</body></html>
