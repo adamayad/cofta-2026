@@ -603,7 +603,10 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
    single clipped letter. An archive table also carries eight numeric columns
    to the live table's six, so fixed layout has no room to give. Auto layout
    sizes the numbers to their digits and hands the rest to the club. */
-.tbl.arch{table-layout:auto}
+/* Ten columns against a 320px phone: the table scrolls inside this rather
+   than being clipped, and the page body never scrolls sideways. */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl.arch{table-layout:auto;min-width:290px}
 .tbl.arch th.tm{width:auto;text-align:left}
 .tbl.arch th.pos{width:18px}
 .tbl.arch thead th,.tbl.arch tbody td{white-space:nowrap;padding-left:3px;padding-right:3px}

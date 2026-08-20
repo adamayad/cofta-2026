@@ -135,6 +135,10 @@
 [data-theme="matchday"] tbody td{padding:12px 4px}
 [data-theme="matchday"] tbody tr:last-child td{border-bottom:none}
 [data-theme="matchday"] tbody tr.unres td{background:#f4f1e2}
+/* The last oklch() left in a component rule the public theme did not already
+   override. Harmless where oklch is unsupported — the tag keeps the plain tag
+   colour — but Matchday should not depend on a 2022 colour function at all. */
+[data-theme="matchday"] .tag.so{color:#8a6a12}
 [data-theme="matchday"] .ko{background:var(--card);border-radius:12px;border-bottom:none;
   padding:13px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(18,20,40,.05)}
 [data-theme="matchday"] .ko .w{font-style:normal}

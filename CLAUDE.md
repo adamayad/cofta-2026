@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v50`.
+  old devices keep stale copies forever. Currently `cofta-v51`.
 
 ## Workflow
 
@@ -749,6 +749,46 @@ So the answer is remembered:
 Every write still goes through an RPC that checks the role in the database,
 so a revoked admin can tap whatever they like and the queue fails those
 events on drain — which is the correct outcome, not a leak.
+
+## What this runs on
+
+Hundreds of strangers' phones, once, with no chance to tell them to update
+anything. Audited against that rather than against the machine it was built on.
+
+- **JavaScript floor: Safari 14 / Chrome 85 (2020).** The tightest feature in
+  the codebase is `??=`; there is no `.at()`, `structuredClone`,
+  `Object.hasOwn`, private field or top-level await. `crypto.randomUUID` is the
+  one modern API used and it already falls back. Keep it there: a parse error
+  in `app.js` is not a broken feature, it is an infinite "Loading…" on that
+  phone with no way back.
+- **Matchday must never depend on `oklch()`.** The `:root` palette is oklch
+  throughout, but `[data-theme="matchday"]` — what the public actually sees —
+  redefines **every** colour token in hex, so the default theme renders on a
+  browser too old for oklch. That is not a coincidence to rely on silently:
+  any new token, or any component rule using a colour function directly, needs
+  a Matchday override in hex. A custom property holding an unparseable colour
+  fails *at computed-value time*, so `background:var(--bg)` becomes
+  transparent rather than falling back — which is how a page ends up as black
+  text on black.
+- `color-mix()` survives only in `:active` tints and one club-block
+  background, where losing it costs a press highlight and nothing else.
+  `subgrid` is already behind `@supports`. `:has()` and `dvh` degrade to
+  ordinary spacing and height.
+- **320px is a real width** (iPhone SE), and the archive standings table has
+  ten columns. It scrolls inside `.tscroll`; without that it was clipped, not
+  scrollable, and Pts — the column a reader opens a table for — was
+  unreachable. Any table wider than about six columns needs the same wrapper.
+- **Never let `localStorage` throw on a path a person is waiting on.** It
+  throws in private browsing and on a full disk. `setSession` was unguarded
+  and sat on the sign-in path, so an organiser tapping Sign in got a raw
+  `QuotaExceededError`. The session now also lives in memory, so sign-in works
+  regardless and only fails to survive a reload. Every other call site was
+  already wrapped; keep it that way.
+- **Timestamps must stay ISO with a `T`.** `snapshot()` emits
+  `2026-08-20T13:30:34.580079+00:00` for `now` and `clock_anchor` because both
+  are `timestamptz` rendered by `to_jsonb`. Postgres's space-separated `::text`
+  form does not parse in Safari, and `Date.parse` returning `NaN` there would
+  poison the clock offset and turn every minute on every phone into `NaN`.
 
 ## Verification habits
 

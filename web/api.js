@@ -14,13 +14,32 @@ export const PUBLISHABLE_KEY = 'sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF';
 const TOKEN_KEY = 'cofta.session.v1';
 
 /* ── session ─────────────────────────────────────────────── */
+/**
+ * The session survives in memory even when it cannot be written down.
+ *
+ * `localStorage.setItem` throws on a phone in private browsing or one whose
+ * storage is full, and this sits on the sign-in path: unguarded, an organiser
+ * tapping Sign in got an exception and no explanation, on the one device that
+ * has to work. Now the write is attempted and the in-memory copy carries the
+ * session regardless, so they are signed in for as long as the page is open —
+ * which is the whole match — and only lose it on a reload.
+ *
+ * `undefined` means "nothing set this run, defer to storage"; `null` means
+ * signed out, and must beat a stale stored value that failed to delete.
+ */
+let memSession;
+
 export function getSession() {
+  if (memSession !== undefined) return memSession;
   try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); }
   catch { return null; }
 }
 function setSession(s) {
-  if (s) localStorage.setItem(TOKEN_KEY, JSON.stringify(s));
-  else localStorage.removeItem(TOKEN_KEY);
+  memSession = s || null;
+  try {
+    if (s) localStorage.setItem(TOKEN_KEY, JSON.stringify(s));
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch { /* private mode or a full disk — the in-memory copy stands in */ }
 }
 export const isSignedIn = () => !!getSession()?.access_token;
 

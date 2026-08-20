@@ -1815,8 +1815,12 @@ function archTable(d, g) {
   // compiler from the fixture list, so they are shown in a muted column and
   // labelled, never passed off as source data.
   const derived = rows.some(r => r.gf == null && r.gf_derived != null);
+  // Ten columns do not fit a 320px phone. Without the scroller the table is
+  // clipped rather than scrollable, so Pts — the column the reader came for —
+  // is simply unreachable on the smallest screens. The wrapper scrolls the
+  // table inside itself and leaves the page body alone.
   return `<div class="sect">${esc(g.name)}</div>
-    <table class="tbl arch"><thead><tr>
+    <div class="tscroll"><table class="tbl arch"><thead><tr>
       <th class="pos"></th><th class="tm">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
       <th class="${derived ? 'drv' : ''}">GF</th><th class="${derived ? 'drv' : ''}">GA</th>
       <th>GD</th><th class="pts">Pts</th></tr></thead><tbody>
@@ -1832,7 +1836,7 @@ function archTable(d, g) {
         <td class="${derived ? 'drv' : ''}">${r.ga ?? r.ga_derived ?? '–'}</td>
         <td>${r.gd ?? '–'}</td><td class="pts">${r.pts ?? '–'}</td></tr>`;
     }).join('')}
-    </tbody></table>
+    </tbody></table></div>
     ${derived ? `<p class="note">GF and GA were not displayed in the source table;
       these are computed from the fixture list and reconcile exactly to the published GD.</p>` : ''}
     ${rows.some(r => r.note) ? rows.filter(r => r.note).map(r =>
