@@ -7,11 +7,15 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v38';
+const VERSION = 'cofta-v39';
 const SHELL = [
   './', './index.html', './styles.css', './fonts.css', './themes.css', './diocese.webp',
   './app.js', './api.js', './model.js', './queue.js', './crests.js',
   './manifest.webmanifest',
+  // The home-screen icons. Cache-first like every other asset, so a phone
+  // that already installed the app only refetches them when VERSION moves.
+  // cofta-icon-source.png is master art, never rendered, deliberately absent.
+  './icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png',
   './crests/smpk.webp','./crests/ste.webp','./crests/cro.webp','./crests/bri.webp',
   './crests/gg.webp','./crests/km.webp','./crests/rot.webp','./crests/stm.webp',
   './fonts/big-shoulders-display-latin-700-normal.woff2',

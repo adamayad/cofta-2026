@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v38`.
+  old devices keep stale copies forever. Currently `cofta-v39`.
 
 ## Workflow
 
@@ -131,9 +131,16 @@ the bare domain).
 
 ## Themes
 
-**Matchday is locked as the public theme.** Token overrides live in
-`themes.css` keyed on `[data-theme]`; club `colour` and `text_colour` come
-from the DB.
+**Matchday is locked as the public theme.**
+
+The manifest's `theme_color` stays `#eef0f3` — Matchday's `--bg`, which
+`app.js` also writes into the `theme-color` meta per theme, so browser chrome
+matches the app rather than the icon. `background_color` is the PWA splash
+behind the icon and is sampled from the artwork's cream (`#fbefed`): that is
+the one surface where the icon's palette belongs.
+
+Token overrides live in `themes.css` keyed on `[data-theme]`; club `colour`
+and `text_colour` come from the DB.
 
 The other four (Programme, Broadcast, Terrace, Swiss) are kept deliberately
 as a working fallback and stay selectable, but the Appearance switcher only
@@ -201,13 +208,16 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
   with the real Hove club. Still the placeholder KM monogram — real artwork
   pending, spelling to confirm.
 - **PWA icons** (`icon-192`, `icon-512`, `icon-maskable`, `apple-touch-icon`)
-  are in the Matchday language: the accent field `#38003c` carrying a white
-  COFTA wordmark in Big Shoulders Display, nothing else — at 60px on a home
-  screen there is room for one idea. Corner treatment differs by purpose:
-  192/512 carry their own 22% rounding since "any" icons are shown as
-  supplied; maskable is full-bleed square with the mark inside the 80% safe
-  circle; apple-touch is full-bleed and fully opaque, because iOS applies its
-  own squircle and fills any transparency it finds.
+  are cut from the association's own artwork, `cofta-icon-source.png` (1080px
+  master, kept in `web/` but never referenced and deliberately **not**
+  precached). Warm cream ground, maroon crest, church and ball inside a
+  rectangular frame. All four are fully opaque — iOS fills any transparency
+  it finds in an apple-touch icon.
+  **The maskable is a separately padded cut, not a copy of the 512.** The
+  standard icon runs its frame to the tile edge, which loses 12% of its ink
+  to a circular mask; the maskable insets everything to a 13% margin and
+  loses 0.12% — 51 pixels, the four corner tips of the frame. Never ship the
+  standard file as the maskable one.
 
 ## Accessibility
 
