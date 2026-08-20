@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v34`.
+  old devices keep stale copies forever. Currently `cofta-v35`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0020`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0021`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -84,6 +84,9 @@ the bare domain).
   already implies a knockout tie and needs no second guard in the client.
 - Suspensions: two yellows in separate matches (per phase: group/KO don't
   combine) or a red → miss the club's own next fixture.
+- The nav is **seven tabs** and scrolls horizontally below 768px rather than
+  wrapping. Moving Organiser to a masthead icon is still outstanding from an
+  earlier package and would relieve the crowding.
 - The click handler is one delegated listener; **every tappable element's
   data-attribute must be in the `closest()` selector list** or it is dead.
   All club/player links are real `<button>`s (mobile tap reliability, and a
@@ -308,6 +311,89 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 3. Before the weekend: venue dry run on real phones, Amani's organiser
    account (allowlisted, user not yet created), poster with QR.
 
+## History: the archive of previous tournaments
+
+Thirteen finished tournaments, 2022–2026, imported by `0021` from
+`tournament_archive.json`. Five editions survive in full; eight are barely
+more than a date and a champion. **Thin records stay thin** — no synthesised
+fixtures, no zero-filled stats, and `null` never rendered as `0`.
+
+- **Eleven `archive_*` tables**, relational rather than a blob. `0021`
+  supersedes the `past_tournaments` jsonb table and `set_past_tournament()`
+  from `0019`, which could not answer the questions History actually asks
+  (this club across editions, this player under a canonical name). Both were
+  dropped, after proving the table empty.
+- **The archive must never ride in `snapshot()`.** Every phone polls that
+  every five seconds and the weekend egress budget is sized without 99
+  matches and 260 events in it. `0021` removed the `history` key that `0019`
+  had added. History reads the tables directly under public-read RLS
+  (`api.fetchArchiveIndex` / `fetchArchiveEdition`), only when opened, and
+  caches hard in `localStorage` — safe because the archive is immutable.
+  Bump `ARCHIVE_V` in `api.js` if the shape ever changes.
+- **Read-only by construction.** No insert/update/delete policy and no RPC:
+  the archive changes by migration or not at all.
+- **Six competitions, not one renamed series.** COFTA, CONAFA, COSTA and The
+  Ark Cup are men's; COSA and Ladies COFTA are women's. Confirmed by Adam,
+  and worth stating because COSA / COSTA / Ladies COFTA read like the same
+  event misspelt. Each has a scoped `[data-comp]` identity in `styles.css`.
+- **Two colour tokens per identity.** `--ci` is the identity on a light card;
+  `--cl` is the same identity as ink on a dark one. Broadcast switches to
+  `--cl`, because measured against its card the deep values land at 1.9:1 —
+  not a colour choice, invisible. All 6 × 5 combinations were measured; the
+  worst is 6.67:1.
+- **Crests: crosswalk, inherit, or monogram — never invented branding.**
+  Clubs that still compete carry `live_team_id` (SMPK↔`smpk`,
+  Stevenage↔`ste`, Croydon↔`cro`, Brighton↔`bri`, Golders Green↔`gg`,
+  Rotherham↔`rot`, St Mark↔`stm`) and render the live crest and colours, so a
+  future crest upgrade flows into the archive for free. **B teams** (PKSM,
+  Golders Green B, St Mark B) inherit the parent's identity through the same
+  crosswalk and add a small "B" — the parent's crest, never a fake one.
+  Everyone else gets a deterministic monogram: initials on a tile whose
+  colour is hashed from the canonical name out of one muted, obviously
+  archival palette (`.mono-0` … `.mono-7`). Pure CSS and text, no image
+  files. **Kidane Mihret is deliberately not mapped to anything historical.**
+- **Future branding is data, not code.** When a real crest or colours arrive
+  for a historical club, they land in that team's `display` jsonb (crest file
+  under `web/crests/archive/`) with no schema and no UI change.
+
+### Identity rules that must not be relaxed
+
+- **SMPK (Hounslow) and Worthing are two different clubs**, and both carry
+  "Pope Kyrillos VI" in their name. Worthing appears in six editions under
+  five alias spellings. No fuzzy match may ever collapse them; the import
+  guards it explicitly and the verification suite proves two separate rows.
+- Team strings resolve by **exact match against `aliases`**, never fuzzily.
+- `player_name` is the string exactly as published; `player_canonical` is the
+  merged identity, and every aggregate groups on the canonical. Twelve merges
+  plus two of Adam's rulings; two pairs deliberately held back.
+
+### Adam's rulings, recorded
+
+- **Q5** — the extra Ark Cup goalscorer entries were shoot-out conversions.
+  The event-derived figures are **canonical** (`is_canonical`), the published
+  leaderboard is inflated, and both are stored. Shoot-out conversions are
+  never goals anywhere.
+- **Q10** — separate `archive_*` tables. The only link to the live tournament
+  is `archive_teams.live_team_id`.
+- **Q11 (partial)** — Kiro Khir and Kyrelos Khir are the same St Mark player
+  (canonical *Kyrelos Khir*); Fady Khir stays separate; the Rizkalla /
+  Rizkallah pair stays held back as two players.
+- **"Myven" is Myven Gaied.** The published string is preserved as
+  `player_name`; the canonical carries the surname.
+
+### One contradiction in the source, resolved by reading
+
+`team_registry.player_name_variants` marks eight pairs `flag_do_not_merge`,
+and `player_registry.merges` then merges seven of them — the only pair left
+unmerged being exactly the one in `held_back`. That is coherent only if
+`flag_do_not_merge` means "never merge these **automatically**", with Q9
+recording each manual decision. The import follows that reading;
+`player_registry` is the merge authority. Recorded in `ARCHIVE_CONFLICTS.md`,
+which is the readable copy of the `archive_conflicts` table.
+
+**Conflicts are never silently resolved.** Both sides are stored, the row
+carries a `flag`, and flags render **for organisers only**.
+
 ## Offline role trust
 
 Found in a venue drill: an organiser's phone restarting on a dead signal came
@@ -351,6 +437,10 @@ and runs against the live project. `tests/boot_drill.html` covers what
 model.js cannot — what `app.js` decides at boot when the network will not
 answer — by stubbing `fetch` and asserting the rendered controls. Serve the
 repo root and open it, plus `?mode=nosession`; read `__drillSummary`.
+`tests/archive_flags.html` covers the other half of the archive's flag rule:
+a spectator seeing zero flags is easy to measure, so that drill stubs only
+the role check, leaves every other request going to the real database, and
+asserts an organiser does see them. Read `__flagSummary`.
 
 Any change to rules, ordering or the clock should come with a test beside it;
 any change to `app.js` should at minimum be **executed** (not just parsed)

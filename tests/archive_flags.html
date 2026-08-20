@@ -1,0 +1,90 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA archive flag drill</title>
+<link rel="stylesheet" href="../web/styles.css"><link rel="stylesheet" href="../web/themes.css">
+<!--
+  Archive flag drill.
+
+  The archive stores conflicts rather than resolving them, and the flags must
+  reach organisers and nobody else. The public half is easy to measure — a
+  spectator sees zero .flagline elements. This covers the other half, which
+  is otherwise only a conditional nobody ever executes: it stubs the role
+  check to say "organiser", lets every other request go to the real database,
+  opens the one Ark Cup play-off whose event count exceeds its score, and
+  asserts the flag is rendered.
+
+  Serve the repo root and open /tests/archive_flags.html; read
+  globalThis.__flagSummary. Needs a connection — it reads the live archive.
+-->
+<script>
+localStorage.clear();
+localStorage.setItem('cofta.session.v1', JSON.stringify({ access_token: 'drill', refresh_token: 'drill' }));
+
+// Stub ONLY the role check. Everything else — snapshot, archive tables — goes
+// to the real server, so this exercises the real rendering path.
+const realFetch = window.fetch.bind(window);
+window.fetch = (url, opts) => {
+  const u = String(url);
+  if (u.includes('/rpc/is_admin')) {
+    return Promise.resolve(new Response('true', { status: 200,
+      headers: { 'Content-Type': 'application/json' } }));
+  }
+  if (u.includes('/rpc/my_role')) {
+    return Promise.resolve(new Response('"organiser"', { status: 200,
+      headers: { 'Content-Type': 'application/json' } }));
+  }
+  return realFetch(url, opts);
+};
+
+const results = [];
+const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+window.addEventListener('load', async () => {
+  await wait(2500);
+  document.getElementById('nav-history').click();
+  for (let i = 0; i < 60 && !document.querySelector('.ccard'); i++) await wait(150);
+  const ark = [...document.querySelectorAll('.ccard')].find(c => c.textContent.includes('Ark'));
+  check('History reached and the Ark Cup card is present', !!ark);
+  if (ark) {
+    ark.click(); await wait(300);
+    const row = document.querySelector('[data-histed="ark-cup-2026"]');
+    check('the 2026 edition is listed', !!row);
+    if (row) {
+      row.click();
+      for (let i = 0; i < 60 && !document.querySelector('.afxr'); i++) await wait(150);
+      const flags = [...document.querySelectorAll('.flagline')].map(f => f.textContent.trim());
+      check('organiser sees the flagged play-off events',
+        flags.some(f => f.includes('event_count_exceeds_score')), flags);
+      check('the official 2-0 is preserved despite three events',
+        [...document.querySelectorAll('.afxs')].some(s => s.textContent.replace(/\s/g,'') === '2–0'));
+      check('the conflicted marker is shown to everyone',
+        [...document.querySelectorAll('.gap')].some(g => g.textContent.trim() === 'conflicted'));
+    }
+  }
+
+  const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results };
+  globalThis.__flagSummary = summary;
+  const out = document.createElement('pre');
+  out.id = 'flag-report';
+  out.style.cssText = 'padding:12px;white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace';
+  out.textContent = 'archive flag drill\n\n'
+    + results.map(r => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.name}`).join('\n')
+    + `\n\n${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script></head>
+<body data-theme="matchday">
+<div class="app">
+  <header class="hd"><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-history" data-view="history">History</button>
+    <button id="nav-admin" data-view="admin">Organiser</button>
+  </nav>
+  <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
+</div>
+<script type="module" src="../web/app.js"></script>
+</body></html>

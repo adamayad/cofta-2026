@@ -59,6 +59,11 @@ const state = {
   tiePens: {},
   trophyPick: null,    // the organiser's working set, before confirming
   trophyTeam: null,    // which club's squad each trophy picker is showing
+
+  // History. The archive is fetched on demand, never polled, and cached hard.
+  // histCat resets to 'men' every time History is opened from the tab bar.
+  archive: null, archiveEd: {}, archiveBusy: false, archiveEdBusy: null, archiveErr: null,
+  histCat: 'men', histComp: null, histEd: null,
 };
 
 /** Events are queued so a tap on bad signal is never lost. The queue sends
@@ -92,11 +97,13 @@ const HIST_MAX = 20;
 const here = () => ({
   view: state.view, matchId: state.matchId, from: state.from,
   day: state.day, award: state.award, sq: { ...state.sq },
+  histComp: state.histComp, histEd: state.histEd, histCat: state.histCat,
 });
 
 const samePage = (a, b) =>
   a.view === b.view && a.matchId === b.matchId && a.award === b.award
-  && a.sq.team === b.sq.team && a.sq.player === b.sq.player;
+  && a.sq.team === b.sq.team && a.sq.player === b.sq.player
+  && a.histComp === b.histComp && a.histEd === b.histEd;
 
 /** Move to another page, remembering the one being left — unless the tap
  *  lands on the page already showing, which must not stack a duplicate. */
@@ -116,6 +123,8 @@ function popHist() {
   if (!prev) return false;
   state.view = prev.view; state.matchId = prev.matchId; state.from = prev.from;
   state.day = prev.day; state.award = prev.award; state.sq = { ...prev.sq };
+  state.histComp = prev.histComp; state.histEd = prev.histEd;
+  if (prev.histCat) state.histCat = prev.histCat;
   state.picker = null; state.editor = null;
   return true;
 }
@@ -805,8 +814,13 @@ function backLabel(fallback) {
   if (prev.view === 'award') return BOARDS[boardKey(prev.award)]?.label ?? 'Stats';
   if (prev.view === 'squads' && prev.sq.player) return playerName(prev.sq.player) ?? 'Player';
   if (prev.view === 'squads' && prev.sq.team) return cityOf(prev.sq.team) || 'Squad';
+  if (prev.view === 'histcomp') return compOf(prev.histComp)?.name ?? 'History';
+  if (prev.view === 'histed') {
+    return state.archive?.editions?.find(e => e.id === prev.histEd)?.display_name ?? 'Edition';
+  }
   return { fixtures: 'Fixtures', live: 'Live now', squads: 'All clubs',
-           tables: 'Tables', awards: 'Stats', admin: 'Organiser' }[prev.view] ?? 'Back';
+           tables: 'Tables', awards: 'Stats', history: 'History',
+           admin: 'Organiser' }[prev.view] ?? 'Back';
 }
 
 const backButton = (fallback) =>
@@ -1304,6 +1318,405 @@ function squadSection() {
     <div class="dqlist">${chips}</div>${editor}`;
 }
 
+/* ── History: previous tournaments ───────────────────────── */
+/**
+ * Six competitions, not one series that kept changing its name. COFTA,
+ * CONAFA, COSTA and The Ark Cup are men's; COSA and Ladies COFTA are
+ * women's. Confirmed by Adam, and worth stating because COSA / COSTA /
+ * Ladies COFTA look like the same event misspelt and are not.
+ *
+ * The archive is immutable and never rides in the polled snapshot — it is
+ * fetched on demand from the archive_* tables and cached hard (see api.js).
+ */
+const COMPS = [
+  { id: 'cofta',        name: 'COFTA',        cat: 'men'   },
+  { id: 'conafa',       name: 'CONAFA',       cat: 'men'   },
+  { id: 'costa',        name: 'COSTA',        cat: 'men'   },
+  { id: 'ark',          name: 'The Ark Cup',  cat: 'men'   },
+  { id: 'cosa',         name: 'COSA',         cat: 'women' },
+  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women' },
+];
+const COMP_SLUG = {
+  'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
+  'The Ark Cup': 'ark', 'COSA': 'cosa', 'Ladies COFTA': 'ladies-cofta',
+};
+const compOf = (id) => COMPS.find(c => c.id === id);
+
+/**
+ * Historical clubs get a monogram, never invented branding.
+ *
+ * Clubs that still compete carry `live_team_id` and render the live crest and
+ * colours, so a future crest upgrade flows into the archive for free. B teams
+ * inherit their parent's identity and add a small "B". Everyone else — the
+ * clubs with no 2026 entry — gets initials on a tile whose colour is picked
+ * deterministically from one muted, obviously-archival palette. The same club
+ * looks the same everywhere, and nothing ever masquerades as a real crest.
+ */
+const ARCHIVE_TILES = 8;   // .mono-0 … .mono-7 in styles.css
+
+function tileIndex(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (Math.imul(h, 31) + name.charCodeAt(i)) >>> 0;
+  return h % ARCHIVE_TILES;
+}
+
+function monogramText(t) {
+  const src = String(t.short_name || t.canonical_name || '?');
+  const words = src.replace(/[^A-Za-z ]+/g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  const w = words[0] || '?';
+  return (w[0] || '?').toUpperCase() + (w[1] || '').toLowerCase();
+}
+
+/** The crest for an archive club: the live one where there is a live club,
+ *  a deterministic monogram tile where there is not. */
+function archCrest(t, size = 28) {
+  if (!t) return `<span class="mono mono-0" style="--mono:${size}px">?</span>`;
+  const live = t.live_team_id && CREST[t.live_team_id];
+  const px = `--mono:${size}px`;
+  if (live) {
+    return `<span class="acrest" style="${px}"><img src="${live}" alt="" width="${size}" height="${size}">`
+      + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
+  }
+  return `<span class="mono mono-${tileIndex(t.canonical_name)}" style="${px}">${esc(monogramText(t))}`
+    + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
+}
+
+const archTeam = (id) => state.archive?.teamById?.[id] ?? null;
+const archName = (id) => archTeam(id)?.canonical_name ?? 'Unknown club';
+const archShort = (id) => archTeam(id)?.short_name ?? 'Unknown';
+
+/** "12–13 September 2026", or a single day where start and end match. */
+function archDates(e) {
+  if (!e.date_start) return '';
+  const MON = ['January','February','March','April','May','June','July',
+               'August','September','October','November','December'];
+  const [ys, ms, ds] = e.date_start.split('-').map(Number);
+  if (!e.date_end || e.date_end === e.date_start) return `${ds} ${MON[ms - 1]} ${ys}`;
+  const [ye, me, de] = e.date_end.split('-').map(Number);
+  if (ys === ye && ms === me) return `${ds}–${de} ${MON[ms - 1]} ${ys}`;
+  return `${ds} ${MON[ms - 1]} – ${de} ${MON[me - 1]} ${ye}`;
+}
+
+/* ── loading ─────────────────────────────────────────────── */
+/**
+ * History is the only part of the app that fetches on demand. Everything
+ * else lives off the 5-second snapshot; putting 99 matches and 260 events in
+ * that payload would cost the weekend's egress budget for data that has not
+ * changed since 2022.
+ */
+function loadArchive() {
+  if (state.archive || state.archiveBusy) return;
+  state.archiveBusy = true;
+  api.fetchArchiveIndex().then(a => {
+    state.archive = {
+      ...a,
+      teamById: Object.fromEntries(a.teams.map(t => [t.id, t])),
+      byComp: a.editions.reduce((m, e) => {
+        const slug = COMP_SLUG[e.competition];
+        (m[slug] = m[slug] || []).push(e);
+        return m;
+      }, {}),
+    };
+    state.archiveErr = null;
+  }).catch(e => { state.archiveErr = e.message; })
+    .finally(() => { state.archiveBusy = false; render(); });
+}
+
+function loadEdition(id) {
+  if (state.archiveEd[id] || state.archiveEdBusy === id) return;
+  state.archiveEdBusy = id;
+  api.fetchArchiveEdition(id).then(d => {
+    state.archiveEd[id] = d;
+    state.archiveErr = null;
+  }).catch(e => { state.archiveErr = e.message; })
+    .finally(() => { state.archiveEdBusy = null; render(); });
+}
+
+const archLoading = (what) =>
+  `<p class="empty">Loading ${esc(what)}…</p>`;
+const archFailed = () =>
+  `<div class="banner warn">Could not load the archive: ${esc(state.archiveErr)}.
+     Previous tournaments need a connection the first time they are opened;
+     after that they are kept on this device.</div>`;
+
+/* ── the three History pages ─────────────────────────────── */
+function viewHistory() {
+  loadArchive();
+  if (state.archiveErr && !state.archive) return archFailed();
+  if (!state.archive) return archLoading('previous tournaments');
+
+  const cat = state.histCat;
+  const toggle = `<div class="seg" role="group" aria-label="Category">
+    ${['men', 'women'].map(c => `<button data-histcat="${c}" class="${cat === c ? 'on' : ''}"
+        aria-pressed="${cat === c}">${c === 'men' ? 'Men' : 'Women'}</button>`).join('')}
+  </div>`;
+
+  const cards = COMPS.filter(c => c.cat === cat).map(c => {
+    const eds = state.archive.byComp[c.id] || [];
+    if (!eds.length) return '';
+    const years = eds.map(e => e.year);
+    const span = years.length === 1 ? `${years[0]}`
+      : `${Math.min(...years)}–${Math.max(...years)}`;
+    const latest = eds[0];
+    return `<button class="ccard" data-histcomp="${c.id}" data-comp="${c.id}">
+      <span class="cch">
+        <span class="ccn">${esc(c.name)}</span>
+        <span class="ccm">${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot; ${span}</span>
+      </span>
+      <span class="ccl">Last winners
+        <b>${esc(latest.champion_team_id ? archShort(latest.champion_team_id) : 'Unknown')}</b>
+        <span class="ccy">${latest.year}</span></span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>`;
+  }).join('');
+
+  return `<div class="sect">Previous tournaments</div>
+    <p class="note" style="padding-top:0">Thirteen finished tournaments, 2022 to 2026.
+      Records vary: some editions survive in full, others as little more than a date
+      and a champion. Nothing here is filled in where the source was silent.</p>
+    ${toggle}
+    <div class="ccards">${cards || '<p class="empty">No tournaments recorded.</p>'}</div>`;
+}
+
+function viewHistComp() {
+  loadArchive();
+  if (state.archiveErr && !state.archive) return archFailed();
+  if (!state.archive) return archLoading('previous tournaments');
+
+  const c = compOf(state.histComp);
+  const eds = state.archive.byComp[state.histComp] || [];
+  const rows = eds.map(e => `<button class="edrow" data-histed="${esc(e.id)}">
+      <span class="edy">${e.year}</span>
+      <span class="edm">
+        <b>${esc(e.display_name)}</b>
+        <span class="edd">${esc(archDates(e))}${e.venue ? ' &middot; ' + esc(e.venue) : ''}</span>
+      </span>
+      <span class="edw">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 24) : ''}</span>
+      ${e.data_confidence === 'minimal' ? '<span class="thin" title="Limited records">thin</span>' : ''}
+      <span class="chev" aria-hidden="true"></span>
+    </button>`).join('');
+
+  return `${backButton('view:history')}
+    <div class="chead" data-comp="${esc(state.histComp)}">
+      <h2>${esc(c?.name ?? state.histComp)}</h2>
+      <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;
+         ${c?.cat === 'women' ? "Women's" : "Men's"}</p>
+    </div>
+    <div class="edrows">${rows || '<p class="empty">No editions recorded.</p>'}</div>`;
+}
+
+/** A thin edition: dates, champion, runner-up, the final line if known, and
+ *  the entrant list. No empty tables and no zero-filled stats — eight of the
+ *  thirteen editions genuinely have nothing more than this. */
+function thinEdition(e) {
+  const entrants = (state.archive.entrants || [])
+    .filter(x => x.edition_id === e.id)
+    .map(x => archTeam(x.team_id)).filter(Boolean)
+    .sort((a, b) => a.short_name.localeCompare(b.short_name));
+  const fin = e.notes?.final || {};
+  return `<div class="thincard">
+      <div class="tcwin">
+        ${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
+        <div><b>${esc(e.champion_team_id ? archName(e.champion_team_id) : 'Champion not recorded')}</b>
+          <span>Champions</span></div>
+      </div>
+      ${e.runner_up_team_id ? `<div class="tcrun">
+        ${archCrest(archTeam(e.runner_up_team_id), 28)}
+        <div><b>${esc(archName(e.runner_up_team_id))}</b><span>Runners-up</span></div></div>` : ''}
+      ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
+      ${fin.decided_by === 'penalties' && fin.shootout
+        && (fin.shootout.winner_score ?? fin.shootout.home) == null
+        ? '<p class="tcnote">The shoot-out score is not recorded.</p>' : ''}
+      ${entrants.length ? `<div class="sect">Entrants</div>
+        <div class="entrants">${entrants.map(t =>
+          `<span class="ent">${archCrest(t, 22)}<span>${esc(t.short_name)}</span></span>`).join('')}</div>
+        ${e.notes?.teams_note ? `<p class="note">${esc(e.notes.teams_note)}</p>` : ''}` : ''}
+      <p class="thinnote">Limited records survive for this edition.</p>
+    </div>`;
+}
+
+function archTable(d, g) {
+  const rows = d.standings.filter(s => s.group_id === g.id);
+  if (!rows.length) return '';
+  // The Ark Cup published GD and Pts only. Its GF/GA were computed by the
+  // compiler from the fixture list, so they are shown in a muted column and
+  // labelled, never passed off as source data.
+  const derived = rows.some(r => r.gf == null && r.gf_derived != null);
+  return `<div class="sect">${esc(g.name)}</div>
+    <table class="tbl arch"><thead><tr>
+      <th class="pos"></th><th class="tm">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
+      <th class="${derived ? 'drv' : ''}">GF</th><th class="${derived ? 'drv' : ''}">GA</th>
+      <th>GD</th><th class="pts">Pts</th></tr></thead><tbody>
+    ${rows.map(r => {
+      const t = archTeam(r.team_id);
+      return `<tr>
+        <td class="pos">${r.position}</td>
+        <td class="tm">${archCrest(t, 20)}<span>${esc(t?.short_name ?? '?')}</span>
+          ${r.note ? `<i class="gapdot" title="${esc(r.note)}">*</i>` : ''}</td>
+        <td>${r.p ?? '–'}</td><td>${r.w ?? '–'}</td>
+        <td>${r.d ?? '–'}</td><td>${r.l ?? '–'}</td>
+        <td class="${derived ? 'drv' : ''}">${r.gf ?? r.gf_derived ?? '–'}</td>
+        <td class="${derived ? 'drv' : ''}">${r.ga ?? r.ga_derived ?? '–'}</td>
+        <td>${r.gd ?? '–'}</td><td class="pts">${r.pts ?? '–'}</td></tr>`;
+    }).join('')}
+    </tbody></table>
+    ${derived ? `<p class="note">GF and GA were not displayed in the source table;
+      these are computed from the fixture list and reconcile exactly to the published GD.</p>` : ''}
+    ${rows.some(r => r.note) ? rows.filter(r => r.note).map(r =>
+      `<p class="note">* ${esc(archShort(r.team_id))}: ${esc(r.note)}</p>`).join('') : ''}`;
+}
+
+const STAGE_LABEL = {
+  group: 'Group stage', league: 'League fixtures', play_off: 'Play-off',
+  quarter_final: 'Quarter-finals', semi_final: 'Semi-finals', final: 'Final',
+};
+
+function archFixtures(d) {
+  const order = ['group', 'league', 'play_off', 'quarter_final', 'semi_final', 'final'];
+  const byStage = order.filter(s => d.matches.some(m => m.stage === s));
+  return byStage.map(stage => {
+    const ms = d.matches.filter(m => m.stage === stage);
+    return `<div class="sect">${esc(STAGE_LABEL[stage] ?? stage)}</div>
+      <div class="afx">${ms.map(m => archFixtureRow(m, d)).join('')}</div>`;
+  }).join('');
+}
+
+function archFixtureRow(m, d) {
+  const evs = d.events.filter(e => e.match_id === m.id);
+  const goals = evs.filter(e => ['goal', 'penalty_goal', 'own_goal'].includes(e.event_type));
+  const pens = m.decided_by === 'penalties';
+  const marker = m.events_status !== 'complete'
+    ? `<span class="gap" title="${esc(m.gap_note || m.events_status)}">${esc(
+        { score_only: 'score only', partial: 'partial record',
+          complete_unattributed: 'unattributed', conflicted: 'conflicted'
+        }[m.events_status] ?? m.events_status)}</span>` : '';
+  return `<div class="afxr">
+    <div class="afxm">
+      <span class="afxt">${archCrest(archTeam(m.home_team_id), 22)}<span>${esc(archShort(m.home_team_id))}</span></span>
+      <span class="afxs">${m.home_score ?? '–'}<i>–</i>${m.away_score ?? '–'}</span>
+      <span class="afxt away"><span>${esc(archShort(m.away_team_id))}</span>${archCrest(archTeam(m.away_team_id), 22)}</span>
+    </div>
+    ${pens ? `<div class="afxp">${m.shootout_home != null && m.shootout_away != null
+        ? `${m.shootout_home}–${m.shootout_away} on penalties`
+        : 'Won on penalties'}${m.shootout_winner_id
+        ? ' — ' + esc(archShort(m.shootout_winner_id)) : ''}</div>` : ''}
+    ${goals.length ? `<div class="afxg">${goals.map(g => {
+        const who = g.player_name ? esc(g.player_name) : 'Unattributed';
+        const side = g.team_id ? esc(archShort(g.team_id)) : 'team unknown';
+        const kind = g.event_type === 'own_goal' ? ' (og)'
+                   : g.event_type === 'penalty_goal' ? ' (pen)' : '';
+        return `<span class="afxgi">${g.minute ? `<i>${esc(g.minute)}′</i>` : ''}${who}${kind}
+          <em>${side}</em></span>`;
+      }).join('')}</div>` : ''}
+    ${marker}
+    ${m.gap_note ? `<p class="afxn">${esc(m.gap_note)}</p>` : ''}
+    ${state.admin && evs.some(e => e.flag) ? `<p class="flagline">flagged:
+       ${esc([...new Set(evs.filter(e => e.flag).map(e => e.flag))].join(', '))}</p>` : ''}
+  </div>`;
+}
+
+const BOARD_LABEL = {
+  goalscorer: 'Goalscorers', assists: 'Assists', yellow_cards: 'Yellow cards',
+  player_of_the_match: 'Player of the Match', man_of_the_match: 'Man of the Match',
+  clean_sheets: 'Clean sheets',
+};
+
+function archBoards(d) {
+  // Where published and derived disagree, is_canonical marks the one to lead
+  // with — Adam's Q5 ruling made the event-derived Ark Cup figures canonical.
+  const rows = d.boards.filter(b => b.is_canonical);
+  // Goals first, then the other player boards, then club boards — the order
+  // the live Stats hub uses, rather than whatever order the rows arrived in.
+  const ORDER = ['goalscorer', 'assists', 'man_of_the_match', 'player_of_the_match',
+                 'yellow_cards', 'clean_sheets'];
+  const kinds = [...new Set(rows.map(b => b.board_type))]
+    .sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  return kinds.map(kind => {
+    const rs = rows.filter(b => b.board_type === kind).slice(0, 30);
+    const superseded = d.boards.some(b => b.board_type === kind && !b.is_canonical);
+    return `<div class="sect">${esc(BOARD_LABEL[kind] ?? kind)}</div>
+      ${superseded ? `<p class="note" style="padding-top:0">Counted from the match events.
+        The published leaderboard for this edition counted shoot-out conversions as goals;
+        both figures are kept in the archive.</p>` : ''}
+      <div class="alb">${rs.map(b => `<div class="albr">
+        <span class="albv">${b.value ?? '–'}</span>
+        <span class="albn">${esc(b.player_name ?? archShort(b.team_id))}
+          ${b.player_name && b.team_id ? `<i>${esc(archShort(b.team_id))}</i>` : ''}</span>
+        ${state.admin && b.flag ? `<span class="flagline">${esc(b.flag)}</span>` : ''}
+      </div>`).join('')}</div>`;
+  }).join('');
+}
+
+function archAwards(d) {
+  const named = d.awards.filter(a => !a.match_id && !a.is_published_summary);
+  if (!named.length) return '';
+  const LAB = {
+    player_of_the_tournament: 'Player of the tournament',
+    top_scorer: 'Top scorer', most_clean_sheets: 'Most clean sheets',
+  };
+  return `<div class="sect">Awards</div>
+    <div class="aawards">${named.map(a => `<div class="aaw">
+      <span class="aawl">${esc(LAB[a.award_type] ?? a.award_type)}</span>
+      <span class="aawn">${esc(a.player_name ?? archShort(a.team_id))}
+        ${a.value != null ? `<i>${a.value}</i>` : ''}</span>
+      ${a.team_id && a.player_name ? `<span class="aawt">${esc(archShort(a.team_id))}</span>` : ''}
+    </div>`).join('')}</div>`;
+}
+
+function viewHistEdition() {
+  loadArchive();
+  if (state.archiveErr && !state.archive) return archFailed();
+  if (!state.archive) return archLoading('previous tournaments');
+
+  const e = state.archive.editions.find(x => x.id === state.histEd);
+  if (!e) return `${backButton('view:history')}<p class="empty">That edition is not in the archive.</p>`;
+  const slug = COMP_SLUG[e.competition];
+  const back = backButton('view:history');
+
+  const head = `<div class="chead ehead" data-comp="${esc(slug)}">
+    <h2>${esc(e.display_name)}</h2>
+    <p>${esc(archDates(e))}${e.venue ? ' &middot; ' + esc(e.venue) : ''}</p>
+    ${e.format ? `<p class="efmt">${esc(e.format)}</p>` : ''}
+  </div>`;
+
+  if (e.data_confidence === 'minimal') {
+    return `${back}${head}${thinEdition(e)}${archNotes(e)}`;
+  }
+
+  loadEdition(e.id);
+  const d = state.archiveEd[e.id];
+  if (state.archiveErr && !d) return `${back}${head}${archFailed()}`;
+  if (!d) return `${back}${head}${archLoading(e.display_name)}`;
+
+  const podium = `<div class="thincard">
+    <div class="tcwin">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
+      <div><b>${esc(e.champion_team_id ? archName(e.champion_team_id) : 'Not recorded')}</b>
+        <span>Champions</span></div></div>
+    ${e.runner_up_team_id ? `<div class="tcrun">${archCrest(archTeam(e.runner_up_team_id), 28)}
+      <div><b>${esc(archName(e.runner_up_team_id))}</b><span>Runners-up</span></div></div>` : ''}
+    ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
+  </div>`;
+
+  return back + head + podium
+    + d.groups.map(g => archTable(d, g)).join('')
+    + archFixtures(d) + archBoards(d) + archAwards(d) + archNotes(e);
+}
+
+/** What the source could not tell us, said plainly rather than hidden. */
+function archNotes(e) {
+  const gaps = e.notes?.known_gaps || [];
+  const extra = ['competition_note', 'teams_note', 'round_numbering_note',
+                 'league_table_note', 'final_orientation_note', 'venue_note',
+                 'third_place_note', 'squads_note', 'edition_note']
+    .map(k => e.notes?.[k]).filter(Boolean);
+  if (!gaps.length && !extra.length && !e.source) return '';
+  return `<div class="sect">About this record</div>
+    ${extra.map(t => `<p class="note">${esc(t)}</p>`).join('')}
+    ${gaps.length ? `<ul class="gaps">${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}
+    ${e.source ? `<p class="note src">Source: ${esc(e.source)}</p>` : ''}`;
+}
+
 /* ── render ──────────────────────────────────────────────── */
 function render() {
   const age = Date.now() - state.lastFetch;
@@ -1323,12 +1736,14 @@ function render() {
   if (a && a.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)
       && $('body') && $('body').contains && $('body').contains(a)) return;
 
-  // A leaderboard belongs to the Awards tab, so that tab stays lit while one
-  // is open — same reasoning as a match staying under the tab it came from.
+  // A leaderboard belongs to Stats and a competition or edition belongs to
+  // History, so those tabs stay lit while a child page is open — same
+  // reasoning as a match staying under the tab it was opened from.
   const navFor = state.view === 'match' ? state.from
                : state.view === 'award' ? 'awards'
+               : (state.view === 'histcomp' || state.view === 'histed') ? 'history'
                : state.view;
-  ['fixtures', 'live', 'squads', 'tables', 'awards', 'admin'].forEach(v =>
+  ['fixtures', 'live', 'squads', 'tables', 'awards', 'history', 'admin'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
 
   const body =
@@ -1338,7 +1753,10 @@ function render() {
     state.view === 'squads'   ? viewSquads()   :
     state.view === 'tables'   ? viewTables()   :
     state.view === 'award'    ? viewAwardBoard() :
-    state.view === 'awards'   ? viewAwards()   : viewAdmin();
+    state.view === 'awards'   ? viewAwards()   :
+    state.view === 'history'  ? viewHistory()  :
+    state.view === 'histcomp' ? viewHistComp() :
+    state.view === 'histed'   ? viewHistEdition() : viewAdmin();
 
   $('body').innerHTML = body +
     (state.error ? `<div class="banner warn">Could not reach the server: ${esc(state.error)}.
@@ -1370,7 +1788,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -1381,6 +1799,7 @@ document.addEventListener('click', async (ev) => {
       const [kind, arg] = String(t.dataset.back).split(':');
       state.award = null;
       state.picker = null; state.editor = null;
+      if (arg === 'history') { state.histComp = null; state.histEd = null; }
       if (kind === 'sqteam') {
         state.view = 'squads'; state.sq = { team: arg, player: null };
       } else {
@@ -1397,6 +1816,28 @@ document.addEventListener('click', async (ev) => {
     state.view = t.dataset.view; state.picker = null; state.editor = null;
     state.hist = []; state.award = null;
     if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
+    // History opens on Men every time, as specified — the toggle is a
+    // per-visit choice, not a preference worth remembering.
+    if (t.dataset.view === 'history') {
+      state.histCat = 'men'; state.histComp = null; state.histEd = null;
+    }
+    render(); return;
+  }
+
+  // History: category toggle, then competition, then edition. Each forward
+  // move pushes the page it leaves, so back walks the trail.
+  if (t.dataset.histcat) {
+    state.histCat = t.dataset.histcat;
+    render(); return;
+  }
+
+  if (t.dataset.histcomp) {
+    navigate(() => { state.view = 'histcomp'; state.histComp = t.dataset.histcomp; });
+    render(); return;
+  }
+
+  if (t.dataset.histed) {
+    navigate(() => { state.view = 'histed'; state.histEd = t.dataset.histed; });
     render(); return;
   }
 

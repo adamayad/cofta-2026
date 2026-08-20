@@ -180,3 +180,74 @@ export const setSlot = (slot, teamId) =>
 // is_admin/my_role are deliberately not exported individually: checkRole() is
 // the only door, so no future caller can check the role without refreshing the
 // cache that an offline boot depends on.
+
+/* ── the historical archive ──────────────────────────────── */
+/**
+ * Thirteen finished tournaments, 2022-2026. Deliberately NOT part of
+ * snapshot(): every phone polls that every five seconds, and the weekend
+ * egress budget is sized without 99 matches and 260 events riding along.
+ *
+ * These are direct table reads under public-read RLS, fetched only when
+ * someone opens History, and cached hard — the archive is immutable, so a
+ * cached copy can never go stale. Bump ARCHIVE_V if the shape changes.
+ */
+const ARCHIVE_V = 'v1';
+const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
+
+function cached(what) {
+  try { return JSON.parse(localStorage.getItem(cacheKey(what)) || 'null'); }
+  catch { return null; }
+}
+function cache(what, value) {
+  try { localStorage.setItem(cacheKey(what), JSON.stringify(value)); } catch {}
+  return value;
+}
+
+async function rest(path) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: headers(false) });
+  if (!r.ok) throw new Error(`archive read failed (${r.status})`);
+  return r.json();
+}
+
+/** Clubs and editions: small, and needed by every History page. */
+export async function fetchArchiveIndex() {
+  const hit = cached('index');
+  if (hit) return hit;
+  const [teams, editions, entrants] = await Promise.all([
+    rest('archive_teams?select=id,canonical_name,short_name,live_team_id,display,parent_club'),
+    rest('archive_editions?select=*&order=year.desc,date_start.desc'),
+    rest('archive_edition_teams?select=edition_id,team_id'),
+  ]);
+  return cache('index', { teams, editions, entrants });
+}
+
+/** One edition's detail, fetched the first time it is opened. Matches come
+ *  first because the events query filters on their ids. */
+export async function fetchArchiveEdition(id) {
+  const hit = cached('ed.' + id);
+  if (hit) return hit;
+  const q = encodeURIComponent(id);
+  const matches = await rest(
+    `archive_matches?select=*&edition_id=eq.${q}&order=match_date.asc,kickoff_time.asc,id.asc`);
+  const inList = matches.length ? matches.map(m => `"${m.id}"`).join(',') : '""';
+  const [events, groups, standings, boards, awards] = await Promise.all([
+    rest(`archive_match_events?select=*&match_id=in.(${inList})&order=match_id.asc,seq.asc`),
+    rest(`archive_groups?select=*&edition_id=eq.${q}&order=name.asc`),
+    rest(`archive_standings?select=*&order=position.asc`),
+    rest(`archive_leaderboards?select=*&edition_id=eq.${q}&order=rank.asc`),
+    rest(`archive_awards?select=*&edition_id=eq.${q}`),
+  ]);
+  const mine = new Set(groups.map(g => g.id));
+  return cache('ed.' + id, {
+    matches, events, groups,
+    standings: standings.filter(s => mine.has(s.group_id)),
+    boards, awards,
+  });
+}
+
+/** Organiser view only: the conflict register behind the flags. */
+export async function fetchArchiveConflicts() {
+  const hit = cached('conflicts');
+  if (hit) return hit;
+  return cache('conflicts', await rest('archive_conflicts?select=*&order=id.asc'));
+}
