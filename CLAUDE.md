@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v49`.
+  old devices keep stale copies forever. Currently `cofta-v50`.
 
 ## Workflow
 
@@ -438,6 +438,15 @@ are about the tournament, not about the compiler.
   from a render path needs the same latch. Verified offline: one attempt, no
   growth while sitting on the error or navigating away and back, one more per
   tap, and full recovery when the network returns.
+  **All three loaders have it: `loadArchive`, `loadEdition`, `loadHonours`.**
+  `loadHonours` had the same bug and a worse symptom — `cabinetBody` tested
+  only `!state.archive` before showing the error, so when the index loaded and
+  only the honours read failed, it skipped the error branch and sat on
+  "Loading this club's record…" for ever while spinning the fetch. The guard
+  there is now `(state.archiveErr && !state.archive) || state.honoursErr`.
+  Anything added later that fetches from a render path needs the same latch
+  and its own error branch; a loader that renders on failure without one is
+  this bug again.
 - **Read-only by construction.** No insert/update/delete policy and no RPC:
   the archive changes by migration or not at all.
 - **Six competitions, not one renamed series.** COFTA, CONAFA, COSTA and The

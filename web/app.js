@@ -68,7 +68,7 @@ const state = {
   archiveEdErr: {},
   histCat: 'men', histComp: null, histEd: null,
   archTeam: null,          // which club's standalone cabinet is open
-  archiveHonours: null, honoursBusy: false,
+  archiveHonours: null, honoursBusy: false, honoursErr: null,
   clubTab: 'squad',        // Squad or History on a live club page; never persists
   cabCat: 'men',           // which side's record a cabinet is showing
 };
@@ -2031,12 +2031,15 @@ function archNotes(e) {
  * That id exists so they can borrow the parent's crest; it does not make them
  * the parent, and PKSM's record must never appear under SMPK's name.
  */
+/** Latches its failure for the same reason loadArchive does — it is called
+ *  from cabinetBody's render and calls render() when it settles, so without
+ *  `honoursErr` a failure is the same unbounded retry loop. */
 function loadHonours() {
-  if (state.archiveHonours || state.honoursBusy) return;
+  if (state.archiveHonours || state.honoursBusy || state.honoursErr) return;
   state.honoursBusy = true;
   api.fetchArchiveHonours()
-    .then(h => { state.archiveHonours = h; state.archiveErr = null; })
-    .catch(e => { state.archiveErr = e.message; })
+    .then(h => { state.archiveHonours = h; state.archiveErr = null; state.honoursErr = null; })
+    .catch(e => { state.archiveErr = e.message; state.honoursErr = e.message; })
     .finally(() => { state.honoursBusy = false; render(); });
 }
 
@@ -2063,7 +2066,11 @@ const TROPHY_LABEL = {
  */
 function cabinetBody(archTeamId) {
   loadArchive(); loadHonours();
-  if (state.archiveErr && !state.archive) return archFailed();
+  // Either read failing has to reach archFailed(). Checking only
+  // `!state.archive` left the honours failure showing "Loading…" for ever:
+  // the index was present, so the error branch was skipped, and the loading
+  // branch had nothing left to wait for.
+  if ((state.archiveErr && !state.archive) || state.honoursErr) return archFailed();
   if (!state.archive || !state.archiveHonours) return archLoading('this club’s record');
 
   const t = archTeam(archTeamId);
@@ -2295,6 +2302,7 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.archretry !== undefined) {
     state.archiveErr = null;
     state.archiveEdErr = {};
+    state.honoursErr = null;
     render(); return;
   }
 
