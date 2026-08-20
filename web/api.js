@@ -188,13 +188,35 @@ export const setSlot = (slot, teamId) =>
  * egress budget is sized without 99 matches and 260 events riding along.
  *
  * These are direct table reads under public-read RLS, fetched only when
- * someone opens History, and cached hard — the archive is immutable, so a
- * cached copy can never go stale. Bump ARCHIVE_V if the shape changes.
+ * someone opens History, and cached hard with no expiry.
+ *
+ * **Bump ARCHIVE_V in any migration that touches an archive_* table.** Not
+ * only when the shape changes — that was the original rule and it was wrong.
+ * Results of finished tournaments are immutable, but their presentation is
+ * not: 0022 split names from cities, 0023 added women's crests, 0024 fixed
+ * three church names and 0025 wired twelve crest files. A phone that had
+ * opened History before any of those keeps the old copy for ever, because
+ * nothing else ever invalidates it. That is what happened to the archive
+ * crests — the files and the database were both right, and devices still
+ * drew monograms.
  */
-const ARCHIVE_V = 'v2';   // v2: teams carry city, and display colours
+const ARCHIVE_V = 'v3';   // v3: crests, corrected names, split cities
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
+/** Bumping the version orphans the previous one, and localStorage is a small
+ *  budget shared with the snapshot and the write queue. Sweep on first read
+ *  rather than leaving a dead copy of the whole archive per bump. */
+function pruneOldArchives() {
+  const keep = `cofta.archive.${ARCHIVE_V}.`;
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith('cofta.archive.') && !k.startsWith(keep)) localStorage.removeItem(k);
+    }
+  } catch { /* private mode, or a full disk — the cache is optional anyway */ }
+}
+
 function cached(what) {
+  pruneOldArchives();
   try { return JSON.parse(localStorage.getItem(cacheKey(what)) || 'null'); }
   catch { return null; }
 }
