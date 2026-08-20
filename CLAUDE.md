@@ -95,6 +95,17 @@ the bare domain).
 - One-off tie shoot-outs are records in `tie_shootouts` and act as the fifth
   tie-break in `standings()`. They are group-stage only and decide table
   order, never a match result. Slot overrides are only for disqualifications.
+- **A standings row is only marked level once a shoot-out is actually owed.**
+  `r.unresolved` is true from the first kick-off — after one match most of a
+  group is level on everything, because almost nothing has happened yet — so
+  the table used to tint four rows and pin a "LEVEL" badge on them before
+  anything was at stake. The badge is gone and the `unres` highlight now
+  follows `M.unresolvedPairs()`, which fires only when the group is complete
+  and the tie decides qualification. Those are exactly the rows
+  `unresolvedNotice` names for spectators and `tieShootoutPanels` offers to
+  the organiser, so a highlighted row always has its explanation on the same
+  screen. A 3rd/4th tie stays quiet: it sends nobody through, the rules
+  separate nobody, and no shoot-out is offered.
 - Match penalties (`matches.pens_*`) are a different thing entirely and are
   knockout-only — `set_shootout()` refuses a stage of `A` or `B`, so `m.pd`
   already implies a knockout tie and needs no second guard in the client.
@@ -378,6 +389,18 @@ being all that survives. `data_confidence` still routes the edition to
 `thinEdition()`, which shows what exists and stops. The page simply ends
 sooner, which is the honest signal.
 
+Two more of the same kind went with it, and the pattern is worth naming: **the
+archive does not narrate its own coverage to the reader.** The History index
+led with a paragraph explaining that records vary and nothing was filled in
+where the source was silent — a caveat before a single tournament was shown,
+answering a question nobody had asked. And every edition page ended with
+`Source: Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 1`, which
+names the import's own working file and reads like a citation on a scoreboard.
+`e.source` is still on the row, so provenance is recorded and "where did this
+figure come from" stays answerable; it is simply not rendered. The
+`known_gaps` and per-edition notes under **About this record** do stay — those
+are about the tournament, not about the compiler.
+
 - **Eleven `archive_*` tables**, relational rather than a blob. `0021`
   supersedes the `past_tournaments` jsonb table and `set_past_tournament()`
   from `0019`, which could not answer the questions History actually asks
@@ -453,6 +476,32 @@ legible before you open a single year. `M.champions()` and
 - **Thin records degrade quietly.** An edition with no recorded champion is
   simply absent from the roll, and the page says how many are unaccounted
   for instead of implying nobody won.
+
+### Archive tables and goal lines
+
+- **An archive table's club column is `tm`, not `nm`.** The base table sets
+  `table-layout:fixed` with `th{width:26px}` and escapes it only for `th.nm`,
+  so the archive's club column silently took the numeric width and every club
+  rendered as one clipped letter. `.tbl.arch` uses `table-layout:auto`, which
+  also matters because it carries eight numeric columns to the live table's
+  six. Do not add a column to it without re-checking a 7-row group at 375px.
+- **Goal lines never name a club.** A match has exactly two clubs, both on the
+  row above with their crests, so the club under every goal was pure
+  repetition — and, as a full church name over a city, it wrapped to two
+  lines. Scorers now sit in two columns, home left and away right, with each
+  player's minutes collapsed onto one line. `M.archScorerLines()` is the pure
+  split and is tested.
+- **Own goals are placed by the scoreline, never by `team_id`.** The archive
+  does not mean the same thing by that column twice: in `CONAFA26-A-R3-03` it
+  is the side the goal counted for (six normal goals plus one own goal makes
+  the published 7-0), and in `ARK26-L07` it is the side that conceded it (0-3,
+  where the away side's one normal goal plus two own goals makes three).
+  Reading it directly would credit a club two goals in a match it lost to nil.
+  Whichever side's normal goals fall short of its published score by exactly
+  the number of own goals is the side they counted for; anything less certain
+  than that, and any goal with no club at all, goes to `unplaced` and renders
+  under both columns rather than inside one. Verified across all 75 matches
+  with a complete event record: every column sums to its published scoreline.
 
 ### The trophy cabinet
 
@@ -699,6 +748,23 @@ asserts an organiser does see them. Read `__flagSummary`.
 `tests/assist_drill.html` drives the goal editor as an organiser and captures
 the edit_event payload instead of sending it, which is the only way to prove
 the full-replace rule holds. Read `__assistSummary`.
+
+Two rules that drill had to learn, and both apply to any drill that navigates:
+
+- **Re-query rows by index; never hold a node across a re-render.** It cached
+  `[data-match]` once and clicked back to Fixtures between tries, which
+  re-renders the view and detaches every cached node — so from the second
+  iteration it clicked nothing. It passed for weeks because the first fixture
+  happened to hold a goal, and only failed when the rehearsal data moved its
+  goals later. A loop that "searched twelve rows" had opened one.
+- **A stub that swallows a write must also play the write back.** The app
+  keeps polling the real snapshot every five seconds, and each poll overwrites
+  the optimistic state — so an assist set in step one was gone before the
+  assertions about editing it a second time ran, and the drill reported the
+  exact failure it exists to catch. The `edit_event` stub now remembers each
+  edit and replays it into every following snapshot, which is what the real
+  RPC would have caused. Without that the drill was timing-dependent on a
+  five-second poll and passed only by being fast enough.
 `tests/naming_drill.html` walks all thirteen editions and fails if any
 alias-only team spelling reaches the DOM, or if a B-team render loses its
 marker. Read `__namingSummary`.
@@ -711,13 +777,26 @@ before `git stash` showed the same failures did *not* appear at HEAD and the
 same code passed 8/8 in a new tab. If a drill fails, reload it alone before
 believing it.
 
-**And run it in a *fronted* tab.** The boot drill's recovery phase dispatches
-`online` and probes 700ms later; a backgrounded tab throttles timers, the
-handler's fetch has not resolved by then, and exactly those four recovery
-assertions fail. It reproduced twice in background tabs and passes every time
-the pane is showing — with and without a query string, at HEAD and on the
-branch. A drill that fails only in the background is measuring the browser,
-not the app.
+**KNOWN FLAKE: the boot drill's four recovery assertions.** They fail perhaps
+half the time, in fronted and background tabs alike, and — checked by
+stashing — **identically at HEAD**, so a failure there is not evidence about
+whatever you are working on. Confirm at HEAD before spending an hour on it, as
+has now happened twice.
+
+What is established: on a failing run `cofta.session.v1` is already gone by
+the time the `online` handler runs, so `reverifyRole` takes its
+`!api.isSignedIn()` early return and never re-checks. What is ruled out:
+`signOut()` (it would take `cofta.role.v1` with it, and that survives),
+`refreshSession()` (only reachable from a 401 or a 45-minute timer, and the
+captured call list on a failing run is one `is_admin` and some snapshots — no
+auth request at all), and any app call to `clear()` (there is none). A
+`Storage.prototype.removeItem` patch never fires on a failing run, and adding
+one makes the drill pass, which is why this is still open.
+
+Do NOT instrument it by assigning `localStorage.removeItem = fn`. Storage's
+named-property setter stores that as a *key* rather than shadowing the method,
+so the patch silently never runs — an hour went into a "nothing removed it"
+reading that was purely an artefact of that.
 
 **Computed-style assertions must disable transitions first.** `getComputedStyle`
 returns the in-flight value during a transition, and transitions are frozen

@@ -690,15 +690,29 @@ function viewTables() {
   const ms = resolvedMatches();
   if (!teamsArr.length) return '<p class="empty">Loading\u2026</p>';
 
-  const tbl = (g) => M.standings(teamsArr, ms, g, state.ties).map((r, i) => `
-      <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''} ${r.unresolved ? 'unres' : ''}">
+  /**
+   * `r.unresolved` is true from the first kick-off \u2014 after one match most of
+   * a group is level on everything, because almost nothing has happened yet.
+   * That is not news, so it is not shown. The highlight follows
+   * `unresolvedPairs` instead, which fires only once the group is complete
+   * AND the tie decides qualification: exactly the rows the banner names for
+   * spectators and the shoot-out panel offers to the organiser. A highlight
+   * always has its explanation on the same screen, and a 3rd/4th tie that
+   * sends nobody through stays quiet, because the rules separate nobody.
+   */
+  const tbl = (g) => {
+    const pending = new Set(M.unresolvedPairs(teamsArr, ms, g, state.ties)
+      .flatMap(p => [p.a.team.id, p.b.team.id]));
+    return M.standings(teamsArr, ms, g, state.ties).map((r, i) => `
+      <tr class="${i < 2 && !r.team.disqualified ? 'up' : ''} ${r.team.disqualified ? 'dq' : ''} ${pending.has(r.team.id) ? 'unres' : ''}">
         <td class="nm"><span class="in" data-team="${r.team.id}"><span class="rk">${i + 1}</span>
           <span class="tile" style="--c:${r.team.colour}"><img src="${crest(r.team.id)}" alt=""></span>
-          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.unresolved ? '<span class="tag lvl">Level</span>' : ''}${r.tie === 'W' ? '<span class="tag so">Shoot-out</span>' : ''}</b>
+          <span class="who"><b>${esc(r.team.name)}${r.team.disqualified ? '<span class="tag">DQ</span>' : ''}${r.tie === 'W' ? '<span class="tag so">Shoot-out</span>' : ''}</b>
           <i>${esc(r.team.city)}</i></span></span></td>
         <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
         <td>${r.p ? (r.gd > 0 ? '+' : r.gd < 0 ? '\u2212' : '') + Math.abs(r.gd) : '\u2013'}</td>
         <td class="p">${r.pts}</td></tr>`).join('');
+  };
 
   const head = `<thead><tr><th class="nm">Club</th><th>P</th><th>W</th><th>D</th>
     <th>L</th><th>GD</th><th>Pts</th></tr></thead>`;
@@ -1678,10 +1692,11 @@ function viewHistory() {
     </button>`;
   }).join('');
 
+  // No preamble apologising for the archive's coverage. It led with a caveat
+  // about record quality before showing a single tournament, which is the
+  // importer's concern rather than the reader's — they came to look up a
+  // winner. Sparse editions are self-evidently sparse when opened.
   return `<div class="sect">Previous tournaments</div>
-    <p class="note" style="padding-top:0">Thirteen finished tournaments, 2022 to 2026.
-      Records vary: some editions survive in full, others as little more than a date
-      and a champion. Nothing here is filled in where the source was silent.</p>
     ${toggle}
     <div class="ccards">${cards || '<p class="empty">No tournaments recorded.</p>'}</div>`;
 }
@@ -1838,19 +1853,38 @@ function archFixtureRow(m, d) {
         ? `${m.shootout_home}–${m.shootout_away} on penalties`
         : 'Won on penalties'}${m.shootout_winner_id
         ? ' — ' + archTeamLink(m.shootout_winner_id) : ''}</div>` : ''}
-    ${goals.length ? `<div class="afxg">${goals.map(g => {
-        const who = g.player_name ? esc(g.player_name) : 'Unattributed';
-        const side = g.team_id ? archTeamLink(g.team_id) : 'team unknown';
-        const kind = g.event_type === 'own_goal' ? ' (og)'
-                   : g.event_type === 'penalty_goal' ? ' (pen)' : '';
-        return `<span class="afxgi">${g.minute ? `<i>${esc(g.minute)}′</i>` : ''}${who}${kind}
-          <em>${side}</em></span>`;
-      }).join('')}</div>` : ''}
+    ${archGoalCols(goals, m)}
     ${marker}
     ${m.gap_note ? `<p class="afxn">${esc(m.gap_note)}</p>` : ''}
     ${state.admin && evs.some(e => e.flag) ? `<p class="flagline">flagged:
        ${esc([...new Set(evs.filter(e => e.flag).map(e => e.flag))].join(', '))}</p>` : ''}
   </div>`;
+}
+
+/**
+ * Scorers under an archive scoreline, in the two columns the scoreboard above
+ * already establishes: home left, away right. No club on any line — the two
+ * clubs are named once, at the top, with their crests.
+ *
+ * Goals the archive cannot place sit under both columns rather than inside
+ * one, because putting them in a column would assert a side.
+ */
+function archGoalCols(goals, m) {
+  if (!goals.length) return '';
+  const { home, away, unplaced } = M.archScorerLines(goals, m);
+  const line = (l) => {
+    const mins = l.mins.map(x => esc(x) + '′').join(', ');
+    // Two goals with no minute between them is still two goals; say so
+    // rather than silently collapsing them into one name.
+    const extra = !l.mins.length && l.count > 1 ? ` ×${l.count}` : '';
+    const tag = l.kind ? `<em>(${l.kind})</em>` : '';
+    return `<span class="agl">${l.name ? esc(l.name) : 'Unattributed'}${extra}${tag}
+      ${mins ? `<i>${mins}</i>` : ''}</span>`;
+  };
+  const col = (rows, cls) => `<div class="aglc ${cls}">${rows.map(line).join('')}</div>`;
+  if (!home.length && !away.length && !unplaced.length) return '';
+  return `<div class="afxg">${col(home, 'h')}${col(away, 'a')}</div>
+    ${unplaced.length ? `<div class="aglu">${unplaced.map(line).join('')}</div>` : ''}`;
 }
 
 const BOARD_LABEL = {
@@ -1950,11 +1984,17 @@ function archNotes(e) {
                  'league_table_note', 'final_orientation_note', 'venue_note',
                  'third_place_note', 'squads_note', 'edition_note']
     .map(k => e.notes?.[k]).filter(Boolean);
-  if (!gaps.length && !extra.length && !e.source) return '';
+  // `e.source` is deliberately not rendered. It names the import's own
+  // working file — a PDF filename and a section number — which tells a
+  // reader nothing about the tournament and reads like a citation on a
+  // scoreboard. It stays on the row, so provenance is still recorded and a
+  // future question about where a figure came from is answerable; the guard
+  // below no longer counts it, or an edition with nothing but a source would
+  // render a heading over an empty section.
+  if (!gaps.length && !extra.length) return '';
   return `<div class="sect">About this record</div>
     ${extra.map(t => `<p class="note">${esc(t)}</p>`).join('')}
-    ${gaps.length ? `<ul class="gaps">${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}
-    ${e.source ? `<p class="note src">Source: ${esc(e.source)}</p>` : ''}`;
+    ${gaps.length ? `<ul class="gaps">${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}`;
 }
 
 /* ── the trophy cabinet ──────────────────────────────────── */

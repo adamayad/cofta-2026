@@ -705,6 +705,82 @@ test('reigningChampion of an unwon competition is null', () => {
   eq(M.reigningChampion([]), null, 'null');
 });
 
+/* ── archive scorer lines ─────────────────────────────────
+   The two own-goal cases are taken from the real archive, because they are
+   the reason this cannot read team_id: the two editions disagree about what
+   that column means. */
+const MATCH = { home_team_id: 'H', away_team_id: 'A', home_score: 3, away_score: 1 };
+
+test('archScorerLines splits the two sides and never names the club', () => {
+  const r = M.archScorerLines([
+    { event_type: 'goal', team_id: 'H', player_name: 'Mitch', minute: '24' },
+    { event_type: 'goal', team_id: 'A', player_name: 'Andrew', minute: '40' },
+    { event_type: 'goal', team_id: 'H', player_name: 'Mitch', minute: '52' },
+    { event_type: 'goal', team_id: 'H', player_name: 'Sam', minute: '9' },
+  ], MATCH);
+  eq(r.home.map(x => x.name), ['Sam', 'Mitch'], 'earliest scorer first');
+  eq(r.home.find(x => x.name === 'Mitch').mins, ['24', '52'], 'both minutes on one line');
+  eq(r.away.map(x => x.name), ['Andrew'], 'away column');
+  eq(r.unplaced.length, 0, 'nothing left over');
+});
+
+test('archScorerLines places an own goal by the scoreline, not by team_id', () => {
+  // CONAFA26-A-R3-03: published 7-0, six normal goals to the home side and
+  // one own goal. team_id says home, and the scoreline agrees.
+  const a = M.archScorerLines([
+    ...Array.from({ length: 6 }, (_, i) => (
+      { event_type: 'goal', team_id: 'H', player_name: 'P' + i, minute: String(i + 1) })),
+    { event_type: 'own_goal', team_id: 'H', player_name: null, minute: '86' },
+  ], { home_team_id: 'H', away_team_id: 'A', home_score: 7, away_score: 0 });
+  eq(a.home.length, 7, 'the own goal counts for the home side');
+  eq(a.away.length, 0, 'and not the away side');
+  eq(a.unplaced.length, 0, 'and is not set aside');
+
+  // ARK26-L07: published 0-3, one normal away goal and two own goals whose
+  // team_id is the side that CONCEDED them. Reading team_id would credit the
+  // home side two goals in a match it lost to nil.
+  const b = M.archScorerLines([
+    { event_type: 'goal', team_id: 'A', player_name: 'Away', minute: null },
+    { event_type: 'own_goal', team_id: 'H', player_name: 'Abs Fidal', minute: null },
+    { event_type: 'own_goal', team_id: 'H', player_name: 'Abs Fidal', minute: null },
+  ], { home_team_id: 'H', away_team_id: 'A', home_score: 0, away_score: 3 });
+  eq(b.home.length, 0, 'the home side is credited nothing');
+  eq(b.away.length, 2, 'both own goals count for the away side');
+  eq(b.away.find(x => x.kind === 'og').count, 2, 'the same player twice, collapsed');
+});
+
+test('archScorerLines sets aside an own goal it cannot place', () => {
+  const r = M.archScorerLines([
+    { event_type: 'goal', team_id: 'H', player_name: 'One', minute: '5' },
+    { event_type: 'own_goal', team_id: 'H', player_name: 'Odd', minute: '70' },
+  ], { home_team_id: 'H', away_team_id: 'A', home_score: 4, away_score: 4 });
+  eq(r.unplaced.map(x => x.name), ['Odd'], 'guessing would credit a club wrongly');
+});
+
+test('archScorerLines sets aside a goal with no club', () => {
+  const r = M.archScorerLines([
+    { event_type: 'goal', team_id: null, player_name: 'Nobody knows', minute: '12' },
+  ], MATCH);
+  eq(r.unplaced.map(x => x.name), ['Nobody knows'], 'unattributed');
+  eq([r.home.length, r.away.length], [0, 0], 'neither side claims it');
+});
+
+test('archScorerLines marks penalties and own goals apart from open play', () => {
+  const r = M.archScorerLines([
+    { event_type: 'penalty_goal', team_id: 'H', player_name: 'Spot', minute: '30' },
+    { event_type: 'goal', team_id: 'H', player_name: 'Spot', minute: '60' },
+  ], { home_team_id: 'H', away_team_id: 'A', home_score: 2, away_score: 0 });
+  eq(r.home.map(x => x.kind), ['pen', ''], 'one line each, not merged');
+});
+
+test('archScorerLines puts a minuteless goal last', () => {
+  const r = M.archScorerLines([
+    { event_type: 'goal', team_id: 'H', player_name: 'Unknown when', minute: null },
+    { event_type: 'goal', team_id: 'H', player_name: 'Late', minute: '90' },
+  ], { home_team_id: 'H', away_team_id: 'A', home_score: 2, away_score: 0 });
+  eq(r.home.map(x => x.name), ['Late', 'Unknown when'], 'a blank minute is not minute zero');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

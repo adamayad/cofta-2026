@@ -748,3 +748,81 @@ export function reigningChampion(editions = []) {
   const latest = played.reduce((a, b) => (b.year > a.year ? b : a));
   return { teamId: latest.champion_team_id, year: latest.year, edition: latest };
 }
+
+/* ── archive scorer lines ─────────────────────────────────── */
+/**
+ * The scorers under an archive scoreline, split into the two columns a
+ * football scoreboard uses: home on the left, away on the right, each
+ * player's minutes collapsed onto one line.
+ *
+ * The club is not named on a goal line. A match has exactly two clubs and
+ * both are already on the row above with their crests, so repeating the full
+ * church name under every goal said nothing, and wrapped to two lines while
+ * saying it.
+ *
+ * OWN GOALS CANNOT BE PLACED BY `team_id`, because the archive does not mean
+ * the same thing by it twice. In CONAFA26-A-R3-03 the id is the side the goal
+ * counted for — six normal goals plus one own goal makes the published 7-0.
+ * In ARK26-L07 it is the side that conceded it: 0-3, with the away side's one
+ * normal goal plus two own goals making three. Guessing wrong would credit a
+ * goal to the wrong club on its own record, so the side comes from the
+ * scoreline instead: whichever side's normal goals fall short of its
+ * published score by exactly the number of own goals is the side they counted
+ * for. When that is ambiguous — or a goal names no club at all, which happens
+ * ten times in the archive — it goes to `unplaced` and is shown apart rather
+ * than attributed to a guess.
+ *
+ * Returns { home, away, unplaced }, each a list of
+ * { name, kind, mins, count } in chronological order.
+ */
+export function archScorerLines(goals = [], match = {}) {
+  const SCORED = ['goal', 'penalty_goal'];
+  const list = (goals || []).filter(g =>
+    SCORED.includes(g?.event_type) || g?.event_type === 'own_goal');
+  const home = [], away = [], unplaced = [];
+
+  const ogs = list.filter(g => g.event_type === 'own_goal');
+  for (const g of list.filter(g => SCORED.includes(g.event_type))) {
+    if (g.team_id && g.team_id === match.home_team_id) home.push(g);
+    else if (g.team_id && g.team_id === match.away_team_id) away.push(g);
+    else unplaced.push(g);
+  }
+
+  if (ogs.length) {
+    const short = (score, scored) => (score == null ? null : score - scored);
+    const hs = short(match.home_score, home.length);
+    const as = short(match.away_score, away.length);
+    // One side accounts for all of them and the other is already square.
+    // Anything less certain than that is not attributed to either.
+    if (hs === ogs.length && as === 0) home.push(...ogs);
+    else if (as === ogs.length && hs === 0) away.push(...ogs);
+    else unplaced.push(...ogs);
+  }
+
+  return {
+    home: archGoalGroups(home),
+    away: archGoalGroups(away),
+    unplaced: archGoalGroups(unplaced),
+  };
+}
+
+/** Collapse one column's goals into a line per scorer, chronologically. */
+function archGoalGroups(goals) {
+  const out = new Map();
+  for (const g of goals) {
+    const kind = g.event_type === 'own_goal' ? 'og'
+               : g.event_type === 'penalty_goal' ? 'pen' : '';
+    const name = g.player_name || null;
+    const key = kind + ' ' + (name ?? '(none)');
+    if (!out.has(key)) out.set(key, { name, kind, mins: [], count: 0 });
+    const row = out.get(key);
+    row.count++;
+    if (g.minute) row.mins.push(String(g.minute));
+  }
+  const rows = [...out.values()];
+  for (const r of rows) r.mins.sort((a, b) => minuteKey(a) - minuteKey(b));
+  // A goal with no minute sorts last: it is not known to have come early.
+  rows.sort((a, b) => (a.mins.length ? minuteKey(a.mins[0]) : Infinity)
+                    - (b.mins.length ? minuteKey(b.mins[0]) : Infinity));
+  return rows;
+}

@@ -259,8 +259,7 @@ select{width:100%;font-family:var(--body);font-size:13px;color:var(--fg);backgro
 .susp .nmx{font-family:var(--disp);font-weight:600;font-size:15px}
 .susp .rs{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc)}
 
-/* level-on-everything */
-.tag.lvl{color:var(--fg2);border-color:var(--line2)}
+/* level on every tie-breaker, with a shoot-out still to come */
 tbody tr.unres td{background:oklch(.965 .022 82)}
 
 /* awards */
@@ -591,7 +590,18 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
   font-size:12.5px;font-weight:500}
 
 /* archive tables */
-.tbl.arch td.tm{display:flex;align-items:center;gap:7px}
+/* The club column is `tm` here, not `nm`, so the `th.nm{width:auto}` escape
+   in the base table never reached it: under table-layout:fixed it inherited
+   the generic 26px meant for a numeric column, and every club rendered as a
+   single clipped letter. An archive table also carries eight numeric columns
+   to the live table's six, so fixed layout has no room to give. Auto layout
+   sizes the numbers to their digits and hands the rest to the club. */
+.tbl.arch{table-layout:auto}
+.tbl.arch th.tm{width:auto;text-align:left}
+.tbl.arch th.pos{width:18px}
+.tbl.arch thead th,.tbl.arch tbody td{white-space:nowrap;padding-left:3px;padding-right:3px}
+.tbl.arch td.tm{display:flex;align-items:center;gap:7px;white-space:normal;
+  padding-left:0}
 /* Derived, not source: the base table already renders every cell dim, so a
    colour change here would have been invisible. Italic plus a lighter weight
    reads as "computed" next to the published columns. */
@@ -611,10 +621,20 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .afxs i{font-style:normal;color:var(--dim);font-size:14px}
 .afxp{text-align:center;font-size:11.5px;color:var(--dim);margin-top:5px;
   text-transform:uppercase;letter-spacing:.07em}
-.afxg{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:9px}
-.afxgi{font-size:12.5px;color:var(--dim)}
-.afxgi i{font-style:normal;font-variant-numeric:tabular-nums;margin-right:4px}
-.afxgi em{font-style:normal;opacity:.75;margin-left:5px;font-size:11.5px}
+/* Scorers in two columns under the score, the way a scoreboard reads: home
+   left, away right. Each side's column is aligned towards its own club above,
+   which is what tells you whose goal it was — the club name used to be
+   repeated on every line and wrapped onto two. */
+.afxg{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:9px}
+.aglc{display:flex;flex-direction:column;gap:4px;min-width:0}
+.aglc.a{text-align:right}
+.agl{font-size:12.5px;color:var(--dim);line-height:1.35}
+.agl i{font-style:normal;font-variant-numeric:tabular-nums;color:var(--fg2)}
+.agl em{font-style:normal;opacity:.7;font-size:11px;margin-left:4px}
+/* Goals the record cannot assign to a side: centred under both columns, so
+   the layout never implies one. */
+.aglu{display:flex;flex-direction:column;gap:4px;margin-top:6px;text-align:center;
+  border-top:1px dashed var(--line);padding-top:6px}
 .gap{display:inline-block;margin-top:8px;font-size:10px;text-transform:uppercase;
   letter-spacing:.09em;color:var(--dim);border:1px solid var(--line);
   border-radius:999px;padding:3px 8px}
@@ -641,7 +661,6 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .aawt{display:block;font-size:12px;color:var(--dim);margin-top:2px}
 .gaps{margin:6px 0 0;padding-left:20px}
 .gaps li{font-size:12.5px;color:var(--dim);line-height:1.55;margin-bottom:5px}
-.note.src{font-style:italic}
 
 /* Goal editor: two labelled lists, scored by then assisted by. */
 .pksub{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.11em;

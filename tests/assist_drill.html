@@ -21,18 +21,39 @@ localStorage.clear();
 localStorage.setItem('cofta.session.v1', JSON.stringify({ access_token: 'drill', refresh_token: 'drill' }));
 
 const sent = [];
+// Edits are captured instead of sent, so the server never learns about them —
+// but the app keeps polling the real snapshot every five seconds, and each
+// poll overwrites the optimistic state with a copy that has no assist on it.
+// The later assertions are about what survives a SECOND edit, so they need
+// the first one to still be there when they run. The stub therefore plays the
+// server's part: it remembers each edit and replays it into every snapshot
+// that follows, which is exactly what a real edit_event would have caused.
+const applied = new Map();
 const realFetch = window.fetch.bind(window);
 const ok = (body) => Promise.resolve(new Response(JSON.stringify(body),
   { status: 200, headers: { 'Content-Type': 'application/json' } }));
-window.fetch = (url, opts) => {
+window.fetch = async (url, opts) => {
   const u = String(url);
   if (u.includes('/rpc/is_admin')) return ok(true);
   if (u.includes('/rpc/my_role'))  return ok('organiser');
   if (u.includes('/rpc/edit_event')) {          // captured, never sent
-    try { sent.push(JSON.parse(opts.body)); } catch { sent.push(opts.body); }
+    let body; try { body = JSON.parse(opts.body); } catch { body = opts.body; }
+    sent.push(body);
+    if (body && body.p_event) applied.set(body.p_event, body);
     return ok(null);
   }
-  return realFetch(url, opts);
+  const res = await realFetch(url, opts);
+  if (!u.includes('/rpc/snapshot') || !applied.size) return res;
+  const snap = await res.clone().json();
+  for (const e of (snap?.events || [])) {
+    const edit = applied.get(e.id);
+    if (!edit) continue;
+    e.p = edit.p_player;
+    e.min = edit.p_minute;
+    e.a = edit.p_assist;
+  }
+  return new Response(JSON.stringify(snap),
+    { status: 200, headers: { 'Content-Type': 'application/json' } });
 };
 
 const results = [];
@@ -46,18 +67,27 @@ window.addEventListener('load', async () => {
   noTransition();
   await wait(3000);
 
-  // find a played match that has a goal on its report
-  let goalEdit = null, tries = 0;
-  const rows = [...document.querySelectorAll('[data-match]')];
-  for (const r of rows) {
-    r.click(); await wait(400); tries++;
+  // Find a played match that has a goal on its report.
+  //
+  // The row list is re-queried by index every time rather than captured once:
+  // going back to Fixtures re-renders the whole view, which detaches every
+  // node held from before, so a cached list silently clicks nothing from the
+  // second iteration on. This drill passed for weeks on that bug because the
+  // first fixture happened to hold a goal; when the rehearsal data moved its
+  // goals to later matches the loop "searched" twelve rows without opening
+  // any of them.
+  let goalEdit = null;
+  const count = document.querySelectorAll('[data-match]').length;
+  for (let i = 0; i < Math.min(count, 20); i++) {
+    document.getElementById('nav-fixtures').click(); await wait(280);
+    const row = document.querySelectorAll('[data-match]')[i];
+    if (!row) continue;
+    row.click(); await wait(420);
     const marks = [...document.querySelectorAll('.tl li .mk.goal')];
     if (marks.length) {
       goalEdit = marks[0].closest('li')?.querySelector('[data-edit]');
       if (goalEdit) break;
     }
-    document.getElementById('nav-fixtures').click(); await wait(250);
-    if (tries > 20) break;
   }
   check('found a goal to edit on the rehearsal data', !!goalEdit);
 
