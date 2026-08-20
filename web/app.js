@@ -64,6 +64,9 @@ const state = {
   // histCat resets to 'men' every time History is opened from the tab bar.
   archive: null, archiveEd: {}, archiveBusy: false, archiveEdBusy: null, archiveErr: null,
   histCat: 'men', histComp: null, histEd: null,
+  archTeam: null,          // which club's standalone cabinet is open
+  archiveHonours: null, honoursBusy: false,
+  clubTab: 'squad',        // Squad or History on a live club page; never persists
 };
 
 /** Events are queued so a tap on bad signal is never lost. The queue sends
@@ -98,12 +101,14 @@ const here = () => ({
   view: state.view, matchId: state.matchId, from: state.from,
   day: state.day, award: state.award, sq: { ...state.sq },
   histComp: state.histComp, histEd: state.histEd, histCat: state.histCat,
+  archTeam: state.archTeam, clubTab: state.clubTab,
 });
 
 const samePage = (a, b) =>
   a.view === b.view && a.matchId === b.matchId && a.award === b.award
   && a.sq.team === b.sq.team && a.sq.player === b.sq.player
-  && a.histComp === b.histComp && a.histEd === b.histEd;
+  && a.histComp === b.histComp && a.histEd === b.histEd
+  && a.archTeam === b.archTeam;
 
 /** Move to another page, remembering the one being left — unless the tap
  *  lands on the page already showing, which must not stack a duplicate. */
@@ -124,6 +129,8 @@ function popHist() {
   state.view = prev.view; state.matchId = prev.matchId; state.from = prev.from;
   state.day = prev.day; state.award = prev.award; state.sq = { ...prev.sq };
   state.histComp = prev.histComp; state.histEd = prev.histEd;
+  state.archTeam = prev.archTeam;
+  state.clubTab = prev.clubTab ?? 'squad';
   if (prev.histCat) state.histCat = prev.histCat;
   state.picker = null; state.editor = null;
   return true;
@@ -934,12 +941,29 @@ function viewSquads() {
         <span style="flex:1">${esc(p.name)}</span>
         <span class="pstat tnum">${bits.join(' \u00b7 ')}</span></button>`;
     }).join('');
-    return `${backButton('view:squads')}
-      <div class="stack one"><div class="sl phead" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
+    // A club that competed before gets its cabinet as a second tab here
+    // rather than a second page about the same club. Kidane Mihret has no
+    // tab at all: nothing in the archive crosswalks to them, and an empty
+    // History tab would imply a record that does not exist.
+    loadArchive();
+    const mine = archiveTeamForLive(t.id);
+    const tabs = mine ? `<div class="ctabs" role="tablist">
+        ${[['squad', 'Squad'], ['history', 'History']].map(([k, lab]) =>
+          `<button role="tab" aria-selected="${state.clubTab === k}"
+             class="${state.clubTab === k ? 'on' : ''}" data-clubtab="${k}">${lab}</button>`).join('')}
+      </div>` : '';
+
+    const head = `<div class="stack one"><div class="sl phead" style="--c:${colOf(t.id)};--tc:${txtOf(t.id)}">
         <span class="bdg"><img src="${crest(t.id)}" alt=""></span>
         <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span>
         <span class="clubmeta"><i>Manager</i><b>${t.manager ? esc(t.manager) : '\u2014'}</b>
-          <i class="cstat">${esc(teamStatus(t.id))}</i></span></div></div>
+          <i class="cstat">${esc(teamStatus(t.id))}</i></span></div></div>`;
+
+    if (mine && state.clubTab === 'history') {
+      return `${backButton('view:squads')}${head}${tabs}${cabinetBody(mine.id)}`;
+    }
+
+    return `${backButton('view:squads')}${head}${tabs}
       ${squad.length
         ? `<div class="sect">Squad \u00b7 ${squad.length}</div><div class="pklist" style="max-height:none">${rows}</div>
            <p class="note">Tap a player for their tournament record.</p>`
@@ -1418,8 +1442,66 @@ function archCrest(t, size = 28) {
 }
 
 const archTeam = (id) => state.archive?.teamById?.[id] ?? null;
-const archName = (id) => archTeam(id)?.canonical_name ?? 'Unknown club';
-const archShort = (id) => archTeam(id)?.short_name ?? 'Unknown';
+
+/**
+ * A club's name for display, and the ONLY way History is allowed to render
+ * one.
+ *
+ * Every name comes from archive_teams, never from the alias string the
+ * edition's source happened to use — the same club is recorded as "Hounslow",
+ * "Pope Kyrillos, Hounslow", "SMPK" and "St Mary & Pope Kyrillos VI" across
+ * five editions, and a reader should not have to work out that those are one
+ * club. Match, event, standing and leaderboard rows all carry a team_id
+ * precisely so the name can be looked up rather than quoted.
+ *
+ * `full` picks the canonical name over the short one. Canonical everywhere it
+ * fits; short only on the two-up fixture row, where two canonical names plus a
+ * score cannot share a line at 375px. Both come from the same row, so the
+ * identity never changes — only its length.
+ */
+const archLabel = (id, full = false) => {
+  const t = archTeam(id);
+  if (!t) return 'Unknown club';
+  return (full ? t.canonical_name : t.short_name) || t.canonical_name;
+};
+
+/**
+ * The name with its B marker. A B team shows the parent's crest, so without
+ * this the two sides of a club are indistinguishable anywhere a name appears
+ * without one — a leaderboard row, an award, a note. Returns escaped HTML.
+ */
+const archTeamName = (id, full = false) => {
+  const t = archTeam(id);
+  const label = archLabel(id, full);
+  // Several canonical names already end in a B — "St Mark B", "Archangel
+  // Michael, Golders Green B", "PKSM (SMPK B)". Only the short forms that do
+  // not say it need the marker, or the name reads "… B B".
+  const saysItAlready = /\bB\)?$/.test(label);
+  return esc(label)
+    + (t?.parent_club && !saysItAlready ? '<i class="btag" title="B team">B</i>' : '');
+};
+
+/**
+ * A club, as a real button through to its cabinet.
+ *
+ * Everywhere History names a club it is a link, so the crest and the name are
+ * one target rather than two — and a `<button>`, not a div, because a div
+ * with a handler cannot be reached by keyboard and announces nothing.
+ */
+const archTeamLink = (id, { full = false, crest = 0, away = false } = {}) => {
+  const t = archTeam(id);
+  if (!t) return `<span class="tlink dead">${esc(archLabel(id, full))}</span>`;
+  const badge = crest ? archCrest(t, crest) : '';
+  // The crest already carries the B badge, so the name must not repeat it —
+  // otherwise a B team reads "St Mary's B B".
+  const name = `<span>${crest ? esc(archLabel(id, full)) : archTeamName(id, full)}</span>`;
+  return `<button class="tlink${away ? ' away' : ''}" data-archteam="${esc(t.id)}">`
+    + (away ? name + badge : badge + name) + '</button>';
+};
+
+// Kept for the few places that want the bare string (sorting, title text).
+const archName = (id) => archLabel(id, true);
+const archShort = (id) => archLabel(id, false);
 
 /** "12–13 September 2026", or a single day where start and end match. */
 function archDates(e) {
@@ -1499,8 +1581,10 @@ function viewHistory() {
         <span class="ccn">${esc(c.name)}</span>
         <span class="ccm">${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot; ${span}</span>
       </span>
+        <!-- plain text, not a link: the whole card is already a button, and a
+             button inside a button is invalid HTML (see CLAUDE.md) -->
       <span class="ccl">Last winners
-        <b>${esc(latest.champion_team_id ? archShort(latest.champion_team_id) : 'Unknown')}</b>
+        <b>${latest.champion_team_id ? archTeamName(latest.champion_team_id) : 'Unknown'}</b>
         <span class="ccy">${latest.year}</span></span>
       <span class="chev" aria-hidden="true"></span>
     </button>`;
@@ -1553,19 +1637,21 @@ function thinEdition(e) {
   return `<div class="thincard">
       <div class="tcwin">
         ${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
-        <div><b>${esc(e.champion_team_id ? archName(e.champion_team_id) : 'Champion not recorded')}</b>
+        <div><b>${e.champion_team_id
+          ? archTeamLink(e.champion_team_id, { full: true })
+          : 'Champion not recorded'}</b>
           <span>Champions</span></div>
       </div>
       ${e.runner_up_team_id ? `<div class="tcrun">
         ${archCrest(archTeam(e.runner_up_team_id), 28)}
-        <div><b>${esc(archName(e.runner_up_team_id))}</b><span>Runners-up</span></div></div>` : ''}
+        <div><b>${archTeamLink(e.runner_up_team_id, { full: true })}</b><span>Runners-up</span></div></div>` : ''}
       ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
       ${fin.decided_by === 'penalties' && fin.shootout
         && (fin.shootout.winner_score ?? fin.shootout.home) == null
         ? '<p class="tcnote">The shoot-out score is not recorded.</p>' : ''}
       ${entrants.length ? `<div class="sect">Entrants</div>
         <div class="entrants">${entrants.map(t =>
-          `<span class="ent">${archCrest(t, 22)}<span>${esc(t.short_name)}</span></span>`).join('')}</div>
+          `<span class="ent">${archTeamLink(t.id, { full: true, crest: 22 })}</span>`).join('')}</div>
         ${e.notes?.teams_note ? `<p class="note">${esc(e.notes.teams_note)}</p>` : ''}` : ''}
       <p class="thinnote">Limited records survive for this edition.</p>
     </div>`;
@@ -1587,7 +1673,7 @@ function archTable(d, g) {
       const t = archTeam(r.team_id);
       return `<tr>
         <td class="pos">${r.position}</td>
-        <td class="tm">${archCrest(t, 20)}<span>${esc(t?.short_name ?? '?')}</span>
+        <td class="tm">${archTeamLink(r.team_id, { full: true, crest: 20 })}
           ${r.note ? `<i class="gapdot" title="${esc(r.note)}">*</i>` : ''}</td>
         <td>${r.p ?? '–'}</td><td>${r.w ?? '–'}</td>
         <td>${r.d ?? '–'}</td><td>${r.l ?? '–'}</td>
@@ -1599,7 +1685,7 @@ function archTable(d, g) {
     ${derived ? `<p class="note">GF and GA were not displayed in the source table;
       these are computed from the fixture list and reconcile exactly to the published GD.</p>` : ''}
     ${rows.some(r => r.note) ? rows.filter(r => r.note).map(r =>
-      `<p class="note">* ${esc(archShort(r.team_id))}: ${esc(r.note)}</p>`).join('') : ''}`;
+      `<p class="note">* ${archTeamName(r.team_id, true)}: ${esc(r.note)}</p>`).join('') : ''}`;
 }
 
 const STAGE_LABEL = {
@@ -1628,17 +1714,17 @@ function archFixtureRow(m, d) {
         }[m.events_status] ?? m.events_status)}</span>` : '';
   return `<div class="afxr">
     <div class="afxm">
-      <span class="afxt">${archCrest(archTeam(m.home_team_id), 22)}<span>${esc(archShort(m.home_team_id))}</span></span>
+      ${archTeamLink(m.home_team_id, { crest: 22 })}
       <span class="afxs">${m.home_score ?? '–'}<i>–</i>${m.away_score ?? '–'}</span>
-      <span class="afxt away"><span>${esc(archShort(m.away_team_id))}</span>${archCrest(archTeam(m.away_team_id), 22)}</span>
+      ${archTeamLink(m.away_team_id, { crest: 22, away: true })}
     </div>
     ${pens ? `<div class="afxp">${m.shootout_home != null && m.shootout_away != null
         ? `${m.shootout_home}–${m.shootout_away} on penalties`
         : 'Won on penalties'}${m.shootout_winner_id
-        ? ' — ' + esc(archShort(m.shootout_winner_id)) : ''}</div>` : ''}
+        ? ' — ' + archTeamLink(m.shootout_winner_id) : ''}</div>` : ''}
     ${goals.length ? `<div class="afxg">${goals.map(g => {
         const who = g.player_name ? esc(g.player_name) : 'Unattributed';
-        const side = g.team_id ? esc(archShort(g.team_id)) : 'team unknown';
+        const side = g.team_id ? archTeamLink(g.team_id) : 'team unknown';
         const kind = g.event_type === 'own_goal' ? ' (og)'
                    : g.event_type === 'penalty_goal' ? ' (pen)' : '';
         return `<span class="afxgi">${g.minute ? `<i>${esc(g.minute)}′</i>` : ''}${who}${kind}
@@ -1676,8 +1762,11 @@ function archBoards(d) {
         both figures are kept in the archive.</p>` : ''}
       <div class="alb">${rs.map(b => `<div class="albr">
         <span class="albv">${b.value ?? '–'}</span>
-        <span class="albn">${esc(b.player_name ?? archShort(b.team_id))}
-          ${b.player_name && b.team_id ? `<i>${esc(archShort(b.team_id))}</i>` : ''}</span>
+          ${b.player_name ? '' : archCrest(archTeam(b.team_id), 22)}
+          <span class="albn">${b.player_name
+            ? esc(b.player_name)
+            : archTeamLink(b.team_id, { full: true })}
+          ${b.player_name && b.team_id ? `<i>${archTeamLink(b.team_id, { full: true })}</i>` : ''}</span>
         ${state.admin && b.flag ? `<span class="flagline">${esc(b.flag)}</span>` : ''}
       </div>`).join('')}</div>`;
   }).join('');
@@ -1693,9 +1782,9 @@ function archAwards(d) {
   return `<div class="sect">Awards</div>
     <div class="aawards">${named.map(a => `<div class="aaw">
       <span class="aawl">${esc(LAB[a.award_type] ?? a.award_type)}</span>
-      <span class="aawn">${esc(a.player_name ?? archShort(a.team_id))}
+      <span class="aawn">${a.player_name ? esc(a.player_name) : archTeamLink(a.team_id, { full: true })}
         ${a.value != null ? `<i>${a.value}</i>` : ''}</span>
-      ${a.team_id && a.player_name ? `<span class="aawt">${esc(archShort(a.team_id))}</span>` : ''}
+      ${a.team_id && a.player_name ? `<span class="aawt">${archTeamLink(a.team_id, { full: true })}</span>` : ''}
     </div>`).join('')}</div>`;
 }
 
@@ -1726,10 +1815,10 @@ function viewHistEdition() {
 
   const podium = `<div class="thincard">
     <div class="tcwin">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
-      <div><b>${esc(e.champion_team_id ? archName(e.champion_team_id) : 'Not recorded')}</b>
+      <div><b>${e.champion_team_id ? archTeamLink(e.champion_team_id, { full: true }) : 'Not recorded'}</b>
         <span>Champions</span></div></div>
     ${e.runner_up_team_id ? `<div class="tcrun">${archCrest(archTeam(e.runner_up_team_id), 28)}
-      <div><b>${esc(archName(e.runner_up_team_id))}</b><span>Runners-up</span></div></div>` : ''}
+      <div><b>${archTeamLink(e.runner_up_team_id, { full: true })}</b><span>Runners-up</span></div></div>` : ''}
     ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
   </div>`;
 
@@ -1750,6 +1839,146 @@ function archNotes(e) {
     ${extra.map(t => `<p class="note">${esc(t)}</p>`).join('')}
     ${gaps.length ? `<ul class="gaps">${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul>` : ''}
     ${e.source ? `<p class="note src">Source: ${esc(e.source)}</p>` : ''}`;
+}
+
+/* ── the trophy cabinet ──────────────────────────────────── */
+/**
+ * A club's whole archive record, reachable from every place History renders
+ * that club.
+ *
+ * Where it opens depends on whether the club still competes. The seven that
+ * do already have a page — Squads → the club — so the cabinet becomes a
+ * second tab there rather than a second page about the same club. Everyone
+ * else gets a standalone page, because there is no live page to tab within.
+ *
+ * B teams take the standalone route even though they carry a live_team_id.
+ * That id exists so they can borrow the parent's crest; it does not make them
+ * the parent, and PKSM's record must never appear under SMPK's name.
+ */
+function loadHonours() {
+  if (state.archiveHonours || state.honoursBusy) return;
+  state.honoursBusy = true;
+  api.fetchArchiveHonours()
+    .then(h => { state.archiveHonours = h; state.archiveErr = null; })
+    .catch(e => { state.archiveErr = e.message; })
+    .finally(() => { state.honoursBusy = false; render(); });
+}
+
+/** The archive club a live club id maps to: the A team, never a B team. */
+const archiveTeamForLive = (liveId) =>
+  (state.archive?.teams || []).find(t => t.live_team_id === liveId && !t.parent_club) ?? null;
+
+/** Where a tap on an archive club should land. */
+function cabinetRoute(t) {
+  return (t?.live_team_id && !t.parent_club)
+    ? { view: 'squads', team: t.live_team_id }
+    : { view: 'archteam', team: t?.id ?? null };
+}
+
+const TROPHY_LABEL = {
+  golden_boot: 'Golden boot',
+  player_of_tournament: 'Player of the tournament',
+  golden_glove: 'Golden glove',
+};
+
+/**
+ * The cabinet body. Shared by the standalone page and the live club page's
+ * History tab, so the two can never drift apart.
+ */
+function cabinetBody(archTeamId) {
+  loadArchive(); loadHonours();
+  if (state.archiveErr && !state.archive) return archFailed();
+  if (!state.archive || !state.archiveHonours) return archLoading('this club’s record');
+
+  const t = archTeam(archTeamId);
+  if (!t) {
+    return `<p class="empty">No archive record for this club. Nothing from
+      2022&ndash;2026 crosswalks to them.</p>`;
+  }
+
+  const cab = M.trophyCabinet(archTeamId, {
+    editions: state.archive.editions,
+    entrants: state.archive.entrants,
+    awards: state.archiveHonours.awards,
+    boards: state.archiveHonours.boards,
+  });
+
+  const wins = cab.finals.filter(f => f.result === 'champion').length;
+  const runs = cab.finals.length - wins;
+
+  const tally = `<div class="cabtally">
+    <div class="stat"><i>Won</i><b class="tnum">${wins}</b></div>
+    <div class="stat"><i>Runners-up</i><b class="tnum">${runs}</b></div>
+    <div class="stat"><i>Entered</i><b class="tnum">${cab.entered}</b></div>
+  </div>`;
+
+  const finals = cab.finals.length
+    ? `<div class="sect">Finals</div>
+       <div class="cabrows">${cab.finals.map(f => `
+         <button class="cabrow" data-histed="${esc(f.edition.id)}"
+           data-comp="${esc(COMP_SLUG[f.edition.competition] ?? '')}">
+           <span class="caby">${f.edition.year}</span>
+           <span class="cabm"><b>${esc(f.edition.competition)}</b>
+             <span class="cabr ${f.result}">${f.result === 'champion' ? 'Winners' : 'Runners-up'}</span></span>
+           <span class="chev" aria-hidden="true"></span>
+         </button>`).join('')}</div>`
+    : `<div class="sect">Finals</div>
+       <p class="note" style="padding-top:0">No final reached in the recorded archive.</p>`;
+
+  // Honours grouped by edition, newest first — the order trophyCabinet
+  // already put them in.
+  const byEd = [];
+  for (const h of cab.honours) {
+    const key = h.editionId;
+    let g = byEd.find(x => x.key === key);
+    if (!g) { g = { key, edition: h.edition, items: [] }; byEd.push(g); }
+    g.items.push(h);
+  }
+  const honours = byEd.length ? `<div class="sect">Honours</div>
+    <div class="cabhon">${byEd.map(g => `<div class="cabhg">
+      <span class="cabhe">${esc(g.edition
+        ? `${g.edition.competition} ${g.edition.year}` : 'Unknown edition')}</span>
+      ${g.items.map(h => `<span class="cabhi">
+        <b>${esc(TROPHY_LABEL[h.trophy] ?? h.trophy)}</b>
+        ${h.player ? `<i>${esc(h.player)}</i>` : ''}
+        ${h.value != null ? `<span class="cabhv tnum">${h.value}</span>` : ''}
+        ${h.source === 'board'
+          ? '<span class="cabled" title="Topped the published board; no trophy is recorded">led</span>'
+          : ''}</span>`).join('')}
+    </div>`).join('')}</div>
+    ${cab.honours.some(h => h.source === 'board')
+      ? `<p class="note">Marked <em>led</em> where the club topped the published
+         board and the source records no trophy. Leading is not winning.</p>` : ''}`
+    : '';
+
+  const also = cab.alsoCompeted.length ? `<div class="sect">Also competed</div>
+    <div class="cabalso">${cab.alsoCompeted.map(e => `
+      <button class="alsochip" data-histed="${esc(e.id)}">${esc(e.competition)}
+        <span>${e.year}</span></button>`).join('')}</div>` : '';
+
+  const nothing = !cab.finals.length && !cab.honours.length && !cab.alsoCompeted.length
+    ? `<p class="empty">This club does not appear in the 2022&ndash;2026 archive.</p>` : '';
+
+  return tally + finals + honours + also + nothing;
+}
+
+/** The standalone cabinet, for clubs with no live page to tab within. */
+function viewArchTeam() {
+  loadArchive();
+  if (state.archiveErr && !state.archive) return archFailed();
+  if (!state.archive) return archLoading('this club’s record');
+  const t = archTeam(state.archTeam);
+  const back = backButton('view:history');
+  if (!t) return `${back}<p class="empty">That club is not in the archive.</p>`;
+
+  return `${back}
+    <div class="stack one"><div class="sl phead cabhead">
+      <span class="bdg">${archCrest(t, 62)}</span>
+      <span class="who"><b>${archTeamName(t.id, true)}</b>
+        <i class="cabsub">${esc(t.parent_club
+          ? `B team of ${t.parent_club}` : 'Archive record')}</i></span>
+    </div></div>
+    ${cabinetBody(t.id)}`;
 }
 
 /* ── render ──────────────────────────────────────────────── */
@@ -1776,7 +2005,8 @@ function render() {
   // reasoning as a match staying under the tab it was opened from.
   const navFor = state.view === 'match' ? state.from
                : state.view === 'award' ? 'awards'
-               : (state.view === 'histcomp' || state.view === 'histed') ? 'history'
+               : (state.view === 'histcomp' || state.view === 'histed'
+                  || state.view === 'archteam') ? 'history'
                : state.view;
   ['fixtures', 'live', 'squads', 'tables', 'awards', 'history'].forEach(v =>
     $('nav-' + v)?.classList.toggle('on', navFor === v));
@@ -1795,7 +2025,8 @@ function render() {
     state.view === 'awards'   ? viewAwards()   :
     state.view === 'history'  ? viewHistory()  :
     state.view === 'histcomp' ? viewHistComp() :
-    state.view === 'histed'   ? viewHistEdition() : viewAdmin();
+    state.view === 'histed'   ? viewHistEdition() :
+    state.view === 'archteam' ? viewArchTeam() : viewAdmin();
 
   $('body').innerHTML = body +
     (state.error ? `<div class="banner warn">Could not reach the server: ${esc(state.error)}.
@@ -1827,7 +2058,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -1855,6 +2086,7 @@ document.addEventListener('click', async (ev) => {
     state.view = t.dataset.view; state.picker = null; state.editor = null;
     state.hist = []; state.award = null;
     if (t.dataset.view === 'squads' && !t.dataset.sqteam) state.sq = { team: null, player: null };
+    if (t.dataset.view === 'squads') state.clubTab = 'squad';
     // History opens on Men every time, as specified — the toggle is a
     // per-visit choice, not a preference worth remembering.
     if (t.dataset.view === 'history') {
@@ -1880,10 +2112,33 @@ document.addEventListener('click', async (ev) => {
     render(); return;
   }
 
+  // A club in History opens its cabinet. The seven that still compete already
+  // have a page, so it opens there on the History tab; everyone else — the
+  // clubs off the circuit, and B teams, which borrow a crest but are not
+  // their parent — gets the standalone cabinet.
+  if (t.dataset.archteam) {
+    const club = archTeam(t.dataset.archteam);
+    const route = cabinetRoute(club);
+    navigate(() => {
+      if (route.view === 'squads') {
+        state.view = 'squads';
+        state.sq = { team: route.team, player: null };
+        state.clubTab = 'history';
+      } else {
+        state.view = 'archteam';
+        state.archTeam = route.team;
+      }
+    });
+    render(); return;
+  }
+
+  if (t.dataset.clubtab) { state.clubTab = t.dataset.clubtab; render(); return; }
+
   if (t.dataset.team) {
     navigate(() => {
       state.view = 'squads';
       state.sq = { team: t.dataset.team, player: null };
+      state.clubTab = 'squad';   // the toggle never persists between visits
       state.award = null;
     });
     render(); return;
@@ -1901,6 +2156,7 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.sqteam) {
     navigate(() => {
       state.view = 'squads'; state.sq = { team: t.dataset.sqteam, player: null };
+      state.clubTab = 'squad';
       state.award = null;
     });
     render(); return;

@@ -1,0 +1,125 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA History naming drill</title>
+<link rel="stylesheet" href="../web/styles.css"><link rel="stylesheet" href="../web/themes.css">
+<!--
+  History naming drill.
+
+  The same club is recorded as "Hounslow", "Pope Kyrillos, Hounslow", "SMPK"
+  and "St Mary & Pope Kyrillos VI" across five editions. A reader must never
+  have to work out that those are one club, so every team name History renders
+  has to come from archive_teams, never from the alias string the source
+  happened to use.
+
+  This walks all thirteen editions, collects every rendered team name from
+  every surface, and asserts each one is a canonical_name or short_name from
+  archive_teams — and specifically that no alias-only spelling survives
+  anywhere. It also checks the B marker is present on every B-team render.
+
+  Serve the repo root and open /tests/naming_drill.html; read
+  globalThis.__namingSummary. Needs a connection.
+-->
+<script>
+localStorage.clear();
+const results = [];
+const check = (name, cond, detail) => results.push({ name, ok: !!cond, detail });
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+window.addEventListener('load', async () => {
+  await wait(2500);
+
+  const R = (p) => fetch('https://faodniafqglgzmdosgfq.supabase.co/rest/v1/' + p, {
+    headers: { apikey: 'sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF',
+               Authorization: 'Bearer sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF' } }).then(r => r.json());
+  const teams = await R('archive_teams?select=id,canonical_name,short_name,aliases,parent_club');
+  const editions = await R('archive_editions?select=id&order=year.desc');
+
+  const allowed = new Set();
+  const bTeamNames = new Set();
+  const aliasOnly = new Set();
+  for (const t of teams) {
+    allowed.add(t.canonical_name); allowed.add(t.short_name);
+    if (t.parent_club) { bTeamNames.add(t.canonical_name); bTeamNames.add(t.short_name); }
+    for (const a of t.aliases || []) {
+      if (a !== t.canonical_name && a !== t.short_name) aliasOnly.add(a);
+    }
+  }
+  check('the archive has alias spellings that must never render',
+    aliasOnly.size > 0, [...aliasOnly].slice(0, 6));
+
+  // Walk every edition page and harvest every element that renders a club.
+  const seen = [], strays = [], missingB = [];
+  document.getElementById('nav-history').click();
+  for (let i = 0; i < 60 && !document.querySelector('.ccard'); i++) await wait(150);
+
+  for (const ed of editions) {
+    location.hash = '';
+    document.getElementById('nav-history').click(); await wait(200);
+    // reach the edition directly through the app's own handler
+    const btn = document.createElement('button');
+    btn.dataset.histed = ed.id; btn.style.display = 'none';
+    document.body.appendChild(btn); btn.click(); btn.remove();
+    for (let i = 0; i < 60; i++) {
+      await wait(150);
+      if (document.querySelector('.thincard') || document.querySelector('.afxr')) break;
+    }
+    // every surface that renders a club name
+    const sel = ['.tcwin div b', '.tcrun div b', '.ent span:last-child',
+                 'table.arch td.tm span', '.afxt span', '.afxgi em',
+                 '.albn', '.albn i', '.aawn', '.aawt'].join(',');
+    for (const el of document.querySelectorAll(sel)) {
+      const raw = el.textContent.replace(/\s+/g, ' ').trim();
+      if (!raw) continue;
+      const name = raw.replace(/\s*B$/, '');          // strip the B marker
+      const isTeamSurface = !el.matches('.albn') || !el.querySelector('i');
+      if (!isTeamSurface) continue;
+      if (aliasOnly.has(name)) strays.push({ ed: ed.id, name, sel: el.className || el.tagName });
+      if (allowed.has(name)) {
+        seen.push(name);
+        // The marker may sit on the crest, on a .btag beside the name, or in
+        // the canonical name itself ("St Mark B", "PKSM (SMPK B)"). Look at
+        // the whole link, not just the text node, because a crest link
+        // deliberately does not repeat the tag.
+        const scope = el.closest('.tlink') || el;
+        const marked = scope.querySelector('.btag, .bteam') || /\bB\)?$/.test(raw);
+        if (bTeamNames.has(name) && !marked) {
+          missingB.push({ ed: ed.id, name, html: scope.outerHTML.slice(0, 120) });
+        }
+      }
+    }
+  }
+
+  check('team names were harvested from every edition', seen.length > 50, seen.length);
+  check('no alias-only spelling renders anywhere in History',
+    strays.length === 0, strays.slice(0, 8));
+  check('every B-team render carries its B marker',
+    missingB.length === 0, missingB.slice(0, 5));
+  check('the two Pope Kyrillos VI clubs stay distinct on screen',
+    !seen.includes('St Demiana, Worthing') && !seen.includes('St Demiana and Pope Kyrillos VI'),
+    seen.filter(n => /Kyrillos|Worthing|Demiana/.test(n)).slice(0, 6));
+
+  const summary = { total: results.length, failures: results.filter(r => !r.ok).length,
+                    results, distinctNames: [...new Set(seen)].sort() };
+  globalThis.__namingSummary = summary;
+  const out = document.createElement('pre');
+  out.id = 'naming-report';
+  out.style.cssText = 'padding:12px;white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace';
+  out.textContent = 'History naming drill\n\n'
+    + results.map(r => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.name}`).join('\n')
+    + `\n\n${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script></head>
+<body data-theme="matchday">
+<div class="app">
+  <header class="hd"><button id="nav-admin" class="gear" data-view="admin" aria-label="Organiser"></button><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-history" data-view="history">History</button>
+  </nav>
+  <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
+</div>
+<script type="module" src="../web/app.js"></script>
+</body></html>

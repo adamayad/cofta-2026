@@ -608,3 +608,91 @@ export function scorerLines(events, matchId, sideKey, nameOf) {
   out.sort((a, b) => minuteKey(a.mins[0]) - minuteKey(b.mins[0]));
   return out;
 }
+
+/* ── the archive trophy cabinet ───────────────────────────── */
+/**
+ * The archive records awards under the names its sources used; the live app
+ * has its own three trophies. This is the mapping between them, and the only
+ * place it is stated.
+ *
+ * `most_clean_sheets` is a club award in the archive while the golden glove
+ * goes to a keeper, which is exactly the mismatch the live app already
+ * handles by having an organiser name the winner. Treated as the club honour
+ * it actually is.
+ */
+export const ARCHIVE_TROPHY = {
+  top_scorer:               'golden_boot',
+  top_goalscorer:           'golden_boot',
+  player_of_the_tournament: 'player_of_tournament',
+  most_clean_sheets:        'golden_glove',
+};
+
+/** Which published boards can stand in for a trophy nobody formally awarded. */
+const BOARD_TROPHY = {
+  goalscorer:   'golden_boot',
+  clean_sheets: 'golden_glove',
+};
+
+/**
+ * One club's whole archive record.
+ *
+ * Finals first — every edition they won or lost, newest first. Then the
+ * individual honours their players took. Then the editions they entered and
+ * neither won nor lost the final of, so a cabinet is quiet about a barren
+ * year rather than silent about the club's history.
+ *
+ * B teams are their own club here. They inherit a parent's crest for display
+ * and nothing else: a B team's results are never folded into the A team's,
+ * because they are different sides that have met each other.
+ *
+ * `source` on an honour separates a trophy that was awarded from a board a
+ * player merely topped. Leading is not winning, and the archive is the last
+ * place to blur that.
+ */
+export function trophyCabinet(teamId, {
+  editions = [], entrants = [], awards = [], boards = [],
+} = {}) {
+  if (!teamId) return { finals: [], honours: [], alsoCompeted: [], entered: 0 };
+
+  const byYear = (a, b) =>
+    (b.year - a.year) || String(a.competition).localeCompare(String(b.competition));
+  const sorted = [...editions].sort(byYear);
+  const byId = Object.fromEntries(sorted.map(e => [e.id, e]));
+
+  const finals = [];
+  for (const e of sorted) {
+    if (e.champion_team_id === teamId)      finals.push({ edition: e, result: 'champion' });
+    else if (e.runner_up_team_id === teamId) finals.push({ edition: e, result: 'runner_up' });
+  }
+
+  const honours = [];
+  for (const a of awards) {
+    if (a.team_id !== teamId) continue;
+    if (a.is_published_summary) continue;          // the flagged table, not the record
+    const trophy = ARCHIVE_TROPHY[a.award_type];
+    if (!trophy) continue;
+    honours.push({
+      edition: byId[a.edition_id] ?? null, editionId: a.edition_id, trophy,
+      player: a.player_name ?? null, value: a.value ?? null, source: 'award',
+    });
+  }
+  for (const b of boards) {
+    if (b.team_id !== teamId || b.rank !== 1) continue;
+    const trophy = BOARD_TROPHY[b.board_type];
+    if (!trophy) continue;
+    // don't repeat an honour that was actually awarded
+    if (honours.some(h => h.editionId === b.edition_id && h.trophy === trophy)) continue;
+    honours.push({
+      edition: byId[b.edition_id] ?? null, editionId: b.edition_id, trophy,
+      player: b.player_name ?? null, value: b.value ?? null, source: 'board',
+    });
+  }
+  honours.sort((x, y) => byYear(x.edition ?? { year: 0 }, y.edition ?? { year: 0 }));
+
+  const inFinal = new Set(finals.map(f => f.edition.id));
+  const entered = entrants.filter(x => x.team_id === teamId).map(x => x.edition_id);
+  const enteredSet = new Set(entered);
+  const alsoCompeted = sorted.filter(e => enteredSet.has(e.id) && !inFinal.has(e.id));
+
+  return { finals, honours, alsoCompeted, entered: enteredSet.size };
+}

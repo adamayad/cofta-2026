@@ -251,3 +251,27 @@ export async function fetchArchiveConflicts() {
   if (hit) return hit;
   return cache('conflicts', await rest('archive_conflicts?select=*&order=id.asc'));
 }
+
+/**
+ * Cross-edition honours, for the trophy cabinets.
+ *
+ * A cabinet spans every edition at once, so it cannot be assembled from the
+ * per-edition fetches. Both tables are small — 39 awards, and only the
+ * rank-one leaderboard rows — so this is one round trip, cached like the rest
+ * of the archive.
+ *
+ * The flagged published summaries are excluded here rather than in the view:
+ * they are a conflicting table the archive keeps for the record, never a
+ * statement that somebody won something.
+ */
+export async function fetchArchiveHonours() {
+  const hit = cached('honours');
+  if (hit) return hit;
+  const [awards, boards] = await Promise.all([
+    rest('archive_awards?select=edition_id,award_type,player_name,team_id,value'
+       + '&is_published_summary=eq.false&match_id=is.null'),
+    rest('archive_leaderboards?select=edition_id,board_type,rank,player_name,team_id,value'
+       + '&rank=eq.1&is_canonical=eq.true'),
+  ]);
+  return cache('honours', { awards, boards });
+}

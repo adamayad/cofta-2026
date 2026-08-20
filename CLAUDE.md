@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v36`.
+  old devices keep stale copies forever. Currently `cofta-v37`.
 
 ## Workflow
 
@@ -58,6 +58,14 @@ the bare domain).
 - **Any feature commit that changes architecture, conventions or workflows
   updates this file in the same commit.** A CLAUDE.md that lags the code is
   worse than none: it is confidently wrong.
+- **Team names in History always render through `archive_teams`** —
+  `archLabel` / `archTeamName` / `archTeamLink` are the only ways to put a
+  club on screen, and never a raw source string. The same club is recorded as
+  "Hounslow", "Pope Kyrillos, Hounslow", "SMPK" and "St Mary & Pope Kyrillos
+  VI" across five editions; a reader must not have to work that out. Match,
+  event, standing and leaderboard rows all carry a `team_id` precisely so the
+  name can be looked up. `tests/naming_drill.html` walks all thirteen editions
+  and fails if any alias-only spelling reaches the DOM.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it
@@ -382,6 +390,49 @@ fixtures, no zero-filled stats, and `null` never rendered as `0`.
   for a historical club, they land in that team's `display` jsonb (crest file
   under `web/crests/archive/`) with no schema and no UI change.
 
+### The trophy cabinet
+
+Every club History names is a real `<button>` through to its whole archive
+record: finals won and lost newest first, the individual honours its players
+took grouped by edition, and an "Also competed" line so a cabinet is quiet
+about a barren year rather than silent about the club's history.
+`M.trophyCabinet()` is the pure aggregation and is tested.
+
+**Where it opens depends on whether the club still competes.**
+
+- The **seven crosswalked clubs** already have a page — Squads → the club — so
+  the cabinet is a **second tab there**, not a second page about the same
+  club. `.ctabs`, Squad first, and the choice **never persists**: every route
+  into a club page resets `state.clubTab` to `squad`.
+- **Everyone else** gets the standalone `archteam` page, because there is no
+  live page to tab within.
+- **B teams take the standalone route too**, even though they carry a
+  `live_team_id`. That id exists so they can borrow the parent's crest; it
+  does not make them the parent. `archiveTeamForLive()` therefore matches on
+  `live_team_id` **and** `parent_club is null`, or PKSM's record would appear
+  under SMPK's name — and the two have played each other.
+- **Kidane Mihret has no History tab at all.** Nothing in the archive
+  crosswalks to them, and an empty tab would imply a record that does not
+  exist.
+
+Two details that bit:
+
+- **The B marker must appear exactly once.** Several canonical names already
+  end in a B ("St Mark B", "PKSM (SMPK B)"), and a crest carries its own
+  badge — so `archTeamName` suppresses the tag when the name already says it,
+  and `archTeamLink` suppresses it again when it is drawing a crest. Without
+  both, a B team reads "St Mary's B B".
+- **A trophy that was awarded is not a board somebody topped.** Honours from
+  `archive_awards` are marked `award`; a club merely leading a published
+  board is marked `led` and says so. Leading is not winning, in the archive
+  as anywhere else.
+
+### Ink on the accent is `--accfg`, never `#fff`
+
+Broadcast's `--acc` is a light orange: white on it measures 2.85:1. Every
+theme already defines `--accfg` for exactly this, and it clears AA in all
+five (worst 5.28:1). Any new filled-accent surface uses it.
+
 ### Identity rules that must not be relaxed
 
 - **SMPK (Hounslow) and Worthing are two different clubs**, and both carry
@@ -470,6 +521,9 @@ asserts an organiser does see them. Read `__flagSummary`.
 `tests/assist_drill.html` drives the goal editor as an organiser and captures
 the edit_event payload instead of sending it, which is the only way to prove
 the full-replace rule holds. Read `__assistSummary`.
+`tests/naming_drill.html` walks all thirteen editions and fails if any
+alias-only team spelling reaches the DOM, or if a B-team render loses its
+marker. Read `__namingSummary`.
 
 **Computed-style assertions must disable transitions first.** `getComputedStyle`
 returns the in-flight value during a transition, and transitions are frozen

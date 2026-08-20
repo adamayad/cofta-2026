@@ -509,6 +509,87 @@ test('topRows off a real board previews the same leaders it reports', () => {
   eq(t[0].item.id, M.leaders(b)[0].item.id, 'the card leader is the board leader');
 });
 
+/* ── the archive trophy cabinet ───────────────────────────
+   A club's record has to hold three shapes at once: the same club winning one
+   year and losing the final the next, a club with nothing but appearances,
+   and a B team whose results must never be folded into its parent's. */
+const CAB_EDITIONS = [
+  { id: 'c24', competition: 'COFTA', year: 2024, champion_team_id: 'bri', runner_up_team_id: 'ste' },
+  { id: 'c23', competition: 'COFTA', year: 2023, champion_team_id: 'ste', runner_up_team_id: 'bri' },
+  { id: 'a26', competition: 'The Ark Cup', year: 2026, champion_team_id: 'smpk', runner_up_team_id: 'ste' },
+  { id: 'c22', competition: 'COFTA', year: 2022, champion_team_id: 'bri', runner_up_team_id: 'cro' },
+];
+const CAB_ENTRANTS = [
+  { edition_id: 'c24', team_id: 'ste' }, { edition_id: 'c23', team_id: 'ste' },
+  { edition_id: 'a26', team_id: 'ste' }, { edition_id: 'c22', team_id: 'ste' },
+  { edition_id: 'c24', team_id: 'wor' }, { edition_id: 'c23', team_id: 'wor' },
+  { edition_id: 'a26', team_id: 'pksm' }, { edition_id: 'a26', team_id: 'smpk' },
+];
+const CAB_AWARDS = [
+  { edition_id: 'c24', award_type: 'top_scorer', team_id: 'ste', player_name: 'A Tiwari', value: 5 },
+  { edition_id: 'a26', award_type: 'player_of_the_tournament', team_id: 'smpk', player_name: 'Naty Musie' },
+  { edition_id: 'a26', award_type: 'top_scorer', team_id: 'pksm', player_name: 'A B-teamer' },
+  { edition_id: 'c23', award_type: 'WOTM', team_id: 'ste', player_name: 'Not a trophy' },
+  { edition_id: 'c24', award_type: 'top_scorer', team_id: 'ste', player_name: 'Published table',
+    is_published_summary: true },
+];
+const CAB_BOARDS = [
+  { edition_id: 'c22', board_type: 'clean_sheets', rank: 1, team_id: 'ste', value: 4 },
+  { edition_id: 'c24', board_type: 'goalscorer', rank: 1, team_id: 'ste', player_name: 'A Tiwari' },
+  { edition_id: 'c22', board_type: 'goalscorer', rank: 3, team_id: 'ste', player_name: 'Not a leader' },
+];
+const cab = (id) => M.trophyCabinet(id, {
+  editions: CAB_EDITIONS, entrants: CAB_ENTRANTS, awards: CAB_AWARDS, boards: CAB_BOARDS });
+
+test('trophyCabinet holds a club that both won and lost finals', () => {
+  const r = cab('ste');
+  eq(r.finals.map(f => [f.edition.id, f.result]),
+     [['a26', 'runner_up'], ['c24', 'runner_up'], ['c23', 'champion']], 'newest first');
+});
+
+test('trophyCabinet lists a club with no trophies but an entrant history', () => {
+  const r = cab('wor');
+  eq(r.finals.length, 0, 'never reached a final');
+  eq(r.honours.length, 0, 'no honours');
+  eq(r.alsoCompeted.map(e => e.id), ['c24', 'c23'], 'still competed, newest first');
+  eq(r.entered, 2, 'entered two editions');
+});
+
+test('trophyCabinet counts a B team separately from its parent', () => {
+  const b = cab('pksm'), parent = cab('smpk');
+  eq(b.finals.length, 0, 'the B team reached no final');
+  eq(b.honours.map(h => h.player), ['A B-teamer'], 'its own honour only');
+  eq(parent.finals.map(f => f.result), ['champion'], 'the parent won it');
+  eq(parent.honours.map(h => h.player), ['Naty Musie'], 'the parent keeps its own honour');
+});
+
+test('trophyCabinet maps archive award types onto the three trophies', () => {
+  const r = cab('ste');
+  const c24 = r.honours.find(h => h.editionId === 'c24');
+  eq(c24.trophy, 'golden_boot', 'top scorer is the golden boot');
+  eq(c24.source, 'award', 'it was awarded, not merely led');
+  eq(r.honours.some(h => h.player === 'Not a trophy'), false, 'WOTM is not one of the three');
+});
+
+test('trophyCabinet never counts the flagged published table as an honour', () => {
+  const r = cab('ste');
+  eq(r.honours.filter(h => h.editionId === 'c24').length, 1, 'one honour, not two');
+  eq(r.honours.some(h => h.player === 'Published table'), false, 'the flagged summary is skipped');
+});
+
+test('trophyCabinet separates topping a board from winning a trophy', () => {
+  const r = cab('ste');
+  const c22 = r.honours.find(h => h.editionId === 'c22');
+  eq(c22.trophy, 'golden_glove', 'most clean sheets stands in for the golden glove');
+  eq(c22.source, 'board', 'marked as led, not awarded');
+  eq(r.honours.some(h => h.player === 'Not a leader'), false, 'rank 3 is not an honour');
+});
+
+test('trophyCabinet on an unknown club is empty rather than throwing', () => {
+  const r = M.trophyCabinet(null, {});
+  eq([r.finals.length, r.honours.length, r.alsoCompeted.length], [0, 0, 0], 'all empty');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };
