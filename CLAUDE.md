@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v44`.
+  old devices keep stale copies forever. Currently `cofta-v45`.
 
 ## Workflow
 
@@ -369,6 +369,14 @@ Thirteen finished tournaments, 2022–2026, imported by `0021` from
 `tournament_archive.json`. Five editions survive in full; eight are barely
 more than a date and a champion. **Thin records stay thin** — no synthesised
 fixtures, no zero-filled stats, and `null` never rendered as `0`.
+
+**A sparse edition is not labelled as one.** Edition rows used to carry a
+"THIN" pill; it is gone, and should not come back. It was internal vocabulary
+on a public page, and it editorialised about a club's own tournament — the
+1-1 and the shoot-out that decided COFTA 2023 are not a lesser record for
+being all that survives. `data_confidence` still routes the edition to
+`thinEdition()`, which shows what exists and stops. The page simply ends
+sooner, which is the honest signal.
 
 - **Eleven `archive_*` tables**, relational rather than a blob. `0021`
   supersedes the `past_tournaments` jsonb table and `set_past_tournament()`

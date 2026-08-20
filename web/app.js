@@ -1700,7 +1700,6 @@ function viewHistComp() {
         <span class="edd">${esc(archDates(e))}${e.venue ? ' &middot; ' + esc(e.venue) : ''}</span>
       </span>
       <span class="edw">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 24) : ''}</span>
-      ${e.data_confidence === 'minimal' ? '<span class="thin" title="Limited records">thin</span>' : ''}
       <span class="chev" aria-hidden="true"></span>
     </button>`).join('');
 
