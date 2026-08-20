@@ -525,6 +525,10 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
   text-transform:uppercase;letter-spacing:.07em}
 .ccl b{display:block;font-family:var(--disp);font-weight:700;font-size:15px;
   letter-spacing:0;text-transform:none;color:var(--fg);margin-top:3px}
+/* the champion's badge sits on the champion's line, not the label's — the
+   name is a block, so the two need their own row to share a baseline */
+.cclw{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-top:3px}
+.cclw b{margin-top:0}
 .ccy{display:block;font-size:11px;margin-top:1px}
 
 .chev{width:8px;height:8px;border-right:2px solid var(--dim);
@@ -793,3 +797,20 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
    chooses which side of one church you are reading. Only rendered where the
    church actually fielded both. */
 .seg.cabseg{margin:0 0 14px}
+
+/* ── a competition's roll of honour ──────────────────────────
+   Who has won it, when, and how many times. No places: a roll of honour is
+   a list, not a league, and calling a three-time winner "second" behind a
+   four-time winner reads like a standing nobody played for. The count and
+   the years carry it.                                                    */
+.rollrows{display:grid;gap:2px}
+.rollrow{padding:11px 6px;border-bottom:1px solid var(--line)}
+.rolltop{display:flex;align-items:center;gap:10px}
+.rolltop .tlink{flex:1 1 auto;min-width:0}
+.rolln{flex:none;font-family:var(--num);font-weight:800;font-size:22px;
+  line-height:1;color:var(--acc)}
+.rollyrs{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;padding-left:40px}
+.ryr{font-family:var(--num);font-weight:600;font-size:11.5px;color:var(--dim);
+  border:1px solid var(--line2);border-radius:999px;padding:2px 8px}
+/* the year they are still holding it from */
+.ryr.now{background:var(--acc);color:var(--accfg);border-color:transparent}

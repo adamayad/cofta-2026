@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v42`.
+  old devices keep stale copies forever. Currently `cofta-v43`.
 
 ## Workflow
 
@@ -408,6 +408,34 @@ fixtures, no zero-filled stats, and `null` never rendered as `0`.
   for a historical club, they land in that team's `display` jsonb (crest file
   under `web/crests/archive/`) with no schema and no UI change.
 
+### Roll of honour, and who holds it now
+
+A competition page leads with every club that has ever won it — titles first,
+then most recent — above the edition list, so the shape of a competition is
+legible before you open a single year. `M.rollOfHonour()` and
+`M.reigningChampion()` are pure and tested.
+
+- **"Reigning champion", not "last winners".** The competition cards said the
+  latter, which is true of a defunct competition and wrong about a live one.
+  The year is always shown beside the name, because for a tournament that
+  skipped a year "reigning" alone would overstate how recent it is.
+- **The holder is derived, never assumed to be first.** `reigningChampion()`
+  takes the maximum year among editions that actually record a champion, so
+  an edition added out of order, or one thin enough to have no champion,
+  cannot become the holder. Editions are not stored sorted.
+- **The year they currently hold is marked in their row** (`.ryr.now`) rather
+  than repeated as a separate line — one club, one row, one badge.
+- **The champion's crest is on the card, and the name is still not a link.**
+  A competition card is itself a `<button>`, so the club stays plain text —
+  but a crest is an `<img>` and nests perfectly well, so the badge goes in.
+  `.cclw` exists only because `.ccl b` is a block: the crest and the name
+  need their own flex row to share a line. Category is passed to `archCrest`
+  explicitly here rather than left to `viewCategory()`, because one loop
+  builds both the men's and the women's cards.
+- **Thin records degrade quietly.** An edition with no recorded champion is
+  simply absent from the roll, and the page says how many are unaccounted
+  for instead of implying nobody won.
+
 ### The trophy cabinet
 
 Every club History names is a real `<button>` through to its whole archive
@@ -664,6 +692,14 @@ vanished on a clean load. An hour went into chasing that as a regression
 before `git stash` showed the same failures did *not* appear at HEAD and the
 same code passed 8/8 in a new tab. If a drill fails, reload it alone before
 believing it.
+
+**And run it in a *fronted* tab.** The boot drill's recovery phase dispatches
+`online` and probes 700ms later; a backgrounded tab throttles timers, the
+handler's fetch has not resolved by then, and exactly those four recovery
+assertions fail. It reproduced twice in background tabs and passes every time
+the pane is showing — with and without a query string, at HEAD and on the
+branch. A drill that fails only in the background is measuring the browser,
+not the app.
 
 **Computed-style assertions must disable transitions first.** `getComputedStyle`
 returns the in-flight value during a transition, and transitions are frozen

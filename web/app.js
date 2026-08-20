@@ -1652,17 +1652,28 @@ function viewHistory() {
     const years = eds.map(e => e.year);
     const span = years.length === 1 ? `${years[0]}`
       : `${Math.min(...years)}–${Math.max(...years)}`;
-    const latest = eds[0];
+    // Who holds it, not merely who won last: they keep it until the next
+    // edition is played. Taken from the model rather than eds[0], so the
+    // label cannot quietly depend on the order the rows arrived in, and an
+    // edition whose champion was never recorded is skipped rather than shown
+    // as "Unknown".
+    const holder = M.reigningChampion(eds);
     return `<button class="ccard" data-histcomp="${c.id}" data-comp="${c.id}">
       <span class="cch">
         <span class="ccn">${esc(c.name)}</span>
         <span class="ccm">${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot; ${span}</span>
       </span>
-        <!-- plain text, not a link: the whole card is already a button, and a
-             button inside a button is invalid HTML (see CLAUDE.md) -->
-      <span class="ccl">Last winners
-        <b>${latest.champion_team_id ? archTeamName(latest.champion_team_id) : 'Unknown'}</b>
-        <span class="ccy">${latest.year}</span></span>
+        <!-- plain text and an image, not a link: the whole card is already a
+             button, and a button inside a button is invalid HTML (see
+             CLAUDE.md). The crest is an <img>, so it nests fine. Category is
+             passed explicitly rather than left to viewCategory(): the men's
+             and women's cards are built by the same loop. -->
+      <span class="ccl">${holder ? 'Reigning champion' : 'Champion'}
+        <span class="cclw">
+          ${holder ? archCrest(archTeam(holder.teamId), 22, c.cat) : ''}
+          <b>${holder ? archTeamName(holder.teamId) : 'Not recorded'}</b>
+        </span>
+        ${holder ? `<span class="ccy">${holder.year}</span>` : ''}</span>
       <span class="chev" aria-hidden="true"></span>
     </button>`;
   }).join('');
@@ -1693,12 +1704,41 @@ function viewHistComp() {
       <span class="chev" aria-hidden="true"></span>
     </button>`).join('');
 
+  // Who has won it, most titles first. A competition is single-category by
+  // definition, so no gender filter belongs here — every edition in `eds` is
+  // already the right side.
+  const roll = M.rollOfHonour(eds);
+  const holder = M.reigningChampion(eds);
+  // A thin edition is absent from the roll rather than counted as a win by
+  // nobody — say so, or the titles above look like they should sum to the
+  // edition count and do not.
+  const unknown = eds.filter(e => !e.champion_team_id).length;
+  const missing = unknown
+    ? `<p class="note">${unknown} ${unknown === 1 ? 'edition has' : 'editions have'} no
+       champion recorded, so ${unknown === 1 ? 'it is' : 'they are'} not counted above.</p>`
+    : '';
+
+  const honours = roll.length ? `<div class="sect">Roll of honour</div>
+    <div class="rollrows">${roll.map(r => `<div class="rollrow">
+      <div class="rolltop">
+        ${archTeamLink(r.teamId, { crest: 30 })}
+        <b class="rolln tnum" title="${r.titles} ${r.titles === 1 ? 'title' : 'titles'}"
+          >${r.titles}</b>
+      </div>
+      <div class="rollyrs">${r.years.map(y =>
+        `<span class="ryr${holder && holder.teamId === r.teamId && holder.year === y
+          ? ' now' : ''}">${y}</span>`).join('')}</div>
+    </div>`).join('')}</div>${missing}`
+    : '';
+
   return `${backButton('view:history')}
     <div class="chead" data-comp="${esc(state.histComp)}">
       <h2>${esc(c?.name ?? state.histComp)}</h2>
       <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;
          ${c?.cat === 'women' ? "Women's" : "Men's"}</p>
     </div>
+    ${honours}
+    <div class="sect">Editions</div>
     <div class="edrows">${rows || '<p class="empty">No editions recorded.</p>'}</div>`;
 }
 

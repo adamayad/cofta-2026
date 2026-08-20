@@ -709,3 +709,42 @@ export function trophyCabinet(teamId, {
 
   return { finals, honours, alsoCompeted, entered: enteredSet.size };
 }
+
+/**
+ * A competition's roll of honour: every club that has won it, most titles
+ * first, with the years they won.
+ *
+ * No places are assigned. A roll of honour is a list, not a league — calling
+ * a three-time winner "second" behind a four-time winner reads like a
+ * standing that was never played for. The count and the years say it.
+ *
+ * Ties break on the most recent title, which is always decisive within one
+ * competition because only one club wins it in any given year.
+ */
+export function rollOfHonour(editions = []) {
+  const by = new Map();
+  for (const e of (editions || [])) {
+    if (!e?.champion_team_id) continue;
+    const row = by.get(e.champion_team_id)
+      ?? { teamId: e.champion_team_id, titles: 0, years: [] };
+    row.titles++;
+    row.years.push(e.year);
+    by.set(e.champion_team_id, row);
+  }
+  const rows = [...by.values()];
+  for (const r of rows) r.years.sort((a, b) => b - a);
+  rows.sort((a, b) => (b.titles - a.titles) || (b.years[0] - a.years[0]));
+  return rows;
+}
+
+/**
+ * Who currently holds a competition — the champion of its most recent
+ * edition. They hold it until the next one is played, which is why this is
+ * the reigning champion rather than merely the last winner.
+ */
+export function reigningChampion(editions = []) {
+  const played = (editions || []).filter(e => e?.champion_team_id);
+  if (!played.length) return null;
+  const latest = played.reduce((a, b) => (b.year > a.year ? b : a));
+  return { teamId: latest.champion_team_id, year: latest.year, edition: latest };
+}
