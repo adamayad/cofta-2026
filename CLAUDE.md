@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v41`.
+  old devices keep stale copies forever. Currently `cofta-v42`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0024`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0025`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -457,6 +457,10 @@ SMPK, St Mark and Golders Green field a men's and a women's team under one
 name. They are **one `archive_teams` row** — one church — so the difference
 lives in fields on that row, not in a second row.
 
+- **B teams inherit the parent's crest, including the women's one.** St Mark
+  B on a Ladies COFTA page was falling through to the live men's crest — the
+  one badge it must not wear. `archCrest` resolves the parent through
+  `archiveTeamForLive` and reads its `crest_women` before giving up.
 - **Crest by category.** `display.crest_women` is used only on an edition
   whose `category` is women, falling back to `display.crest`, then the live
   crest, then the monogram. `viewCategory()` derives the category from the

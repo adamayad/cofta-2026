@@ -95,8 +95,13 @@ window.addEventListener('load', async () => {
 
   await openEdition('conafa-2026');
   const notts = linkFor('St Mary & St George');
-  check('a club with no womens crest is unaffected',
-    !!notts?.querySelector('.mono'), notts?.querySelector('.mono')?.className);
+  check('a club with a crest but no womens crest keeps its own',
+    /st-mary-st-george\.webp$/.test(notts?.querySelector('img')?.getAttribute('src') || ''),
+    notts?.querySelector('img')?.getAttribute('src'));
+  const bolton = linkFor('St Mary & St Philopater');
+  check('a club with no crest at all still gets its monogram',
+    !bolton || !!bolton.querySelector('.mono'),
+    bolton?.querySelector('.mono')?.className ?? 'not in this edition');
 
   /* ── the cabinet no longer pools the two records ── */
   await openEdition('ark-cup-2026');

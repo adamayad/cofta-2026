@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v41';
+const VERSION = 'cofta-v42';
 const SHELL = [
   './', './index.html', './styles.css', './fonts.css', './themes.css', './diocese.webp',
   './app.js', './api.js', './model.js', './queue.js', './crests.js',
@@ -16,6 +16,11 @@ const SHELL = [
   // that already installed the app only refetches them when VERSION moves.
   // cofta-icon-source.png is master art, never rendered, deliberately absent.
   './icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png',
+  // Archive crests are deliberately NOT precached. They are already
+  // cache-first at runtime (the .webp branch in the fetch handler), so they
+  // land on the first History visit and are then free. Precaching them would
+  // make every spectator download ~190KB of art for a tab most never open,
+  // on a weekend whose egress budget is the reason for the Pro upgrade.
   './crests/smpk.webp','./crests/ste.webp','./crests/cro.webp','./crests/bri.webp',
   './crests/gg.webp','./crests/km.webp','./crests/rot.webp','./crests/stm.webp',
   './fonts/big-shoulders-display-latin-700-normal.woff2',

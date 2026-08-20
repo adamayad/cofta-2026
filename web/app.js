@@ -1465,7 +1465,13 @@ function archCrest(t, size = 28, cat = null) {
   // own supplied crest, then the live crest, then the monogram — so a church
   // that has not supplied one yet is never blank and never shows the wrong
   // side's badge.
-  const supplied = (category === 'women' && d.crest_women) || d.crest;
+  // A B team inherits the parent's identity, and that has to include the
+  // parent's women's crest: St Mark B on a Ladies COFTA page was falling
+  // through to the live men's crest, which is the one badge it must not wear.
+  const parent = t.parent_club && t.live_team_id ? archiveTeamForLive(t.live_team_id) : null;
+  const pd = parent?.display || {};
+  const supplied = (category === 'women' && (d.crest_women || pd.crest_women))
+                || d.crest || (parent ? pd.crest : null);
   const live = t.live_team_id && CREST[t.live_team_id];
   const src = supplied || live;
   if (src) {
