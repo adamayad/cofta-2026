@@ -711,17 +711,17 @@ export function trophyCabinet(teamId, {
 }
 
 /**
- * A competition's roll of honour: every club that has won it, most titles
+ * A competition's champions list: every club that has won it, most titles
  * first, with the years they won.
  *
- * No places are assigned. A roll of honour is a list, not a league — calling
+ * No places are assigned. This is a list, not a league — calling
  * a three-time winner "second" behind a four-time winner reads like a
  * standing that was never played for. The count and the years say it.
  *
  * Ties break on the most recent title, which is always decisive within one
  * competition because only one club wins it in any given year.
  */
-export function rollOfHonour(editions = []) {
+export function champions(editions = []) {
   const by = new Map();
   for (const e of (editions || [])) {
     if (!e?.champion_team_id) continue;

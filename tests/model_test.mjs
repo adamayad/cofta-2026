@@ -652,7 +652,7 @@ test('trophyCabinet keeps alsoCompeted inside the category too', () => {
   eq(women.alsoCompeted.length, 0, 'and never on the women’s');
 });
 
-/* ── a competition's roll of honour ───────────────────────
+/* ── a competition's champions list ───────────────────────
    Who has won it, when, and how many times. Editions arrive in whatever
    order the caller had them, so the ordering must come from the function. */
 const ROLL = [
@@ -664,30 +664,30 @@ const ROLL = [
   { id: 'c21', year: 2021, champion_team_id: null },   // played, champion unrecorded
 ];
 
-test('rollOfHonour counts titles and lists the years, most titles first', () => {
-  const r = M.rollOfHonour(ROLL);
+test('champions counts titles and lists the years, most titles first', () => {
+  const r = M.champions(ROLL);
   eq(r.map(x => x.teamId), ['bri', 'ste', 'notts'], 'order');
   eq(r.map(x => x.titles), [3, 1, 1], 'title counts');
   eq(r[0].years, [2025, 2024, 2022], 'years newest first');
 });
 
-test('rollOfHonour breaks a tie on the most recent title', () => {
-  const r = M.rollOfHonour(ROLL);
+test('champions breaks a tie on the most recent title', () => {
+  const r = M.champions(ROLL);
   const [ste, notts] = [r[1], r[2]];
   eq([ste.teamId, ste.years[0]], ['ste', 2026], 'the more recent winner leads');
   eq([notts.teamId, notts.years[0]], ['notts', 2023], 'the older one follows');
 });
 
-test('rollOfHonour ignores an edition whose champion was never recorded', () => {
-  const r = M.rollOfHonour(ROLL);
+test('champions ignores an edition whose champion was never recorded', () => {
+  const r = M.champions(ROLL);
   eq(r.reduce((n, x) => n + x.titles, 0), 5, 'five recorded champions, not six');
   eq(r.some(x => x.teamId == null), false, 'no null row');
 });
 
-test('rollOfHonour on a competition nobody has won yet is empty', () => {
-  eq(M.rollOfHonour([{ id: 'x', year: 2026, champion_team_id: null }]).length, 0, 'empty');
-  eq(M.rollOfHonour([]).length, 0, 'empty');
-  eq(M.rollOfHonour().length, 0, 'empty');
+test('champions on a competition nobody has won yet is empty', () => {
+  eq(M.champions([{ id: 'x', year: 2026, champion_team_id: null }]).length, 0, 'empty');
+  eq(M.champions([]).length, 0, 'empty');
+  eq(M.champions().length, 0, 'empty');
 });
 
 test('reigningChampion is the winner of the most recent edition', () => {

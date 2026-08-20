@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v43`.
+  old devices keep stale copies forever. Currently `cofta-v44`.
 
 ## Workflow
 
@@ -380,8 +380,18 @@ fixtures, no zero-filled stats, and `null` never rendered as `0`.
   matches and 260 events in it. `0021` removed the `history` key that `0019`
   had added. History reads the tables directly under public-read RLS
   (`api.fetchArchiveIndex` / `fetchArchiveEdition`), only when opened, and
-  caches hard in `localStorage` — safe because the archive is immutable.
-  Bump `ARCHIVE_V` in `api.js` if the shape ever changes.
+  caches hard in `localStorage`, with no expiry.
+- **Bump `ARCHIVE_V` in `api.js` in any migration that touches an
+  `archive_*` table.** The original rule said "if the shape ever changes",
+  and that was wrong. Finished results are immutable; their presentation is
+  not — `0022` split names from cities, `0023` added women's crests, `0024`
+  corrected three church names, `0025` wired twelve crest files. Nothing else
+  invalidates that cache, so a phone that opened History before a migration
+  keeps the old copy for ever. This is not hypothetical: the archive crests
+  shipped with the files deployed and the database correct, and devices went
+  on drawing monograms. Local testing missed it precisely because the test
+  drills clear `localStorage` on every run. Bumping prunes the previous
+  version's keys on the next read.
 - **Read-only by construction.** No insert/update/delete policy and no RPC:
   the archive changes by migration or not at all.
 - **Six competitions, not one renamed series.** COFTA, CONAFA, COSTA and The
@@ -408,11 +418,11 @@ fixtures, no zero-filled stats, and `null` never rendered as `0`.
   for a historical club, they land in that team's `display` jsonb (crest file
   under `web/crests/archive/`) with no schema and no UI change.
 
-### Roll of honour, and who holds it now
+### Champions, and who holds it now
 
 A competition page leads with every club that has ever won it — titles first,
 then most recent — above the edition list, so the shape of a competition is
-legible before you open a single year. `M.rollOfHonour()` and
+legible before you open a single year. `M.champions()` and
 `M.reigningChampion()` are pure and tested.
 
 - **"Reigning champion", not "last winners".** The competition cards said the
@@ -423,7 +433,7 @@ legible before you open a single year. `M.rollOfHonour()` and
   takes the maximum year among editions that actually record a champion, so
   an edition added out of order, or one thin enough to have no champion,
   cannot become the holder. Editions are not stored sorted.
-- **The year they currently hold is marked in their row** (`.ryr.now`) rather
+- **The year they currently hold is marked in their row** (`.cyr.now`) rather
   than repeated as a separate line — one club, one row, one badge.
 - **The champion's crest is on the card, and the name is still not a link.**
   A competition card is itself a `<button>`, so the club stays plain text —

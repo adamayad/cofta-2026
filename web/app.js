@@ -1707,9 +1707,9 @@ function viewHistComp() {
   // Who has won it, most titles first. A competition is single-category by
   // definition, so no gender filter belongs here — every edition in `eds` is
   // already the right side.
-  const roll = M.rollOfHonour(eds);
+  const champs = M.champions(eds);
   const holder = M.reigningChampion(eds);
-  // A thin edition is absent from the roll rather than counted as a win by
+  // A thin edition is absent from the list rather than counted as a win by
   // nobody — say so, or the titles above look like they should sum to the
   // edition count and do not.
   const unknown = eds.filter(e => !e.champion_team_id).length;
@@ -1718,15 +1718,15 @@ function viewHistComp() {
        champion recorded, so ${unknown === 1 ? 'it is' : 'they are'} not counted above.</p>`
     : '';
 
-  const honours = roll.length ? `<div class="sect">Roll of honour</div>
-    <div class="rollrows">${roll.map(r => `<div class="rollrow">
-      <div class="rolltop">
+  const honours = champs.length ? `<div class="sect">Champions</div>
+    <div class="champrows">${champs.map(r => `<div class="champrow">
+      <div class="champtop">
         ${archTeamLink(r.teamId, { crest: 30 })}
-        <b class="rolln tnum" title="${r.titles} ${r.titles === 1 ? 'title' : 'titles'}"
+        <b class="champn tnum" title="${r.titles} ${r.titles === 1 ? 'title' : 'titles'}"
           >${r.titles}</b>
       </div>
-      <div class="rollyrs">${r.years.map(y =>
-        `<span class="ryr${holder && holder.teamId === r.teamId && holder.year === y
+      <div class="champyrs">${r.years.map(y =>
+        `<span class="cyr${holder && holder.teamId === r.teamId && holder.year === y
           ? ' now' : ''}">${y}</span>`).join('')}</div>
     </div>`).join('')}</div>${missing}`
     : '';
