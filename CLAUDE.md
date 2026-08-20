@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v48`.
+  old devices keep stale copies forever. Currently `cofta-v49`.
 
 ## Workflow
 
@@ -423,6 +423,21 @@ are about the tournament, not about the compiler.
   on drawing monograms. Local testing missed it precisely because the test
   drills clear `localStorage` on every run. Bumping prunes the previous
   version's keys on the next read.
+- **A FAILED ARCHIVE READ IS NEVER RETRIED BY `render()`.** This was a hang,
+  and the shape is easy to recreate, so it is worth stating as a rule: every
+  History view calls `loadArchive()` at the top of its render, and
+  `loadArchive()` calls `render()` when it settles. The guard used to be
+  `state.archive || state.archiveBusy`, both false after a failure — so a
+  failure was a hot loop: render, fetch, reject, render, fetch, bounded only
+  by how fast the request failed. Offline a fetch rejects immediately, so it
+  was bounded by nothing: it pinned the renderer and hammered the radio, on
+  exactly the dead signal that caused it. Measured, it wedged the browser so
+  completely that evaluating `1 + 1` in the page timed out.
+  `state.archiveErr` (and `state.archiveEdErr[id]`, per edition) now latch the
+  failure, and only a **Try again** tap clears it. Anything else that fetches
+  from a render path needs the same latch. Verified offline: one attempt, no
+  growth while sitting on the error or navigating away and back, one more per
+  tap, and full recovery when the network returns.
 - **Read-only by construction.** No insert/update/delete policy and no RPC:
   the archive changes by migration or not at all.
 - **Six competitions, not one renamed series.** COFTA, CONAFA, COSTA and The

@@ -63,6 +63,9 @@ const state = {
   // History. The archive is fetched on demand, never polled, and cached hard.
   // histCat resets to 'men' every time History is opened from the tab bar.
   archive: null, archiveEd: {}, archiveBusy: false, archiveEdBusy: null, archiveErr: null,
+  // Which reads have already failed, so a failure is not retried forever.
+  // See loadArchive(): the retry is driven by the user, never by render().
+  archiveEdErr: {},
   histCat: 'men', histComp: null, histEd: null,
   archTeam: null,          // which club's standalone cabinet is open
   archiveHonours: null, honoursBusy: false,
@@ -1612,9 +1615,21 @@ function archDates(e) {
  * else lives off the 5-second snapshot; putting 99 matches and 260 events in
  * that payload would cost the weekend's egress budget for data that has not
  * changed since 2022.
+ *
+ * A FAILED READ IS NOT RETRIED UNTIL SOMEONE ASKS.
+ *
+ * Every History view calls this at the top of its render, and this calls
+ * render() when it settles. Without the `archiveErr` guard a failure is a hot
+ * loop: render → fetch → reject → render → fetch, bounded only by how fast
+ * the request fails. Offline, a fetch rejects immediately, so it is bounded
+ * by nothing — it pins the phone and hammers the radio, on exactly the dead
+ * signal that caused it. Found by loading History cold with the archive
+ * endpoints refused; it wedged the whole browser.
+ *
+ * So a failure sticks until the reader taps "Try again", which clears it.
  */
 function loadArchive() {
-  if (state.archive || state.archiveBusy) return;
+  if (state.archive || state.archiveBusy || state.archiveErr) return;
   state.archiveBusy = true;
   api.fetchArchiveIndex().then(a => {
     state.archive = {
@@ -1631,13 +1646,17 @@ function loadArchive() {
     .finally(() => { state.archiveBusy = false; render(); });
 }
 
+/** Same rule as loadArchive, per edition: one failure, then it waits to be
+ *  asked again. Keyed by id, so a single unreachable edition does not stop
+ *  the others from loading. */
 function loadEdition(id) {
-  if (state.archiveEd[id] || state.archiveEdBusy === id) return;
+  if (state.archiveEd[id] || state.archiveEdBusy === id || state.archiveEdErr[id]) return;
   state.archiveEdBusy = id;
   api.fetchArchiveEdition(id).then(d => {
     state.archiveEd[id] = d;
     state.archiveErr = null;
-  }).catch(e => { state.archiveErr = e.message; })
+    delete state.archiveEdErr[id];
+  }).catch(e => { state.archiveErr = e.message; state.archiveEdErr[id] = e.message; })
     .finally(() => { state.archiveEdBusy = null; render(); });
 }
 
@@ -1646,7 +1665,8 @@ const archLoading = (what) =>
 const archFailed = () =>
   `<div class="banner warn">Could not load the archive: ${esc(state.archiveErr)}.
      Previous tournaments need a connection the first time they are opened;
-     after that they are kept on this device.</div>`;
+     after that they are kept on this device.
+     <button class="retry" data-archretry="1">Try again</button></div>`;
 
 /* ── the three History pages ─────────────────────────────── */
 function viewHistory() {
@@ -2233,7 +2253,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -2267,6 +2287,14 @@ document.addEventListener('click', async (ev) => {
     if (t.dataset.view === 'history') {
       state.histCat = 'men'; state.histComp = null; state.histEd = null;
     }
+    render(); return;
+  }
+
+  // Clearing the recorded failure is the whole retry: the next render calls
+  // loadArchive/loadEdition again, and they now have nothing to stop them.
+  if (t.dataset.archretry !== undefined) {
+    state.archiveErr = null;
+    state.archiveEdErr = {};
     render(); return;
   }
 
