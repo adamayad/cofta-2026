@@ -650,14 +650,27 @@ const BOARD_TROPHY = {
  * place to blur that.
  */
 export function trophyCabinet(teamId, {
-  editions = [], entrants = [], awards = [], boards = [],
+  editions = [], entrants = [], awards = [], boards = [], category = null,
 } = {}) {
   if (!teamId) return { finals: [], honours: [], alsoCompeted: [], entered: 0 };
 
   const byYear = (a, b) =>
     (b.year - a.year) || String(a.competition).localeCompare(String(b.competition));
-  const sorted = [...editions].sort(byYear);
+
+  // A church that fields both sides is ONE row here, because it is one
+  // church — SMPK won the Ark Cup and COSA. Without this filter a cabinet
+  // pooled the two into a single trophy count, which is not a record either
+  // side would recognise. Scoping to a category is the caller's decision;
+  // passing none returns everything, which only the tests want.
+  const inScope = category
+    ? [...editions].filter(e => e.category === category)
+    : [...editions];
+  const sorted = inScope.sort(byYear);
   const byId = Object.fromEntries(sorted.map(e => [e.id, e]));
+  const mine = new Set(sorted.map(e => e.id));
+  awards = awards.filter(a => mine.has(a.edition_id));
+  boards = boards.filter(b => mine.has(b.edition_id));
+  entrants = entrants.filter(x => mine.has(x.edition_id));
 
   const finals = [];
   for (const e of sorted) {

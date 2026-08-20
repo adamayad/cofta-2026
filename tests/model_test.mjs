@@ -590,6 +590,68 @@ test('trophyCabinet on an unknown club is empty rather than throwing', () => {
   eq([r.finals.length, r.honours.length, r.alsoCompeted.length], [0, 0, 0], 'all empty');
 });
 
+/* ── a church that fields both sides ──────────────────────
+   SMPK won the Ark Cup (men) and COSA (women). One church, one archive row,
+   two records — and pooling them into a single trophy count is not a record
+   either side would recognise. This is the regression test for that bug. */
+const BOTH_EDITIONS = [
+  { id: 'ark26',  competition: 'The Ark Cup',  year: 2026, category: 'men',
+    champion_team_id: 'smpk', runner_up_team_id: 'ste' },
+  { id: 'cosa26', competition: 'COSA',         year: 2026, category: 'women',
+    champion_team_id: 'smpk', runner_up_team_id: 'gg' },
+  { id: 'lc25',   competition: 'Ladies COFTA', year: 2025, category: 'women',
+    champion_team_id: 'stm',  runner_up_team_id: 'smpk' },
+  { id: 'cofta24',competition: 'COFTA',        year: 2024, category: 'men',
+    champion_team_id: 'bri',  runner_up_team_id: 'smpk' },
+];
+const BOTH_ENTRANTS = [
+  { edition_id: 'ark26', team_id: 'smpk' }, { edition_id: 'cosa26', team_id: 'smpk' },
+  { edition_id: 'lc25',  team_id: 'smpk' }, { edition_id: 'cofta24', team_id: 'smpk' },
+];
+const BOTH_AWARDS = [
+  { edition_id: 'ark26',  award_type: 'top_scorer', team_id: 'smpk', player_name: 'A man' },
+  { edition_id: 'cosa26', award_type: 'top_scorer', team_id: 'smpk', player_name: 'A woman' },
+];
+const bothCab = (cat) => M.trophyCabinet('smpk', {
+  editions: BOTH_EDITIONS, entrants: BOTH_ENTRANTS, awards: BOTH_AWARDS, boards: [],
+  category: cat });
+
+test('trophyCabinet scoped to men returns only men’s editions', () => {
+  const r = bothCab('men');
+  eq(r.finals.map(f => f.edition.id), ['ark26', 'cofta24'], 'men only');
+  eq(r.finals.map(f => f.result), ['champion', 'runner_up'], 'won one, lost one');
+  eq(r.honours.map(h => h.player), ['A man'], 'the women’s honour is not counted');
+  eq(r.entered, 2, 'entered two men’s editions');
+});
+
+test('trophyCabinet scoped to women returns only women’s editions', () => {
+  const r = bothCab('women');
+  eq(r.finals.map(f => f.edition.id), ['cosa26', 'lc25'], 'women only');
+  eq(r.honours.map(h => h.player), ['A woman'], 'the men’s honour is not counted');
+  eq(r.entered, 2, 'entered two women’s editions');
+});
+
+test('trophyCabinet never returns a combined count for a club fielding both', () => {
+  const men = bothCab('men'), women = bothCab('women'), all = bothCab(null);
+  eq(men.finals.length, 2, 'men: two finals');
+  eq(women.finals.length, 2, 'women: two finals');
+  eq(all.finals.length, 4, 'unscoped would have pooled all four — the bug');
+  eq(men.finals.some(f => f.edition.category === 'women'), false, 'no women in the men’s cabinet');
+  eq(women.finals.some(f => f.edition.category === 'men'), false, 'no men in the women’s cabinet');
+  eq(men.entered + women.entered, all.entered, 'the two halves account for the whole');
+});
+
+test('trophyCabinet keeps alsoCompeted inside the category too', () => {
+  const eds = [...BOTH_EDITIONS,
+    { id: 'costa25', competition: 'COSTA', year: 2025, category: 'men',
+      champion_team_id: 'bri', runner_up_team_id: 'cro' }];
+  const ents = [...BOTH_ENTRANTS, { edition_id: 'costa25', team_id: 'smpk' }];
+  const men = M.trophyCabinet('smpk', { editions: eds, entrants: ents, category: 'men' });
+  const women = M.trophyCabinet('smpk', { editions: eds, entrants: ents, category: 'women' });
+  eq(men.alsoCompeted.map(e => e.id), ['costa25'], 'the men’s also-ran shows on the men’s side');
+  eq(women.alsoCompeted.length, 0, 'and never on the women’s');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

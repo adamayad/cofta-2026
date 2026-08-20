@@ -1,0 +1,162 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA gendered-archive drill</title>
+<!-- Crest paths in the data are relative to web/, so this page must resolve
+     them the way the app does or every image 404s and the onerror fallback
+     fires before an assertion can read the src. -->
+<base href="../web/">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="themes.css">
+<!--
+  Gendered archive drill.
+
+  Two things this covers that nothing else can.
+
+  1. THE CABINET BUG. Three churches field both a men's and a women's side
+     under one name, and the cabinet used to pool them: SMPK's record showed
+     the Ark Cup and COSA in one trophy count. The model test pins the
+     aggregation; this pins the rendered page and the entry-point defaulting.
+
+  2. GENDERED CRESTS. The three women's crest files have not been supplied
+     yet, so this stubs the archive_teams read to inject a crest_women and
+     asserts the img src actually follows the edition's category. Without the
+     stub the mechanism would sit untested until the files land.
+
+  Serve the repo root and open /tests/gender_drill.html; read
+  globalThis.__genderSummary. Needs a connection.
+-->
+<script>
+localStorage.clear();
+// An existing file, so the category switch is observable: were this a
+// genuinely absent path the onerror fallback would swap it back to the live
+// crest before the assertion could read src. gg.webp is visibly not smpk's.
+const WOMENS_CREST = './crests/gg.webp';
+const realFetch = window.fetch.bind(window);
+window.fetch = async (url, opts) => {
+  const u = String(url);
+  const res = await realFetch(url, opts);
+  if (!u.includes('archive_teams?select=')) return res;
+  const rows = await res.clone().json();
+  for (const t of rows) {
+    if (t.canonical_name === 'St Mary & Pope Kyrillos VI' && !t.parent_club) {
+      t.display = Object.assign({}, t.display, { crest_women: WOMENS_CREST });
+    }
+  }
+  return new Response(JSON.stringify(rows),
+    { status: 200, headers: { 'Content-Type': 'application/json' } });
+};
+
+const results = [];
+const check = (name, cond, detail) => results.push({ name, ok: !!cond, detail });
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Waiting for ".afxr to exist" is not enough: the previous edition's rows are
+// still in the DOM at that moment, so the loop exits immediately and every
+// assertion reads the page you just left. Wait for the heading to change.
+const openEdition = async (id) => {
+  document.getElementById('nav-history').click(); await wait(250);
+  const before = document.querySelector('.chead h2')?.textContent ?? '';
+  const b = document.createElement('button');
+  b.dataset.histed = id; b.style.display = 'none';
+  document.body.appendChild(b); b.click(); b.remove();
+  for (let i = 0; i < 80; i++) {
+    await wait(150);
+    const head = document.querySelector('.chead h2')?.textContent ?? '';
+    const body = document.querySelector('.afxr') || document.querySelector('.thincard');
+    if (head && head !== before && body) return;
+  }
+  throw new Error('edition ' + id + ' never rendered');
+};
+// Must be a link that actually draws a badge: goal-event links name the club
+// without a crest, and they come first in the DOM.
+const linkFor = (name) => [...document.querySelectorAll('.tlink[data-archteam]')]
+  .find(el => el.querySelector('.who b')?.textContent.trim() === name
+           && (el.querySelector('img') || el.querySelector('.mono')));
+const finals = () => [...document.querySelectorAll('.cabrow .cabm b')].map(b => b.textContent.trim());
+
+window.addEventListener('load', async () => {
+  const kill = document.createElement('style');
+  kill.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+  document.head.appendChild(kill);
+  await wait(3000);
+
+  /* ── the crest follows the edition's category ── */
+  await openEdition('ark-cup-2026');
+  const mensImg = linkFor('St Mary & Pope Kyrillos VI')?.querySelector('img');
+  check('a mens edition uses the live crest',
+    mensImg && /\/crests\/smpk\.webp$/.test(mensImg.getAttribute('src')),
+    mensImg?.getAttribute('src'));
+
+  await openEdition('cosa-2026');
+  const womensImg = linkFor('St Mary & Pope Kyrillos VI')?.querySelector('img');
+  check('a womens edition uses the womens crest',
+    womensImg && womensImg.getAttribute('src') === WOMENS_CREST,
+    womensImg?.getAttribute('src'));
+  check('a womens crest carries a fallback to the live crest if its file is absent',
+    womensImg && /smpk\.webp/.test(womensImg.getAttribute('onerror') || ''),
+    womensImg?.getAttribute('onerror'));
+
+  await openEdition('conafa-2026');
+  const notts = linkFor('St Mary & St George');
+  check('a club with no womens crest is unaffected',
+    !!notts?.querySelector('.mono'), notts?.querySelector('.mono')?.className);
+
+  /* ── the cabinet no longer pools the two records ── */
+  await openEdition('ark-cup-2026');
+  linkFor('St Mary & Pope Kyrillos VI').click();
+  for (let i = 0; i < 60 && !document.querySelector('.cabtally'); i++) await wait(150);
+  const men = finals();
+  check('entering from a mens edition opens on Men',
+    document.querySelector('.cabseg button.on')?.textContent.trim() === 'Men');
+  check('the mens cabinet holds no womens competition',
+    men.length > 0 && !men.includes('COSA') && !men.includes('Ladies COFTA'), men);
+
+  document.querySelector('[data-cabcat="women"]').click(); await wait(250);
+  const women = finals();
+  check('switching to Women shows only womens competitions',
+    women.length > 0 && women.every(c => c === 'COSA' || c === 'Ladies COFTA'), women);
+  check('the two sides do not overlap', !men.some(c => women.includes(c)), { men, women });
+
+  /* ── computed styles on the toggle ── */
+  const on = document.querySelector('.cabseg button.on');
+  const off = document.querySelector('.cabseg button:not(.on)');
+  const cs = getComputedStyle(on), co = getComputedStyle(off);
+  check('the selected side is filled with the accent',
+    cs.backgroundColor !== co.backgroundColor && cs.color !== co.color,
+    { on: cs.backgroundColor, off: co.backgroundColor });
+  check('the toggle is a real pill with a tap target',
+    parseFloat(cs.minHeight) >= 34 && cs.borderRadius.startsWith('999'),
+    { minHeight: cs.minHeight, radius: cs.borderRadius });
+  check('the selected side is announced, not only coloured',
+    on.getAttribute('aria-pressed') === 'true' && off.getAttribute('aria-pressed') === 'false');
+
+  /* ── a club that only played one category gets no toggle ── */
+  await openEdition('conafa-2026');
+  linkFor('St Mary & St George').click();
+  for (let i = 0; i < 60 && !document.querySelector('.cabtally'); i++) await wait(150);
+  check('a club with one category gets no toggle', !document.querySelector('.cabseg'));
+
+  kill.remove();
+  const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results };
+  globalThis.__genderSummary = summary;
+  const out = document.createElement('pre');
+  out.id = 'gender-report';
+  out.style.cssText = 'padding:12px;white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace';
+  out.textContent = 'gendered archive drill\n\n'
+    + results.map(r => `${r.ok ? 'ok  ' : 'FAIL'}  ${r.name}`).join('\n')
+    + `\n\n${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script></head>
+<body data-theme="matchday">
+<div class="app">
+  <header class="hd"><button id="nav-admin" class="gear" data-view="admin" aria-label="Organiser"></button><h1>COFTA 2026</h1><p class="meta"><span class="pip" id="pip"><i></i>Live</span></p></header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-history" data-view="history">History</button>
+  </nav>
+  <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
+</div>
+<script type="module" src="app.js"></script>
+</body></html>

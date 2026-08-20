@@ -67,6 +67,7 @@ const state = {
   archTeam: null,          // which club's standalone cabinet is open
   archiveHonours: null, honoursBusy: false,
   clubTab: 'squad',        // Squad or History on a live club page; never persists
+  cabCat: 'men',           // which side's record a cabinet is showing
 };
 
 /** Events are queued so a tap on bad signal is never lost. The queue sends
@@ -101,7 +102,7 @@ const here = () => ({
   view: state.view, matchId: state.matchId, from: state.from,
   day: state.day, award: state.award, sq: { ...state.sq },
   histComp: state.histComp, histEd: state.histEd, histCat: state.histCat,
-  archTeam: state.archTeam, clubTab: state.clubTab,
+  archTeam: state.archTeam, clubTab: state.clubTab, cabCat: state.cabCat,
 });
 
 const samePage = (a, b) =>
@@ -131,6 +132,7 @@ function popHist() {
   state.histComp = prev.histComp; state.histEd = prev.histEd;
   state.archTeam = prev.archTeam;
   state.clubTab = prev.clubTab ?? 'squad';
+  state.cabCat = prev.cabCat ?? 'men';
   if (prev.histCat) state.histCat = prev.histCat;
   state.picker = null; state.editor = null;
   return true;
@@ -1430,21 +1432,55 @@ function monogramText(t) {
   return (w[0] || '?').toUpperCase() + (w[1] || '').toLowerCase();
 }
 
-/** The crest for an archive club: the live one where there is a live club,
- *  a deterministic monogram tile where there is not. */
-function archCrest(t, size = 28) {
+/**
+ * Which category the page being looked at is about.
+ *
+ * Three churches field both a men's and a women's side under one name and one
+ * crest each, so a crest cannot be chosen from the club alone — it depends on
+ * whose record you are reading. Derived from the view rather than threaded
+ * through twenty call sites, and there is exactly one answer per view.
+ */
+function viewCategory() {
+  if (state.view === 'histed') {
+    return state.archive?.editions?.find(e => e.id === state.histEd)?.category ?? 'men';
+  }
+  if (state.view === 'histcomp') return compOf(state.histComp)?.cat ?? 'men';
+  if (state.view === 'history')  return state.histCat;
+  if (state.view === 'archteam' || state.view === 'squads') return state.cabCat;
+  return 'men';
+}
+
+/**
+ * The badge for an archive club: a supplied crest where there is one, the
+ * live club's crest where the club still competes, a monogram tile otherwise.
+ * `cat` overrides the page's category, which only the tests need.
+ */
+function archCrest(t, size = 28, cat = null) {
   if (!t) return `<span class="mono mono-0" style="--mono:${size}px">?</span>`;
-  const live = t.live_team_id && CREST[t.live_team_id];
   const px = `--mono:${size}px`;
-  if (live) {
-    return `<span class="acrest" style="${px}"><img src="${live}" alt="" width="${size}" height="${size}">`
+  const d = t.display || {};
+  const category = cat ?? viewCategory();
+
+  // A women's crest only on a women's edition. Falls back through the club's
+  // own supplied crest, then the live crest, then the monogram — so a church
+  // that has not supplied one yet is never blank and never shows the wrong
+  // side's badge.
+  const supplied = (category === 'women' && d.crest_women) || d.crest;
+  const live = t.live_team_id && CREST[t.live_team_id];
+  const src = supplied || live;
+  if (src) {
+    // A supplied file that has not landed yet falls back to the live crest
+    // rather than rendering a broken image.
+    const onerr = supplied && live
+      ? ` onerror="this.onerror=null;this.src='${live}'"` : '';
+    return `<span class="acrest" style="${px}"><img src="${src}" alt=""`
+      + ` width="${size}" height="${size}"${onerr}>`
       + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
   }
   // A confirmed colour is data on the row, not something derived here: the
   // same mechanism a real crest would arrive through. Only clubs without one
   // fall back to the hashed palette, which stays deliberately muted so an
   // unassigned club never looks like it has branding it does not have.
-  const d = t.display || {};
   if (d.colour) {
     const ring = d.ring ? `;--ring:${d.ring}` : '';
     return `<span class="mono set${d.ring ? ' ringed' : ''}" style="${px};`
@@ -1914,12 +1950,31 @@ function cabinetBody(archTeamId) {
       2022&ndash;2026 crosswalks to them.</p>`;
   }
 
+  // Which categories this church actually fielded a side in. A club that only
+  // ever played one gets no toggle: a switch with nothing on the other side
+  // is a promise the data cannot keep.
+  const played = ['men', 'women'].filter(c =>
+    M.trophyCabinet(archTeamId, {
+      editions: state.archive.editions, entrants: state.archive.entrants, category: c,
+    }).entered > 0);
+  const cat = played.includes(state.cabCat) ? state.cabCat : (played[0] ?? 'men');
+
+  // THE FIX. This used to pass every edition, so a church fielding both sides
+  // — SMPK won the Ark Cup and COSA — showed one pooled cabinet. Scoping by
+  // category is the whole point of the join.
   const cab = M.trophyCabinet(archTeamId, {
     editions: state.archive.editions,
     entrants: state.archive.entrants,
     awards: state.archiveHonours.awards,
     boards: state.archiveHonours.boards,
+    category: cat,
   });
+
+  const toggle = played.length > 1 ? `<div class="seg cabseg" role="group"
+      aria-label="Which side's honours">
+      ${played.map(c => `<button data-cabcat="${c}" class="${cat === c ? 'on' : ''}"
+         aria-pressed="${cat === c}">${c === 'men' ? 'Men' : 'Women'}</button>`).join('')}
+    </div>` : '';
 
   const wins = cab.finals.filter(f => f.result === 'champion').length;
   const runs = cab.finals.length - wins;
@@ -1975,9 +2030,10 @@ function cabinetBody(archTeamId) {
         <span>${e.year}</span></button>`).join('')}</div>` : '';
 
   const nothing = !cab.finals.length && !cab.honours.length && !cab.alsoCompeted.length
-    ? `<p class="empty">This club does not appear in the 2022&ndash;2026 archive.</p>` : '';
+    ? `<p class="empty">No ${cat === 'women' ? "women's" : "men's"} record for this
+         club in the 2022&ndash;2026 archive.</p>` : '';
 
-  return tally + finals + honours + also + nothing;
+  return toggle + tally + finals + honours + also + nothing;
 }
 
 /** The standalone cabinet, for clubs with no live page to tab within. */
@@ -2076,7 +2132,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -2137,7 +2193,12 @@ document.addEventListener('click', async (ev) => {
   if (t.dataset.archteam) {
     const club = archTeam(t.dataset.archteam);
     const route = cabinetRoute(club);
+    // A cabinet is entered from a gendered context, so it opens on that side:
+    // tapping a club on a Ladies COFTA page shows their women's record, not
+    // their men's. The toggle inside is the manual override.
+    const from = viewCategory();
     navigate(() => {
+      state.cabCat = from === 'women' ? 'women' : 'men';
       if (route.view === 'squads') {
         state.view = 'squads';
         state.sq = { team: route.team, player: null };
@@ -2150,7 +2211,15 @@ document.addEventListener('click', async (ev) => {
     render(); return;
   }
 
-  if (t.dataset.clubtab) { state.clubTab = t.dataset.clubtab; render(); return; }
+  if (t.dataset.clubtab) {
+    state.clubTab = t.dataset.clubtab;
+    // The live tournament is men's — there are no women's squads in the live
+    // app yet — so a club page's History tab opens on the men's record.
+    if (t.dataset.clubtab === 'history') state.cabCat = 'men';
+    render(); return;
+  }
+
+  if (t.dataset.cabcat) { state.cabCat = t.dataset.cabcat; render(); return; }
 
   if (t.dataset.team) {
     navigate(() => {

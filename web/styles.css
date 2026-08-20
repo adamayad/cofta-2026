@@ -787,3 +787,9 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
    enough to a white card to vanish against it. */
 .mono{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
 .mono.set.ringed{box-shadow:inset 0 0 0 2px var(--ring),inset 0 0 0 3px rgba(0,0,0,.10)}
+
+/* The cabinet's own Men/Women switch. Distinct from the History tab's
+   category filter: that one chooses which competitions to list, this one
+   chooses which side of one church you are reading. Only rendered where the
+   church actually fielded both. */
+.seg.cabseg{margin:0 0 14px}

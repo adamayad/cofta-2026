@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v39`.
+  old devices keep stale copies forever. Currently `cofta-v40`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0022`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0023`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -451,6 +451,65 @@ Broadcast's `--acc` is a light orange: white on it measures 2.85:1. Every
 theme already defines `--accfg` for exactly this, and it clears AA in all
 five (worst 5.28:1). Any new filled-accent surface uses it.
 
+### One church, two sides
+
+SMPK, St Mark and Golders Green field a men's and a women's team under one
+name. They are **one `archive_teams` row** — one church — so the difference
+lives in fields on that row, not in a second row.
+
+- **Crest by category.** `display.crest_women` is used only on an edition
+  whose `category` is women, falling back to `display.crest`, then the live
+  crest, then the monogram. `viewCategory()` derives the category from the
+  view rather than threading it through every call site, and there is exactly
+  one answer per view. A supplied crest carries an `onerror` back to the live
+  crest, so a file that has not landed yet degrades instead of breaking.
+- **The cabinet was pooling them, and that was a bug.** `trophyCabinet()` was
+  called with every edition, so SMPK's record showed the Ark Cup and COSA in
+  a single trophy count — a record neither side would recognise. Root cause:
+  the join was on the club alone, with no category filter. `trophyCabinet()`
+  now takes a `category` and scopes editions, awards, boards and entrants to
+  it; `cabinetBody` passes one.
+  **This was the only cross-edition roll-up missing the filter.** Everything
+  else in History is scoped by `edition_id`, or by competition — and a
+  competition is single-category by definition.
+- **A cabinet opens on the side you came from.** From a Ladies COFTA page you
+  see the women's record; from the live club page you see the men's, because
+  the live tournament is men's. A **Men/Women toggle** inside allows a
+  deliberate switch, and renders only where the church actually fielded both.
+- **Dependency:** the live app has no women's squads — `public.teams` has no
+  gender column — so the live club page's History tab can only be entered
+  from a men's context today. When women's live teams exist, that entry point
+  should set `state.cabCat` from the squad's own category instead of `'men'`.
+
+### Uploading an archive crest
+
+Same manual pattern as the live crests, and the same warning: **drop files in
+the local clone, never through the GitHub web UI.**
+
+Directory: **`web/crests/archive/`**, `.webp`, 224×224.
+
+| case | filename |
+|---|---|
+| crosswalked club | `<live_team_id>.webp` — `smpk.webp`, `stm.webp` |
+| women's crest | `<live_team_id>-w.webp` — `smpk-w.webp` |
+| club with no live row | slug of `canonical_name`: lowercase, `&` dropped, spaces to hyphens — `st-mary-st-george.webp` |
+
+A file is inert until the club's `display` points at it:
+
+```sql
+update public.archive_teams
+   set display = coalesce(display, '{}'::jsonb)
+               || jsonb_build_object('crest', './crests/archive/st-mary-st-george.webp')
+ where canonical_name = 'St Mary & St George' and city = 'Nottingham';
+```
+
+Use `crest_women` for a women's crest. A crest replaces that club's monogram
+tile; the monogram keys stay on the row and are simply no longer read. Bump
+`VERSION` in `sw.js` in the same push — crests are cache-first, so without it
+no installed device ever fetches them. `web/crests/archive/README.md` carries
+the same table, and `DRAFT_wire_womens_crests.sql` is the ready statement for
+the three women's crests.
+
 ### Archive club colours are data, not a hash
 
 `archive_teams.canonical_name` holds the **full church name only** and `city`
@@ -585,6 +644,14 @@ the full-replace rule holds. Read `__assistSummary`.
 `tests/naming_drill.html` walks all thirteen editions and fails if any
 alias-only team spelling reaches the DOM, or if a B-team render loses its
 marker. Read `__namingSummary`.
+
+**Run each drill in a fresh tab.** They are not isolated from one another:
+every drill stubs `window.fetch` and clears `localStorage`, and running six in
+sequence in one tab produced four spurious failures in the boot drill that
+vanished on a clean load. An hour went into chasing that as a regression
+before `git stash` showed the same failures did *not* appear at HEAD and the
+same code passed 8/8 in a new tab. If a drill fails, reload it alone before
+believing it.
 
 **Computed-style assertions must disable transitions first.** `getComputedStyle`
 returns the in-flight value during a transition, and transitions are frozen
