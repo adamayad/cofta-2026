@@ -191,7 +191,7 @@ export const setSlot = (slot, teamId) =>
  * someone opens History, and cached hard — the archive is immutable, so a
  * cached copy can never go stale. Bump ARCHIVE_V if the shape changes.
  */
-const ARCHIVE_V = 'v1';
+const ARCHIVE_V = 'v2';   // v2: teams carry city, and display colours
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 function cached(what) {
@@ -214,7 +214,7 @@ export async function fetchArchiveIndex() {
   const hit = cached('index');
   if (hit) return hit;
   const [teams, editions, entrants] = await Promise.all([
-    rest('archive_teams?select=id,canonical_name,short_name,live_team_id,display,parent_club'),
+    rest('archive_teams?select=id,canonical_name,city,short_name,live_team_id,display,parent_club'),
     rest('archive_editions?select=*&order=year.desc,date_start.desc'),
     rest('archive_edition_teams?select=edition_id,team_id'),
   ]);

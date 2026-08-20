@@ -742,3 +742,48 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
   font-size:12.5px;font-weight:500;color:inherit}
 .alsochip span{font-family:var(--num);font-weight:800;color:var(--dim)}
 .alsochip:active{background:var(--card)}
+
+/* ── club identity: full church name, city demoted ───────────
+   The same shape the live pages use in .clubBlock and the standings row, so
+   a club reads identically whichever half of the app you are in: the FULL
+   church name on the primary line, the city small underneath. Never a
+   shortened name, never "Name, City" on one line.                        */
+.tlink .who{display:block;min-width:0}
+.tlink .who b{display:block;font-weight:600;font-size:14px;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlink .who i{display:block;font-style:normal;font-size:11.5px;line-height:1.25;
+  color:var(--dim);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlink.away .who{text-align:right}
+
+/* Where the club is itself the secondary fact — under a player's name on a
+   leaderboard — the two run on one line rather than stacking. */
+.tlink.inline{display:inline;font-size:12px;color:var(--dim);padding:0;margin:0}
+.tlink.inline b{font-weight:500}
+.tlink.inline span::before{content:' · '}
+
+/* the podium reads name / city / role, so the role line steps down again */
+.tcwin .tlink .who b,.tcrun .tlink .who b{font-family:var(--disp);font-weight:800;
+  font-size:19px;line-height:1.15;white-space:normal}
+.tcrun .tlink .who b{font-size:15px}
+.tcwin > div,.tcrun > div{min-width:0}
+
+/* the standings cell stacks too, so the row grows to fit both lines */
+.tbl.arch td.tm{align-items:center}
+.tbl.arch td.tm .tlink .who b{font-size:13.5px}
+.tbl.arch td.tm .tlink .who i{font-size:10.5px}
+
+/* fixtures: two stacked lines per side, as on the live fixture row */
+.afxm{align-items:center}
+.afxt,.tlink{align-items:center}
+
+/* confirmed archive colours, carried on the row as data */
+.mono.set{background:var(--tile);color:var(--ink)}
+/* Nottingham and Manchester are both red. A ring is the second, non-colour
+   cue that keeps them apart in a fixture list — and for anyone who cannot
+   tell the two reds apart at all. */
+.mono.set.ringed{box-shadow:inset 0 0 0 2px var(--ring)}
+/* Every monogram needs an edge: the pink and the muted fallbacks are close
+   enough to a white card to vanish against it. */
+.mono{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.mono.set.ringed{box-shadow:inset 0 0 0 2px var(--ring),inset 0 0 0 3px rgba(0,0,0,.10)}

@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v37`.
+  old devices keep stale copies forever. Currently `cofta-v38`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0021`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0022`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -58,14 +58,22 @@ the bare domain).
 - **Any feature commit that changes architecture, conventions or workflows
   updates this file in the same commit.** A CLAUDE.md that lags the code is
   worse than none: it is confidently wrong.
-- **Team names in History always render through `archive_teams`** —
+- **A club renders as its full church name with the city small underneath.**
+  Everywhere — live pages and History alike, edition pages, standings,
+  fixtures, leaderboards, awards, cabinets. Never a shortened form, never
+  "Name, City" on one line. `clubBlock` and the standings row already did
+  this live; `archTeamLink` does it for the archive. The one variant is
+  `inline`, for the club shown *under* a player's name on a leaderboard,
+  where a stacked block would out-shout the player.
+- **Team names in History come from `archive_teams` and nothing else.**
   `archLabel` / `archTeamName` / `archTeamLink` are the only ways to put a
-  club on screen, and never a raw source string. The same club is recorded as
-  "Hounslow", "Pope Kyrillos, Hounslow", "SMPK" and "St Mary & Pope Kyrillos
-  VI" across five editions; a reader must not have to work that out. Match,
-  event, standing and leaderboard rows all carry a `team_id` precisely so the
-  name can be looked up. `tests/naming_drill.html` walks all thirteen editions
-  and fails if any alias-only spelling reaches the DOM.
+  club on screen. The same club is recorded as "Hounslow", "Pope Kyrillos,
+  Hounslow", "SMPK" and "St Mary & Pope Kyrillos VI" across five editions; a
+  reader must not have to work that out. `short_name` is **not** a display
+  string — it survives only as the monogram's initials, because half these
+  clubs are "St Mary & …" and canonical names would collide on "SM".
+  `tests/naming_drill.html` walks all thirteen editions and fails if anything
+  but a canonical name reaches a name line.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it
@@ -432,6 +440,49 @@ Two details that bit:
 Broadcast's `--acc` is a light orange: white on it measures 2.85:1. Every
 theme already defines `--accfg` for exactly this, and it clears AA in all
 five (worst 5.28:1). Any new filled-accent surface uses it.
+
+### Archive club colours are data, not a hash
+
+`archive_teams.canonical_name` holds the **full church name only** and `city`
+is its own column (0022). For the seven crosswalked clubs the name matches
+`teams.name` exactly, enforced by an assertion in that migration. Two
+different churches share a name — Golders Green and Birmingham are both
+"St Mary & Archangel Michael" — so uniqueness is on `(canonical_name, city)`,
+which is the whole reason the city is a column rather than part of the string.
+
+Where a source never recorded a church name (Newcastle, the historical Hove,
+the joint Liverpool & Bolton entry) the source string stands and the city is
+null. Inventing one would break the archive's first rule.
+
+**Eight clubs off the circuit have confirmed colours**, stored in their
+`display` jsonb rather than computed:
+
+| club | colour | ink |
+|---|---|---|
+| St Mary & St Abanoub, Leeds | `#4B2E83` purple | white |
+| Newcastle | `#16305C` dark blue | white |
+| St Mary & St George, Nottingham | `#A31621` deep red | white |
+| St Mary & St Mina, Manchester | `#D6402A` red + `#FFD9D2` ring | white |
+| St Mina, Ireland | `#1B7A4B` green | white |
+| Hove *(historical club)* | `#6B7280` grey | white |
+| St Paul, London | `#E8A0C0` pink | `#3A1F2B` |
+| St Mary & Archangel Michael, Birmingham | `#1F6FB2` blue | white |
+
+Worst ink-on-tile contrast is 4.54:1. **Nottingham and Manchester are both
+red**, so they take clearly different reds and Manchester carries a ring the
+other does not — a second, non-colour cue, which also serves anyone who
+cannot tell the two reds apart. The ring is data like the colour.
+
+**A future club gets an explicit entry here, not a hash.** The deterministic
+palette (`.mono-0` … `.mono-7`, keyed on the row id so a name correction
+cannot reshuffle it) is only for clubs nobody has assigned yet, and stays
+muted precisely so an unassigned club never looks like it has real branding.
+Every monogram carries a hairline, because the pink and the muted fallbacks
+are otherwise close enough to a white card to vanish against it.
+
+The historical **Hove** here is the club that withdrew before the 2026 draw.
+It is a distinct row from anything in the live `teams` table and is unrelated
+to the `hove` → `km` rename in 0020.
 
 ### Identity rules that must not be relaxed
 

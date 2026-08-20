@@ -1413,14 +1413,17 @@ const compOf = (id) => COMPS.find(c => c.id === id);
  */
 const ARCHIVE_TILES = 8;   // .mono-0 … .mono-7 in styles.css
 
+/** Hashed on the row id, which never changes — a name can be corrected. */
 function tileIndex(name) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (Math.imul(h, 31) + name.charCodeAt(i)) >>> 0;
   return h % ARCHIVE_TILES;
 }
 
+/** Initials come from the short label, not the church name: half these clubs
+ *  are "St Mary & …", so canonical names would collide on "SM". */
 function monogramText(t) {
-  const src = String(t.short_name || t.canonical_name || '?');
+  const src = String(t.short_name || t.city || t.canonical_name || '?');
   const words = src.replace(/[^A-Za-z ]+/g, ' ').split(/\s+/).filter(Boolean);
   if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   const w = words[0] || '?';
@@ -1437,7 +1440,18 @@ function archCrest(t, size = 28) {
     return `<span class="acrest" style="${px}"><img src="${live}" alt="" width="${size}" height="${size}">`
       + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
   }
-  return `<span class="mono mono-${tileIndex(t.canonical_name)}" style="${px}">${esc(monogramText(t))}`
+  // A confirmed colour is data on the row, not something derived here: the
+  // same mechanism a real crest would arrive through. Only clubs without one
+  // fall back to the hashed palette, which stays deliberately muted so an
+  // unassigned club never looks like it has branding it does not have.
+  const d = t.display || {};
+  if (d.colour) {
+    const ring = d.ring ? `;--ring:${d.ring}` : '';
+    return `<span class="mono set${d.ring ? ' ringed' : ''}" style="${px};`
+      + `--tile:${d.colour};--ink:${d.text_colour || '#fff'}${ring}">${esc(monogramText(t))}`
+      + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
+  }
+  return `<span class="mono mono-${tileIndex(t.id)}" style="${px}">${esc(monogramText(t))}`
     + (t.parent_club ? `<i class="bteam">B</i>` : '') + `</span>`;
 }
 
@@ -1454,28 +1468,24 @@ const archTeam = (id) => state.archive?.teamById?.[id] ?? null;
  * club. Match, event, standing and leaderboard rows all carry a team_id
  * precisely so the name can be looked up rather than quoted.
  *
- * `full` picks the canonical name over the short one. Canonical everywhere it
- * fits; short only on the two-up fixture row, where two canonical names plus a
- * score cannot share a line at 375px. Both come from the same row, so the
- * identity never changes — only its length.
+ * The name is the FULL church name and nothing else; the city is a separate
+ * column and renders as its own demoted line. `short_name` is not a display
+ * string — it survives only as the monogram's initials, because half these
+ * clubs are "St Mary & …" and canonical names would collide on "SM".
  */
-const archLabel = (id, full = false) => {
-  const t = archTeam(id);
-  if (!t) return 'Unknown club';
-  return (full ? t.canonical_name : t.short_name) || t.canonical_name;
-};
+const archLabel = (id) => archTeam(id)?.canonical_name ?? 'Unknown club';
+const archCity  = (id) => archTeam(id)?.city ?? '';
 
 /**
  * The name with its B marker. A B team shows the parent's crest, so without
  * this the two sides of a club are indistinguishable anywhere a name appears
- * without one — a leaderboard row, an award, a note. Returns escaped HTML.
+ * without one. Returns escaped HTML.
  */
-const archTeamName = (id, full = false) => {
+const archTeamName = (id) => {
   const t = archTeam(id);
-  const label = archLabel(id, full);
-  // Several canonical names already end in a B — "St Mark B", "Archangel
-  // Michael, Golders Green B", "PKSM (SMPK B)". Only the short forms that do
-  // not say it need the marker, or the name reads "… B B".
+  const label = archLabel(id);
+  // Every B team's canonical name already ends in a B, so the tag would be a
+  // second one. Kept as a guard for any future row that does not.
   const saysItAlready = /\bB\)?$/.test(label);
   return esc(label)
     + (t?.parent_club && !saysItAlready ? '<i class="btag" title="B team">B</i>' : '');
@@ -1484,24 +1494,32 @@ const archTeamName = (id, full = false) => {
 /**
  * A club, as a real button through to its cabinet.
  *
- * Everywhere History names a club it is a link, so the crest and the name are
- * one target rather than two — and a `<button>`, not a div, because a div
+ * Two lines, always: the full church name, then the city small underneath —
+ * the same shape `clubBlock` uses on the live pages, so a club looks the same
+ * whichever half of the app you are in. A `<button>`, not a div, because a div
  * with a handler cannot be reached by keyboard and announces nothing.
  */
-const archTeamLink = (id, { full = false, crest = 0, away = false } = {}) => {
+const archTeamLink = (id, { crest = 0, away = false, inline = false } = {}) => {
   const t = archTeam(id);
-  if (!t) return `<span class="tlink dead">${esc(archLabel(id, full))}</span>`;
+  if (!t) return `<span class="tlink dead"><span class="who"><b>Unknown club</b></span></span>`;
+  const city = archCity(id);
+
+  // Where the club is itself secondary — the small line under a player's name
+  // on a leaderboard — a stacked block would out-shout the player. There the
+  // same two facts run on one line, still name first and city demoted.
+  if (inline) {
+    return `<button class="tlink inline" data-archteam="${esc(t.id)}">`
+      + `<b>${archTeamName(id)}</b>`
+      + (city ? `<span>${esc(city)}</span>` : '') + '</button>';
+  }
+
   const badge = crest ? archCrest(t, crest) : '';
-  // The crest already carries the B badge, so the name must not repeat it —
-  // otherwise a B team reads "St Mary's B B".
-  const name = `<span>${crest ? esc(archLabel(id, full)) : archTeamName(id, full)}</span>`;
+  const who = `<span class="who"><b>${archTeamName(id)}</b>`
+    + (city ? `<i>${esc(city)}</i>` : '') + '</span>';
   return `<button class="tlink${away ? ' away' : ''}" data-archteam="${esc(t.id)}">`
-    + (away ? name + badge : badge + name) + '</button>';
+    + (away ? who + badge : badge + who) + '</button>';
 };
 
-// Kept for the few places that want the bare string (sorting, title text).
-const archName = (id) => archLabel(id, true);
-const archShort = (id) => archLabel(id, false);
 
 /** "12–13 September 2026", or a single day where start and end match. */
 function archDates(e) {
@@ -1632,26 +1650,26 @@ function thinEdition(e) {
   const entrants = (state.archive.entrants || [])
     .filter(x => x.edition_id === e.id)
     .map(x => archTeam(x.team_id)).filter(Boolean)
-    .sort((a, b) => a.short_name.localeCompare(b.short_name));
+    .sort((a, b) => a.canonical_name.localeCompare(b.canonical_name));
   const fin = e.notes?.final || {};
   return `<div class="thincard">
       <div class="tcwin">
         ${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
-        <div><b>${e.champion_team_id
-          ? archTeamLink(e.champion_team_id, { full: true })
-          : 'Champion not recorded'}</b>
+        <div>${e.champion_team_id
+          ? archTeamLink(e.champion_team_id)
+          : '<b>Champion not recorded</b>'}
           <span>Champions</span></div>
       </div>
       ${e.runner_up_team_id ? `<div class="tcrun">
         ${archCrest(archTeam(e.runner_up_team_id), 28)}
-        <div><b>${archTeamLink(e.runner_up_team_id, { full: true })}</b><span>Runners-up</span></div></div>` : ''}
+        <div>${archTeamLink(e.runner_up_team_id)}<span>Runners-up</span></div></div>` : ''}
       ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
       ${fin.decided_by === 'penalties' && fin.shootout
         && (fin.shootout.winner_score ?? fin.shootout.home) == null
         ? '<p class="tcnote">The shoot-out score is not recorded.</p>' : ''}
       ${entrants.length ? `<div class="sect">Entrants</div>
         <div class="entrants">${entrants.map(t =>
-          `<span class="ent">${archTeamLink(t.id, { full: true, crest: 22 })}</span>`).join('')}</div>
+          `<span class="ent">${archTeamLink(t.id, { crest: 22 })}</span>`).join('')}</div>
         ${e.notes?.teams_note ? `<p class="note">${esc(e.notes.teams_note)}</p>` : ''}` : ''}
       <p class="thinnote">Limited records survive for this edition.</p>
     </div>`;
@@ -1673,7 +1691,7 @@ function archTable(d, g) {
       const t = archTeam(r.team_id);
       return `<tr>
         <td class="pos">${r.position}</td>
-        <td class="tm">${archTeamLink(r.team_id, { full: true, crest: 20 })}
+        <td class="tm">${archTeamLink(r.team_id, { crest: 20 })}
           ${r.note ? `<i class="gapdot" title="${esc(r.note)}">*</i>` : ''}</td>
         <td>${r.p ?? '–'}</td><td>${r.w ?? '–'}</td>
         <td>${r.d ?? '–'}</td><td>${r.l ?? '–'}</td>
@@ -1685,7 +1703,7 @@ function archTable(d, g) {
     ${derived ? `<p class="note">GF and GA were not displayed in the source table;
       these are computed from the fixture list and reconcile exactly to the published GD.</p>` : ''}
     ${rows.some(r => r.note) ? rows.filter(r => r.note).map(r =>
-      `<p class="note">* ${archTeamName(r.team_id, true)}: ${esc(r.note)}</p>`).join('') : ''}`;
+      `<p class="note">* ${archTeamName(r.team_id)}: ${esc(r.note)}</p>`).join('') : ''}`;
 }
 
 const STAGE_LABEL = {
@@ -1765,8 +1783,8 @@ function archBoards(d) {
           ${b.player_name ? '' : archCrest(archTeam(b.team_id), 22)}
           <span class="albn">${b.player_name
             ? esc(b.player_name)
-            : archTeamLink(b.team_id, { full: true })}
-          ${b.player_name && b.team_id ? `<i>${archTeamLink(b.team_id, { full: true })}</i>` : ''}</span>
+            : archTeamLink(b.team_id)}
+          ${b.player_name && b.team_id ? archTeamLink(b.team_id, { inline: true }) : ''}</span>
         ${state.admin && b.flag ? `<span class="flagline">${esc(b.flag)}</span>` : ''}
       </div>`).join('')}</div>`;
   }).join('');
@@ -1782,9 +1800,9 @@ function archAwards(d) {
   return `<div class="sect">Awards</div>
     <div class="aawards">${named.map(a => `<div class="aaw">
       <span class="aawl">${esc(LAB[a.award_type] ?? a.award_type)}</span>
-      <span class="aawn">${a.player_name ? esc(a.player_name) : archTeamLink(a.team_id, { full: true })}
+      <span class="aawn">${a.player_name ? esc(a.player_name) : archTeamLink(a.team_id)}
         ${a.value != null ? `<i>${a.value}</i>` : ''}</span>
-      ${a.team_id && a.player_name ? `<span class="aawt">${archTeamLink(a.team_id, { full: true })}</span>` : ''}
+      ${a.team_id && a.player_name ? `<span class="aawt">${archTeamLink(a.team_id, { inline: true })}</span>` : ''}
     </div>`).join('')}</div>`;
 }
 
@@ -1815,10 +1833,10 @@ function viewHistEdition() {
 
   const podium = `<div class="thincard">
     <div class="tcwin">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 44) : ''}
-      <div><b>${e.champion_team_id ? archTeamLink(e.champion_team_id, { full: true }) : 'Not recorded'}</b>
+      <div>${e.champion_team_id ? archTeamLink(e.champion_team_id) : '<b>Not recorded</b>'}
         <span>Champions</span></div></div>
     ${e.runner_up_team_id ? `<div class="tcrun">${archCrest(archTeam(e.runner_up_team_id), 28)}
-      <div><b>${archTeamLink(e.runner_up_team_id, { full: true })}</b><span>Runners-up</span></div></div>` : ''}
+      <div>${archTeamLink(e.runner_up_team_id)}<span>Runners-up</span></div></div>` : ''}
     ${e.final_summary ? `<p class="tcfin">${esc(e.final_summary)}</p>` : ''}
   </div>`;
 
@@ -1974,7 +1992,7 @@ function viewArchTeam() {
   return `${back}
     <div class="stack one"><div class="sl phead cabhead">
       <span class="bdg">${archCrest(t, 62)}</span>
-      <span class="who"><b>${archTeamName(t.id, true)}</b>
+      <span class="who"><b>${archTeamName(t.id)}</b>
         <i class="cabsub">${esc(t.parent_club
           ? `B team of ${t.parent_club}` : 'Archive record')}</i></span>
     </div></div>

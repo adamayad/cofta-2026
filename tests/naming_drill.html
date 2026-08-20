@@ -9,10 +9,10 @@
   has to come from archive_teams, never from the alias string the source
   happened to use.
 
-  This walks all thirteen editions, collects every rendered team name from
-  every surface, and asserts each one is a canonical_name or short_name from
-  archive_teams — and specifically that no alias-only spelling survives
-  anywhere. It also checks the B marker is present on every B-team render.
+  This walks all thirteen editions, collects the primary name line from every
+  surface that renders a club, and asserts each one is a canonical_name from
+  archive_teams — never a short label and never an alias. It also checks the
+  city renders as its own demoted line, and the B marker on every B team.
 
   Serve the repo root and open /tests/naming_drill.html; read
   globalThis.__namingSummary. Needs a connection.
@@ -29,17 +29,22 @@ window.addEventListener('load', async () => {
   const R = (p) => fetch('https://faodniafqglgzmdosgfq.supabase.co/rest/v1/' + p, {
     headers: { apikey: 'sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF',
                Authorization: 'Bearer sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF' } }).then(r => r.json());
-  const teams = await R('archive_teams?select=id,canonical_name,short_name,aliases,parent_club');
+  const teams = await R('archive_teams?select=id,canonical_name,city,short_name,aliases,parent_club');
   const editions = await R('archive_editions?select=id&order=year.desc');
 
+  // Only the canonical name may render. The short label is no longer a
+  // display string — it survives as the monogram's initials and nothing else
+  // — so "Brighton" appearing as a club name is now a failure, not a pass.
   const allowed = new Set();
+  const cities = new Set();
   const bTeamNames = new Set();
   const aliasOnly = new Set();
   for (const t of teams) {
-    allowed.add(t.canonical_name); allowed.add(t.short_name);
-    if (t.parent_club) { bTeamNames.add(t.canonical_name); bTeamNames.add(t.short_name); }
+    allowed.add(t.canonical_name);
+    if (t.city) cities.add(t.city);
+    if (t.parent_club) bTeamNames.add(t.canonical_name);
     for (const a of t.aliases || []) {
-      if (a !== t.canonical_name && a !== t.short_name) aliasOnly.add(a);
+      if (a !== t.canonical_name) aliasOnly.add(a);
     }
   }
   check('the archive has alias spellings that must never render',
@@ -62,16 +67,19 @@ window.addEventListener('load', async () => {
       if (document.querySelector('.thincard') || document.querySelector('.afxr')) break;
     }
     // every surface that renders a club name
-    const sel = ['.tcwin div b', '.tcrun div b', '.ent span:last-child',
-                 'table.arch td.tm span', '.afxt span', '.afxgi em',
-                 '.albn', '.albn i', '.aawn', '.aawt'].join(',');
+    // the primary name line on every surface that renders a club
+    // Only the club-name elements. A player row's .albn also contains the
+    // nested club link, so harvesting it would read the two as one string.
+    const sel = ['.tlink .who b', '.tlink.inline b'].join(',');
     for (const el of document.querySelectorAll(sel)) {
       const raw = el.textContent.replace(/\s+/g, ' ').trim();
       if (!raw) continue;
       const name = raw.replace(/\s*B$/, '');          // strip the B marker
-      const isTeamSurface = !el.matches('.albn') || !el.querySelector('i');
-      if (!isTeamSurface) continue;
       if (aliasOnly.has(name)) strays.push({ ed: ed.id, name, sel: el.className || el.tagName });
+      if (!allowed.has(name) && !aliasOnly.has(name)
+          && !/^(Unknown club|Not recorded|Champion not recorded)/.test(name)) {
+        strays.push({ ed: ed.id, name, why: 'not a canonical_name' });
+      }
       if (allowed.has(name)) {
         seen.push(name);
         // The marker may sit on the crest, on a .btag beside the name, or in
@@ -92,6 +100,15 @@ window.addEventListener('load', async () => {
     strays.length === 0, strays.slice(0, 8));
   check('every B-team render carries its B marker',
     missingB.length === 0, missingB.slice(0, 5));
+  // the city must be its own demoted line, never folded into the name
+  const cityLines = [...document.querySelectorAll('.tlink .who i')]
+    .map(e => e.textContent.trim()).filter(Boolean);
+  check('cities render as their own line, not inside the name',
+    cityLines.length > 0 && cityLines.every(c => cities.has(c)),
+    [...new Set(cityLines)].slice(0, 8));
+  check('no rendered name contains a comma or bracket',
+    seen.every(n => !/[,()]/.test(n)), seen.filter(n => /[,()]/.test(n)).slice(0, 5));
+
   check('the two Pope Kyrillos VI clubs stay distinct on screen',
     !seen.includes('St Demiana, Worthing') && !seen.includes('St Demiana and Pope Kyrillos VI'),
     seen.filter(n => /Kyrillos|Worthing|Demiana/.test(n)).slice(0, 6));
