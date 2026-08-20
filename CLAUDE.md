@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v33`.
+  old devices keep stale copies forever. Currently `cofta-v34`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0019`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0020`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -174,8 +174,10 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
   so 224px is 3.6× — retina-true on a 3× phone, where the old 112px cuts were
   a 1.8× upscale and visibly soft. Fixtures tiles draw at 24px and are
   heavily oversampled; not worth maintaining a second size.
-- `hove.webp` is Kidane Mihret's crest, not a Hove one: the club changed and
-  the internal id did not. Still the placeholder KM monogram — real artwork
+- `km.webp` is Kidane Mihret. The id was `hove` until 0020 renamed it: Hove
+  withdrew pre-draw and Kidane Mihret took the slot, and the alias was kept
+  for convenience until History arrived and made "hove" genuinely ambiguous
+  with the real Hove club. Still the placeholder KM monogram — real artwork
   pending, spelling to confirm.
 - **PWA icons** (`icon-192`, `icon-512`, `icon-maskable`, `apple-touch-icon`)
   are in the Matchday language: the accent field `#38003c` carrying a white

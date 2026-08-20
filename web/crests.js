@@ -5,7 +5,7 @@ export const CREST = {
   cro: './crests/cro.webp',
   bri: './crests/bri.webp',
   gg: './crests/gg.webp',
-  hove: './crests/hove.webp',
+  km: './crests/km.webp',
   rot: './crests/rot.webp',
   stm: './crests/stm.webp',
 };
