@@ -1,0 +1,6316 @@
+{
+  "archive_meta": {
+    "title": "Coptic Football Tournament Archive",
+    "compiled": "2026-08-19",
+    "editions": 13,
+    "sources": [
+      "Coptic_Football_Tournament_Archive_2024-2026.pdf (5 rich editions)",
+      "Adam notes (8 thin editions)"
+    ],
+    "principle": "Faithful transcription only. Absent fields are null, never zero, never inferred. Thin records stay thin.",
+    "competition_series": {
+      "COFTA": "men's",
+      "CONAFA": "men's",
+      "COSTA": "men's",
+      "COSA": "women's",
+      "Ladies COFTA": "women's",
+      "The Ark Cup": "men's",
+      "note": "Confirmed by Adam: COSA, COSTA and Ladies COFTA are three separate competitions, not one renamed series."
+    }
+  },
+  "team_registry": {
+    "note": "Canonical team list assembled from all sources. 'aliases' are the exact strings as they appear in each source. Merges marked confidence 'confirmed' are certain from the source data; 'probable' need Adam's sign-off before merging; 'open' must NOT be merged without an answer.",
+    "teams": [
+      {
+        "canonical": "Anba Abraam, Brighton",
+        "short": "Brighton",
+        "aliases": [
+          "Anba Abraam, Brighton",
+          "Anba Abraam Brighton",
+          "Brighton"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St George, Stevenage",
+        "short": "Stevenage",
+        "aliases": [
+          "St George, Stevenage",
+          "St George Stevenage",
+          "Stevenage"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St Anthony, Rotherham",
+        "short": "Rotherham",
+        "aliases": [
+          "St Anthony, Rotherham",
+          "St Anthony Rotherham",
+          "Rotherham"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Archangel Michael, Golders Green",
+        "short": "Golders Green",
+        "aliases": [
+          "Archangel Michael, Golders Green",
+          "Archangel Michael Golders Green",
+          "Golders Green",
+          "Golders"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Full church name is St Mary and Archangel Michael, Golders Green - the host of The Ark Cup 2026."
+      },
+      {
+        "canonical": "St Demiana & Pope Kyrillos VI, Worthing",
+        "short": "Worthing",
+        "aliases": [
+          "St Demiana Worthing",
+          "St Demiana and Pope Kyrillos VI",
+          "St Demiana, Worthing",
+          "Worthing",
+          "Worthing (St Demiana and Pope Kyrillos VI)"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Confirmed by Adam. NOTE: two distinct clubs carry \"Pope Kyrillos VI\" in their name - this one (Worthing) and SMPK (Hounslow). Never merge them."
+      },
+      {
+        "canonical": "St Shenouda, Croydon",
+        "short": "Croydon",
+        "aliases": [
+          "St Shenouda, Croydon",
+          "St Shenouda Croydon",
+          "Croydon"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St Mary & St George, Nottingham",
+        "short": "Nottingham",
+        "aliases": [
+          "Nottingham",
+          "Notts",
+          "St Mary & St George Nottingham"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St Mark, Kensington",
+        "short": "St Mark",
+        "aliases": [
+          "St Mark, Kensington",
+          "St Mark Kensington",
+          "St Marks",
+          "St Mark's",
+          "St Mark"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Confirmed by Adam: all St Mark / St Marks / St Mark’s entries are the Kensington club."
+      },
+      {
+        "canonical": "St Mary & Pope Kyrillos VI, Hounslow",
+        "short": "SMPK",
+        "aliases": [
+          "Hounslow",
+          "Pope Kyrillos Hounslow",
+          "Pope Kyrillos, Hounslow",
+          "SMPK",
+          "St Mary & Pope Kyrillos VI"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Confirmed by Adam: SMPK and Pope Kyrillos, Hounslow are the same club."
+      },
+      {
+        "canonical": "PKSM (SMPK B)",
+        "short": "PKSM",
+        "aliases": [
+          "PKSM",
+          "SMPK B"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "B team of St Mary & Pope Kyrillos VI, Hounslow.",
+        "parent_club": "St Mary & Pope Kyrillos VI, Hounslow"
+      },
+      {
+        "canonical": "Archangel Michael, Golders Green B",
+        "short": "St Mary's",
+        "aliases": [
+          "St Mary's",
+          "Golders Green B"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Confirmed by Adam: the Ark Cup 2026 'St Mary's' is Golders Green's second team. Displayed as \"St Mary's\" in that edition.",
+        "parent_club": "Archangel Michael, Golders Green"
+      },
+      {
+        "canonical": "Manchester (St Mary & St Mina)",
+        "short": "Manchester",
+        "aliases": [
+          "Manchester",
+          "St Mary and St Mina"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Leeds (St Mary & St Abanoub)",
+        "short": "Leeds",
+        "aliases": [
+          "Leeds",
+          "St Mary and St Abanoub"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Birmingham (St Mary & Archangel Michael)",
+        "short": "Birmingham",
+        "aliases": [
+          "Birmingham",
+          "St Mary and Archangel Michael"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Scotland (St Mary & St Michael)",
+        "short": "Scotland",
+        "aliases": [
+          "Scotland",
+          "St Mary And St Michael"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Bolton (St Mary & St Philopater)",
+        "short": "Bolton",
+        "aliases": [
+          "Bolton",
+          "St Mary & St Philopater"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Liverpool & Bolton (joint team)",
+        "short": "Liverpool & Bolton",
+        "aliases": [
+          "Liverpool & Bolton"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "CONAFA 2024 joint entry; kept distinct from the standalone Bolton entry of COFTA 2022."
+      },
+      {
+        "canonical": "Newcastle",
+        "short": "Newcastle",
+        "aliases": [
+          "Newcastle"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Hove",
+        "short": "Hove",
+        "aliases": [
+          "Hove"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "Ireland",
+        "short": "Ireland",
+        "aliases": [
+          "Ireland"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St Paul",
+        "short": "St Paul",
+        "aliases": [
+          "St Paul"
+        ],
+        "merge_confidence": "confirmed"
+      },
+      {
+        "canonical": "St Mark B",
+        "short": "St Mark B",
+        "aliases": [
+          "St Mark B"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "Ladies COFTA 2025 entrant.",
+        "parent_club": "St Mark, Kensington"
+      }
+    ],
+    "player_name_variants": [
+      {
+        "variants": [
+          "Abanoub Fakhoury",
+          "Abanob Fakhory"
+        ],
+        "teams": [
+          "Brighton"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Eli Abdel-Malek",
+          "Ebi Abdel-Malek",
+          "Ebi Abdelmalik"
+        ],
+        "teams": [
+          "Golders Green"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Stavros Akriviadis",
+          "Stavros Arkiviadis"
+        ],
+        "teams": [
+          "St Marks",
+          "Brighton"
+        ],
+        "action": "flag_do_not_merge",
+        "note": "Both spellings appear inside CONAFA 2026 alone; the archive deliberately kept them separate."
+      },
+      {
+        "variants": [
+          "Andy Lotfallah",
+          "Andrew Lotfallah"
+        ],
+        "teams": [
+          "Rotherham"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Micha Abu Aita",
+          "Micha Abu-Aita"
+        ],
+        "teams": [
+          "Stevenage",
+          "Nottingham"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Danny Saaman",
+          "Daniel Samaan"
+        ],
+        "teams": [
+          "Croydon",
+          "Stevenage"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Decio Emanuel",
+          "Decio Emmanuel"
+        ],
+        "teams": [
+          "Stevenage"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Karim Rizkalla",
+          "Karim Rizkallah"
+        ],
+        "teams": [
+          "Newcastle",
+          "Stevenage"
+        ],
+        "action": "flag_do_not_merge"
+      },
+      {
+        "variants": [
+          "Kiro Khir",
+          "Kyrelos Khir",
+          "Fady Khir",
+          "Kyro Fawzy Aziz"
+        ],
+        "teams": [
+          "St Mark"
+        ],
+        "action": "keep_separate",
+        "note": "Archive explicitly kept Fady Khir and Kyrelos Khir apart as distinct players."
+      },
+      {
+        "variants": [
+          "George Coutlakis",
+          "Oti Koutlakis"
+        ],
+        "teams": [
+          "Hounslow"
+        ],
+        "action": "keep_separate",
+        "note": "Archive explicitly records these as two different Hounslow players."
+      },
+      {
+        "variants": [
+          "Daniel Kyriacou",
+          "Efthymious Kyriacou"
+        ],
+        "teams": [
+          "Hounslow",
+          "Leeds",
+          "SMPK",
+          "Stevenage"
+        ],
+        "action": "keep_separate"
+      },
+      {
+        "variants": [
+          "Anthony Mina",
+          "Daniel Mina"
+        ],
+        "teams": [
+          "Ireland"
+        ],
+        "action": "keep_separate"
+      },
+      {
+        "variants": [
+          "Mark Girgis",
+          "Steven Girgis"
+        ],
+        "teams": [
+          "Nottingham",
+          "Rotherham"
+        ],
+        "action": "keep_separate"
+      },
+      {
+        "variants": [
+          "Simon Fakhouri",
+          "Keyroulos Fakhory",
+          "Abanob Fakhory"
+        ],
+        "teams": [
+          "Golders Green",
+          "Brighton"
+        ],
+        "action": "keep_separate"
+      },
+      {
+        "variants": [
+          "Antony Messag"
+        ],
+        "teams": [
+          "Newcastle"
+        ],
+        "action": "flag_possibly_truncated",
+        "note": "Archive notes this name may be truncated in the source app."
+      }
+    ]
+  },
+  "editions": [
+    {
+      "id": "cofta-2022",
+      "competition": "COFTA",
+      "year": 2022,
+      "display_name": "COFTA 2022",
+      "category": "men",
+      "date_start": "2022-09-17",
+      "date_end": "2022-09-18",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 8,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "Croydon",
+      "final_summary": "Brighton beat Croydon in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": null,
+        "winner": "Brighton",
+        "loser": "Croydon"
+      },
+      "teams": [
+        "Brighton",
+        "Croydon",
+        "Rotherham",
+        "Stevenage",
+        "St Mark",
+        "Bolton (St Mary & St Philopater)",
+        "Nottingham",
+        "Manchester"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No final scoreline.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data.",
+        "Team list may be incomplete; only entrants named in the notes are recorded."
+      ]
+    },
+    {
+      "id": "conafa-2023",
+      "competition": "CONAFA",
+      "year": 2023,
+      "display_name": "CONAFA 2023",
+      "category": "men",
+      "date_start": "2023-03-25",
+      "date_end": "2023-03-26",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 8,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "SMPK",
+      "final_summary": "Brighton beat SMPK on penalties in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": "penalties",
+        "shootout": {
+          "home": null,
+          "away": null
+        },
+        "winner": "Brighton",
+        "loser": "SMPK"
+      },
+      "teams": [
+        "Brighton",
+        "SMPK",
+        "Croydon",
+        "Birmingham",
+        "Manchester",
+        "Nottingham",
+        "St Mark",
+        "Scotland"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No regulation scoreline for the final.",
+        "No penalty shootout score.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data.",
+        "Team list may be incomplete; only entrants named in the notes are recorded."
+      ]
+    },
+    {
+      "id": "cofta-2023",
+      "competition": "COFTA",
+      "year": 2023,
+      "display_name": "COFTA 2023",
+      "category": "men",
+      "date_start": "2023-10-21",
+      "date_end": "2023-10-22",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 7,
+      "team_count_basis": "confirmed by Adam: this edition ran with seven teams",
+      "match_count": null,
+      "champion": "St Mary & St George, Nottingham",
+      "runner_up": "Brighton",
+      "final_summary": "St Mary & St George, Nottingham 1-1 Brighton (Nottingham won 9-8 on penalties)",
+      "final": {
+        "home": null,
+        "away": null,
+        "home_score": 1,
+        "away_score": 1,
+        "decided_by": "penalties",
+        "shootout": {
+          "winner_score": 9,
+          "loser_score": 8
+        },
+        "winner": "St Mary & St George, Nottingham",
+        "loser": "Brighton"
+      },
+      "final_orientation_note": "Home/away sides of the final are not stated in the source; 1-1 and the 9-8 shootout are.",
+      "teams": [
+        "St Mary & St George, Nottingham",
+        "Brighton",
+        "Croydon",
+        "St Mark",
+        "Rotherham",
+        "Stevenage",
+        "Golders Green"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {
+        "player_of_the_tournament": {
+          "player": "Micha Abu-Aita",
+          "team": "St Mary & St George, Nottingham"
+        }
+      },
+      "known_gaps": [
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers or top scorer."
+      ]
+    },
+    {
+      "id": "conafa-2024",
+      "competition": "CONAFA",
+      "year": 2024,
+      "display_name": "CONAFA 2024",
+      "category": "men",
+      "date_start": "2024-03-09",
+      "date_end": "2024-03-10",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 10,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "Worthing",
+      "final_summary": "Brighton beat Worthing in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": null,
+        "winner": "Brighton",
+        "loser": "Worthing"
+      },
+      "teams": [
+        "Brighton",
+        "Worthing",
+        "SMPK",
+        "St Mark",
+        "Nottingham",
+        "Rotherham",
+        "Scotland",
+        "Liverpool & Bolton (joint team)",
+        "Stevenage",
+        "Birmingham"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No final scoreline.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data.",
+        "Team list may be incomplete; only entrants named in the notes are recorded."
+      ]
+    },
+    {
+      "id": "costa-2024",
+      "competition": "COSTA",
+      "year": 2024,
+      "display_name": "COSTA 2024",
+      "category": "men",
+      "date_start": "2024-06-28",
+      "date_end": "2024-06-29",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": null,
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "Croydon",
+      "final_summary": "Brighton beat Croydon in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": null,
+        "winner": "Brighton",
+        "loser": "Croydon"
+      },
+      "teams": [
+        "Brighton",
+        "Croydon"
+      ],
+      "teams_note": "Only the two finalists are known. No other entrants were listed in the notes.",
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No final scoreline.",
+        "No entrant list beyond the two finalists.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data."
+      ]
+    },
+    {
+      "id": "cofta-2024",
+      "competition": "COFTA",
+      "competition_full": "Coptic Orthodox Football Tournament Association",
+      "year": 2024,
+      "display_name": "COFTA 2024",
+      "category": "men",
+      "date_start": "2024-09-28",
+      "date_end": "2024-09-29",
+      "venue": "Meadway Playing Fields",
+      "data_confidence": "full",
+      "source": "Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 1",
+      "format": "Two groups of four; top two from each group to the semi-finals, then the final",
+      "team_count": 8,
+      "match_count": 15,
+      "champion": "Anba Abraam, Brighton",
+      "runner_up": "St George, Stevenage",
+      "final_summary": "St George, Stevenage 1-1 Anba Abraam, Brighton (Brighton won on penalties; shootout score not displayed)",
+      "teams": [
+        "St Anthony, Rotherham",
+        "St Mark, Kensington",
+        "Archangel Michael, Golders Green",
+        "St Demiana, Worthing",
+        "Anba Abraam, Brighton",
+        "St George, Stevenage",
+        "St Shenouda, Croydon",
+        "Pope Kyrillos, Hounslow"
+      ],
+      "groups": [
+        {
+          "name": "Group A",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "St Anthony, Rotherham",
+              "p": 3,
+              "w": 3,
+              "d": 0,
+              "l": 0,
+              "gf": 5,
+              "ga": 0,
+              "gd": 5,
+              "pts": 9
+            },
+            {
+              "pos": 2,
+              "team": "St Mark, Kensington",
+              "p": 3,
+              "w": 1,
+              "d": 1,
+              "l": 1,
+              "gf": 4,
+              "ga": 4,
+              "gd": 0,
+              "pts": 4
+            },
+            {
+              "pos": 3,
+              "team": "Archangel Michael, Golders Green",
+              "p": 3,
+              "w": 1,
+              "d": 1,
+              "l": 1,
+              "gf": 3,
+              "ga": 3,
+              "gd": 0,
+              "pts": 4
+            },
+            {
+              "pos": 4,
+              "team": "St Demiana, Worthing",
+              "p": 3,
+              "w": 0,
+              "d": 0,
+              "l": 3,
+              "gf": 2,
+              "ga": 7,
+              "gd": -5,
+              "pts": 0
+            }
+          ]
+        },
+        {
+          "name": "Group B",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "Anba Abraam, Brighton",
+              "p": 3,
+              "w": 3,
+              "d": 0,
+              "l": 0,
+              "gf": 9,
+              "ga": 0,
+              "gd": 9,
+              "pts": 9
+            },
+            {
+              "pos": 2,
+              "team": "St George, Stevenage",
+              "p": 3,
+              "w": 1,
+              "d": 1,
+              "l": 1,
+              "gf": 4,
+              "ga": 4,
+              "gd": 0,
+              "pts": 4
+            },
+            {
+              "pos": 3,
+              "team": "St Shenouda, Croydon",
+              "p": 3,
+              "w": 0,
+              "d": 2,
+              "l": 1,
+              "gf": 2,
+              "ga": 4,
+              "gd": -2,
+              "pts": 2
+            },
+            {
+              "pos": 4,
+              "team": "Pope Kyrillos, Hounslow",
+              "p": 3,
+              "w": 0,
+              "d": 1,
+              "l": 2,
+              "gf": 2,
+              "ga": 9,
+              "gd": -7,
+              "pts": 1
+            }
+          ]
+        }
+      ],
+      "matches": [
+        {
+          "ref": "COFTA24-A-R1-1",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": "2024-09-28",
+          "time": "10:30",
+          "venue": "Meadway Playing Fields",
+          "home": "St Demiana, Worthing",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Archangel Michael, Golders Green",
+              "player": "Eli Abdel-Malek",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Archangel Michael, Golders Green",
+              "player": "Eli Abdel-Malek",
+              "minute": null
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "Archangel Michael, Golders Green",
+              "players": [
+                "John Baselous",
+                "Andrew Louis"
+              ]
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-B-R1-1",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2024-09-28",
+          "time": "10:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Anba Abraam, Brighton",
+          "away": "Pope Kyrillos, Hounslow",
+          "home_score": 5,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Leon Lawandi",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Martin Farkas",
+              "minute": null
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "Anba Abraam, Brighton",
+              "players": [
+                "Matthew Asad",
+                "Ham",
+                "Martin Farkas",
+                "Ham",
+                "Asad Oukeen"
+              ]
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-A-R1-2",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": "2024-09-28",
+          "time": "11:30",
+          "venue": "Meadway Playing Fields",
+          "home": "St Anthony, Rotherham",
+          "away": "St Mark, Kensington",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andrew Tadross",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-B-R1-2",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2024-09-28",
+          "time": "11:30",
+          "venue": "Meadway Playing Fields",
+          "home": "St George, Stevenage",
+          "away": "St Shenouda, Croydon",
+          "home_score": 1,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Shenouda, Croydon",
+              "player": "Danny Saaman",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-A-R2-1",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2024-09-28",
+          "time": "12:30",
+          "venue": "Meadway Playing Fields",
+          "home": "St Demiana, Worthing",
+          "away": "St Anthony, Rotherham",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Mark Girgis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Fady Salama",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-B-R2-1",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": "2024-09-28",
+          "time": "12:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Anba Abraam, Brighton",
+          "away": "St George, Stevenage",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Tamer",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Abanoub Fakhoury",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-A-R2-2",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2024-09-28",
+          "time": "13:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Archangel Michael, Golders Green",
+          "away": "St Mark, Kensington",
+          "home_score": 1,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Kiro Khir",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Archangel Michael, Golders Green",
+              "player": "Andrew Louis",
+              "minute": null,
+              "assist": "CJ Forbes"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-B-R2-2",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": "2024-09-28",
+          "time": "13:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Pope Kyrillos, Hounslow",
+          "away": "St Shenouda, Croydon",
+          "home_score": 1,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Shenouda, Croydon",
+              "player": "Meena Ibrahim",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Pope Kyrillos, Hounslow",
+              "player": "Sam Dhir",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-A-R3-1",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2024-09-28",
+          "time": "15:30",
+          "venue": "Meadway Playing Fields",
+          "home": "St Demiana, Worthing",
+          "away": "St Mark, Kensington",
+          "home_score": 2,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Demiana, Worthing",
+              "player": "Sam Botrous",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Demiana, Worthing",
+              "player": "Anthony",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Victor Lewis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Victor Lewis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Eduardo Estevez",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-B-R3-1",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2024-09-28",
+          "time": "15:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Anba Abraam, Brighton",
+          "away": "St Shenouda, Croydon",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-A-R3-2",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2024-09-28",
+          "time": "16:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Archangel Michael, Golders Green",
+          "away": "St Anthony, Rotherham",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "Source match screen shows the 0-2 score but no goalscorer events. Two St Anthony goals have no recorded scorer."
+        },
+        {
+          "ref": "COFTA24-B-R3-2",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2024-09-28",
+          "time": "16:30",
+          "venue": "Meadway Playing Fields",
+          "home": "Pope Kyrillos, Hounslow",
+          "away": "St George, Stevenage",
+          "home_score": 1,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Micha Abu Aita",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Micha Abu Aita",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Mina Guirguis",
+              "minute": null
+            },
+            {
+              "type": "goal",
+              "team": "Pope Kyrillos, Hounslow",
+              "player": "Sam Dhir",
+              "minute": null,
+              "source_note": "identified in the supplied annotated screenshot"
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "St George, Stevenage",
+              "players": [
+                "George Atalla",
+                "Jon Aderanti",
+                "Danny Hanna"
+              ]
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-SF1",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": "2024-09-29",
+          "time": "14:00",
+          "venue": "Meadway Playing Fields",
+          "home": "St Anthony, Rotherham",
+          "away": "St George, Stevenage",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": null
+            }
+          ]
+        },
+        {
+          "ref": "COFTA24-SF2",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": "2024-09-29",
+          "time": "15:00",
+          "venue": "Meadway Playing Fields",
+          "home": "Anba Abraam, Brighton",
+          "away": "St Mark, Kensington",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "Source semi-final screen shows the 1-0 score but no goalscorer event."
+        },
+        {
+          "ref": "COFTA24-FINAL",
+          "stage": "final",
+          "group": null,
+          "round": null,
+          "date": "2024-09-29",
+          "time": null,
+          "venue": "Meadway Playing Fields",
+          "home": "St George, Stevenage",
+          "away": "Anba Abraam, Brighton",
+          "home_score": 1,
+          "away_score": 1,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": null,
+            "away": null,
+            "winner": "Anba Abraam, Brighton"
+          },
+          "events_status": "partial",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Martin Farkas",
+              "minute": null
+            }
+          ],
+          "gap_note": "The St George goalscorer and the penalty shoot-out score are not displayed in the source."
+        }
+      ],
+      "goalscorers": [
+        {
+          "player": "Demas Ramsis",
+          "team": "Anba Abraam, Brighton",
+          "goals": 5
+        },
+        {
+          "player": "Aaditya Tiwari",
+          "team": "St George, Stevenage",
+          "goals": 2
+        },
+        {
+          "player": "Eli Abdel-Malek",
+          "team": "Archangel Michael, Golders Green",
+          "goals": 2
+        },
+        {
+          "player": "Martin Farkas",
+          "team": "Anba Abraam, Brighton",
+          "goals": 2
+        },
+        {
+          "player": "Micha Abu Aita",
+          "team": "St George, Stevenage",
+          "goals": 2
+        },
+        {
+          "player": "Sam Dhir",
+          "team": "Pope Kyrillos, Hounslow",
+          "goals": 2
+        },
+        {
+          "player": "Victor Lewis",
+          "team": "St Mark, Kensington",
+          "goals": 2
+        },
+        {
+          "player": "Abanoub Fakhoury",
+          "team": "Anba Abraam, Brighton",
+          "goals": 1
+        },
+        {
+          "player": "Andrew Louis",
+          "team": "Archangel Michael, Golders Green",
+          "goals": 1
+        },
+        {
+          "player": "Andrew Tadross",
+          "team": "St Anthony, Rotherham",
+          "goals": 1
+        },
+        {
+          "player": "Anthony",
+          "team": "St Demiana, Worthing",
+          "goals": 1
+        },
+        {
+          "player": "Danny Saaman",
+          "team": "St Shenouda, Croydon",
+          "goals": 1
+        },
+        {
+          "player": "Eduardo Estevez",
+          "team": "St Mark, Kensington",
+          "goals": 1
+        },
+        {
+          "player": "Fady Salama",
+          "team": "St Anthony, Rotherham",
+          "goals": 1
+        },
+        {
+          "player": "Kiro Khir",
+          "team": "St Mark, Kensington",
+          "goals": 1
+        },
+        {
+          "player": "Leon Lawandi",
+          "team": "Anba Abraam, Brighton",
+          "goals": 1
+        },
+        {
+          "player": "Mark Girgis",
+          "team": "St Anthony, Rotherham",
+          "goals": 1
+        },
+        {
+          "player": "Meena Ibrahim",
+          "team": "St Shenouda, Croydon",
+          "goals": 1
+        },
+        {
+          "player": "Mina Guirguis",
+          "team": "St George, Stevenage",
+          "goals": 1
+        },
+        {
+          "player": "Sam Botrous",
+          "team": "St Demiana, Worthing",
+          "goals": 1
+        },
+        {
+          "player": "Tamer",
+          "team": "Anba Abraam, Brighton",
+          "goals": 1
+        }
+      ],
+      "assists": [
+        {
+          "player": "Ham",
+          "assists": 2
+        },
+        {
+          "player": "Andrew Louis",
+          "assists": 1
+        },
+        {
+          "player": "Asad Oukeen",
+          "assists": 1
+        },
+        {
+          "player": "CJ Forbes",
+          "assists": 1
+        },
+        {
+          "player": "Danny Hanna",
+          "assists": 1
+        },
+        {
+          "player": "George Atalla",
+          "assists": 1
+        },
+        {
+          "player": "John Baselous",
+          "assists": 1
+        },
+        {
+          "player": "Jon Aderanti",
+          "assists": 1
+        },
+        {
+          "player": "Martin Farkas",
+          "assists": 1
+        },
+        {
+          "player": "Matthew Asad",
+          "assists": 1
+        }
+      ],
+      "player_of_the_match": [
+        {
+          "player": "Efe Opone",
+          "awards": 1
+        },
+        {
+          "player": "Aaditya Tiwari",
+          "awards": 1
+        },
+        {
+          "player": "Martin Farkas",
+          "awards": 1
+        },
+        {
+          "player": "Ham",
+          "awards": 1
+        }
+      ],
+      "known_gaps": [
+        "Archangel Michael 0-2 St Anthony: no goalscorer events displayed (2 goals unattributed).",
+        "Anba Abraam 1-0 St Mark (semi-final): no goalscorer event displayed (1 goal unattributed).",
+        "Final: the St George scorer is not displayed (1 goal unattributed).",
+        "Final: penalty shoot-out score is not displayed.",
+        "Efe Opone appears on the Player of the Match screen but nowhere in the match event data."
+      ]
+    },
+    {
+      "id": "conafa-2025",
+      "competition": "CONAFA",
+      "year": 2025,
+      "display_name": "CONAFA 2025",
+      "category": "men",
+      "date_start": "2025-03-08",
+      "date_end": "2025-03-09",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 12,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "St Demiana & Pope Kyrillos VI, Worthing",
+      "final_summary": "Brighton beat Worthing in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": null,
+        "winner": "Brighton",
+        "loser": "St Demiana & Pope Kyrillos VI, Worthing"
+      },
+      "teams": [
+        "Brighton",
+        "St Demiana & Pope Kyrillos VI, Worthing",
+        "Rotherham",
+        "Stevenage",
+        "Scotland",
+        "St Mark",
+        "Nottingham",
+        "Manchester",
+        "Leeds",
+        "Birmingham",
+        "SMPK",
+        "Golders Green"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No final scoreline.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data.",
+        "Team list may be incomplete; only entrants named in the notes are recorded."
+      ]
+    },
+    {
+      "id": "ladies-cofta-2025",
+      "competition": "Ladies COFTA",
+      "year": 2025,
+      "display_name": "Ladies COFTA 2025",
+      "category": "women",
+      "date_start": "2025-03-22",
+      "date_end": "2025-03-23",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 8,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "St Mark",
+      "runner_up": "Brighton",
+      "final_summary": "St Mark beat Brighton on penalties in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": null,
+        "decided_by": "penalties",
+        "shootout": {
+          "home": null,
+          "away": null
+        },
+        "winner": "St Mark",
+        "loser": "Brighton"
+      },
+      "teams": [
+        "St Mark",
+        "Brighton",
+        "St Mark B",
+        "SMPK",
+        "Worthing",
+        "Birmingham",
+        "Golders Green",
+        "Stevenage"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No regulation scoreline for the final.",
+        "No penalty shootout score.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No goalscorers, awards or player data."
+      ]
+    },
+    {
+      "id": "cofta-2025",
+      "competition": "COFTA",
+      "competition_full": "Coptic Orthodox Football Tournament Association",
+      "year": 2025,
+      "display_name": "COFTA 2025",
+      "category": "men",
+      "date_start": "2025-09-06",
+      "date_end": "2025-09-06",
+      "venue": "Shephalbury Park",
+      "data_confidence": "full",
+      "source": "Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 2",
+      "format": "Two groups of three playing a double round-robin over six rounds, then semi-finals and a final",
+      "team_count": 6,
+      "match_count": 15,
+      "champion": "Anba Abraam, Brighton",
+      "runner_up": "Archangel Michael, Golders Green",
+      "final_summary": "Archangel Michael, Golders Green 0-1 Anba Abraam, Brighton",
+      "competition_note": "St Mark, Kensington finished second in Group B but were disqualified after the group stage had concluded. Archangel Michael, Golders Green progressed to the knockout stage in their place.",
+      "teams": [
+        "St George, Stevenage",
+        "St Anthony, Rotherham",
+        "St Demiana, Worthing",
+        "Anba Abraam, Brighton",
+        "St Mark, Kensington",
+        "Archangel Michael, Golders Green"
+      ],
+      "groups": [
+        {
+          "name": "Group A",
+          "winner": "St George, Stevenage",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "St George, Stevenage",
+              "p": 4,
+              "w": 3,
+              "d": 1,
+              "l": 0,
+              "gf": 8,
+              "ga": 0,
+              "gd": 8,
+              "pts": 10
+            },
+            {
+              "pos": 2,
+              "team": "St Anthony, Rotherham",
+              "p": 4,
+              "w": 2,
+              "d": 1,
+              "l": 1,
+              "gf": 10,
+              "ga": 2,
+              "gd": 8,
+              "pts": 7
+            },
+            {
+              "pos": 3,
+              "team": "St Demiana, Worthing",
+              "p": 4,
+              "w": 0,
+              "d": 0,
+              "l": 4,
+              "gf": 0,
+              "ga": 16,
+              "gd": -16,
+              "pts": 0
+            }
+          ]
+        },
+        {
+          "name": "Group B",
+          "winner": "Anba Abraam, Brighton",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "Anba Abraam, Brighton",
+              "p": 4,
+              "w": 4,
+              "d": 0,
+              "l": 0,
+              "gf": 8,
+              "ga": 3,
+              "gd": 5,
+              "pts": 12
+            },
+            {
+              "pos": 2,
+              "team": "St Mark, Kensington",
+              "p": 4,
+              "w": 2,
+              "d": 0,
+              "l": 2,
+              "gf": 4,
+              "ga": 5,
+              "gd": -1,
+              "pts": 6,
+              "note": "disqualified after the group stage"
+            },
+            {
+              "pos": 3,
+              "team": "Archangel Michael, Golders Green",
+              "p": 4,
+              "w": 0,
+              "d": 0,
+              "l": 4,
+              "gf": 1,
+              "ga": 5,
+              "gd": -4,
+              "pts": 0
+            }
+          ]
+        }
+      ],
+      "matches": [
+        {
+          "ref": "COFTA25-A-R1",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": "2025-09-06",
+          "time": "10:30",
+          "venue": "Shephalbury Park",
+          "home": "St George, Stevenage",
+          "away": "St Demiana, Worthing",
+          "home_score": 4,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Danny Saaman",
+              "minute": 1,
+              "assist": "Julian Navanathan",
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Julian Navanathan",
+              "minute": 5,
+              "assist": "Karim Tadros",
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Julian Navanathan",
+              "minute": 11,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "yellow_card",
+              "team": null,
+              "player": "Decio Emanuel",
+              "minute": 33
+            },
+            {
+              "type": "yellow_card",
+              "team": null,
+              "player": "Matthew Fahmy",
+              "minute": 33
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": 43,
+              "assist": "Danny Saaman",
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-A-R2",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2025-09-06",
+          "time": "11:30",
+          "venue": "Shephalbury Park",
+          "home": "St Demiana, Worthing",
+          "away": "St Anthony, Rotherham",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andy Lotfallah",
+              "minute": 45,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-A-R3",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2025-09-06",
+          "time": "12:30",
+          "venue": "Shephalbury Park",
+          "home": "St George, Stevenage",
+          "away": "St Anthony, Rotherham",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Daniel Kyriacou",
+              "minute": 15,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": 38,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-A-R4",
+          "stage": "group",
+          "group": "Group A",
+          "round": 4,
+          "date": "2025-09-06",
+          "time": "14:00",
+          "venue": "Shephalbury Park",
+          "home": "St George, Stevenage",
+          "away": "St Demiana, Worthing",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": 6,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St George, Stevenage",
+              "player": "Aaditya Tiwari",
+              "minute": 13,
+              "assist": "Michael Shenouda",
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-A-R5",
+          "stage": "group",
+          "group": "Group A",
+          "round": 5,
+          "date": "2025-09-06",
+          "time": "15:00",
+          "venue": "Shephalbury Park",
+          "home": "St Demiana, Worthing",
+          "away": "St Anthony, Rotherham",
+          "home_score": 0,
+          "away_score": 9,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Mark Yanni",
+              "minute": 4,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Amir Selim",
+              "minute": 6,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andrew Tadross",
+              "minute": 9,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andy Lotfallah",
+              "minute": 21,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andy Lotfallah",
+              "minute": 22,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andy Lotfallah",
+              "minute": 26,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Mitch Collins",
+              "minute": 31,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "St Anthony, Rotherham",
+              "player": "John Raouf",
+              "minute": 34,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "penalty_goal",
+              "team": "St Anthony, Rotherham",
+              "player": "Andy Lotfallah",
+              "minute": 36,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-A-R6",
+          "stage": "group",
+          "group": "Group A",
+          "round": 6,
+          "date": "2025-09-06",
+          "time": "16:00",
+          "venue": "Shephalbury Park",
+          "home": "St George, Stevenage",
+          "away": "St Anthony, Rotherham",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "No match events shown in the source screenshots."
+        },
+        {
+          "ref": "COFTA25-B-R1",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2025-09-06",
+          "time": "10:30",
+          "venue": "Shephalbury Park",
+          "home": "Anba Abraam, Brighton",
+          "away": "St Mark, Kensington",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "complete_unattributed",
+          "events": [
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Demas Ramsis",
+              "minute": 13
+            },
+            {
+              "type": "yellow_card",
+              "team": null,
+              "player": "Abanoub Fakhoury",
+              "minute": 35
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Steven Sava",
+              "minute": 37
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Sydney Noulton",
+              "minute": 40
+            },
+            {
+              "type": "yellow_card",
+              "team": null,
+              "player": "Kiro Khir",
+              "minute": 40
+            }
+          ],
+          "gap_note": "AMBIGUITY: three goals displayed for a 2-1 scoreline with no team attribution. Which scorer belongs to St Mark is not determinable from the source."
+        },
+        {
+          "ref": "COFTA25-B-R2",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": "2025-09-06",
+          "time": "11:30",
+          "venue": "Shephalbury Park",
+          "home": "St Mark, Kensington",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Sami Suliman",
+              "minute": 14,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-B-R3",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2025-09-06",
+          "time": "12:30",
+          "venue": "Shephalbury Park",
+          "home": "Anba Abraam, Brighton",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "complete_unattributed",
+          "events": [
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Demas Ramsis",
+              "minute": 9
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Sebastian",
+              "minute": 17
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Ebi Abdel-Malek",
+              "minute": 20
+            }
+          ],
+          "gap_note": "AMBIGUITY: three goals displayed for a 2-1 scoreline with no team attribution."
+        },
+        {
+          "ref": "COFTA25-B-R4",
+          "stage": "group",
+          "group": "Group B",
+          "round": 4,
+          "date": "2025-09-06",
+          "time": "14:00",
+          "venue": "Shephalbury Park",
+          "home": "Anba Abraam, Brighton",
+          "away": "St Mark, Kensington",
+          "home_score": 3,
+          "away_score": 1,
+          "events_status": "complete_unattributed",
+          "events": [
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Stefano",
+              "minute": 7
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Stavros Akriviadis",
+              "minute": 10
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Abanoub Fakhoury",
+              "minute": 14
+            },
+            {
+              "type": "goal",
+              "team": null,
+              "player": "Leon Lawandi",
+              "minute": 24
+            }
+          ],
+          "gap_note": "AMBIGUITY: four goals displayed for a 3-1 scoreline with no team attribution."
+        },
+        {
+          "ref": "COFTA25-B-R5",
+          "stage": "group",
+          "group": "Group B",
+          "round": 5,
+          "date": "2025-09-06",
+          "time": "15:00",
+          "venue": "Shephalbury Park",
+          "home": "St Mark, Kensington",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Mark, Kensington",
+              "player": "Kiro Khir",
+              "minute": 1,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-B-R6",
+          "stage": "group",
+          "group": "Group B",
+          "round": 6,
+          "date": "2025-09-06",
+          "time": "16:00",
+          "venue": "Shephalbury Park",
+          "home": "Anba Abraam, Brighton",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Peter",
+              "minute": 1,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ]
+        },
+        {
+          "ref": "COFTA25-SF1",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": "2025-09-06",
+          "time": null,
+          "venue": "Shephalbury Park",
+          "home": "St George, Stevenage",
+          "away": "Archangel Michael, Golders Green",
+          "home_score": 0,
+          "away_score": 0,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": 2,
+            "away": 4,
+            "winner": "Archangel Michael, Golders Green"
+          },
+          "events_status": "complete",
+          "events": []
+        },
+        {
+          "ref": "COFTA25-SF2",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": "2025-09-06",
+          "time": null,
+          "venue": "Shephalbury Park",
+          "home": "Anba Abraam, Brighton",
+          "away": "St Anthony, Rotherham",
+          "home_score": 3,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Martin Farkas",
+              "minute": 1,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Demas Ramsis",
+              "minute": 1,
+              "team_attribution": "inferred_from_clean_sheet"
+            },
+            {
+              "type": "goal",
+              "team": "Anba Abraam, Brighton",
+              "player": "Stefano",
+              "minute": 1,
+              "team_attribution": "inferred_from_clean_sheet"
+            }
+          ],
+          "gap_note": "All three goals are displayed at 1'; reproduced as shown."
+        },
+        {
+          "ref": "COFTA25-FINAL",
+          "stage": "final",
+          "group": null,
+          "round": null,
+          "date": "2025-09-06",
+          "time": null,
+          "venue": "Shephalbury Park",
+          "home": "Archangel Michael, Golders Green",
+          "away": "Anba Abraam, Brighton",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "Scorer not displayed. HOME/AWAY CONFLICT: two places in the source render the final as 'Archangel Michael 0-1 Anba Abraam' and one as 'Anba Abraam 1-0 Archangel Michael'. Majority orientation used here; result identical either way."
+        }
+      ],
+      "goalscorers": [
+        {
+          "player": "Andy Lotfallah",
+          "goals": 5
+        },
+        {
+          "player": "Aaditya Tiwari",
+          "goals": 4
+        },
+        {
+          "player": "Demas Ramsis",
+          "goals": 3
+        },
+        {
+          "player": "Julian Navanathan",
+          "goals": 2
+        },
+        {
+          "player": "Stefano",
+          "goals": 2
+        },
+        {
+          "player": "Abanoub Fakhoury",
+          "goals": 1
+        },
+        {
+          "player": "Amir Selim",
+          "goals": 1
+        },
+        {
+          "player": "Andrew Tadross",
+          "goals": 1
+        },
+        {
+          "player": "Daniel Kyriacou",
+          "goals": 1
+        },
+        {
+          "player": "Danny Saaman",
+          "goals": 1
+        },
+        {
+          "player": "Ebi Abdel-Malek",
+          "goals": 1
+        },
+        {
+          "player": "John Raouf",
+          "goals": 1
+        },
+        {
+          "player": "Kiro Khir",
+          "goals": 1
+        },
+        {
+          "player": "Leon Lawandi",
+          "goals": 1
+        },
+        {
+          "player": "Mark Yanni",
+          "goals": 1
+        },
+        {
+          "player": "Martin Farkas",
+          "goals": 1
+        },
+        {
+          "player": "Mitch Collins",
+          "goals": 1
+        },
+        {
+          "player": "Peter",
+          "goals": 1
+        },
+        {
+          "player": "Sami Suliman",
+          "goals": 1
+        },
+        {
+          "player": "Sebastian",
+          "goals": 1
+        },
+        {
+          "player": "Stavros Akriviadis",
+          "goals": 1
+        },
+        {
+          "player": "Steven Sava",
+          "goals": 1
+        },
+        {
+          "player": "Sydney Noulton",
+          "goals": 1
+        }
+      ],
+      "assists": [
+        {
+          "player": "Danny Saaman",
+          "assists": 1
+        },
+        {
+          "player": "Julian Navanathan",
+          "assists": 1
+        },
+        {
+          "player": "Karim Tadros",
+          "assists": 1
+        },
+        {
+          "player": "Michael Shenouda",
+          "assists": 1
+        }
+      ],
+      "cards": [
+        {
+          "player": "Abanoub Fakhoury",
+          "yellow": 1
+        },
+        {
+          "player": "Decio Emanuel",
+          "yellow": 1
+        },
+        {
+          "player": "Kiro Khir",
+          "yellow": 1
+        },
+        {
+          "player": "Matthew Fahmy",
+          "yellow": 1
+        }
+      ],
+      "known_gaps": [
+        "The final's goalscorer is not displayed.",
+        "Group A Round 6 (St George 0-0 St Anthony): no events displayed.",
+        "Three Group B matches display goals without team attribution (B-R1, B-R3, B-R4).",
+        "Some event pages use shortened player names (Peter, Sebastian, Stefano); reproduced as displayed rather than inferred.",
+        "Source does not state a team for any yellow card."
+      ]
+    },
+    {
+      "id": "costa-2025",
+      "competition": "COSTA",
+      "year": 2025,
+      "display_name": "COSTA 2025",
+      "category": "men",
+      "date_start": "2025-10-25",
+      "date_end": "2025-10-26",
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam's notes, no supporting document",
+      "format": null,
+      "team_count": 8,
+      "team_count_basis": "count of named entrants only; source did not state a total",
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": "SMPK",
+      "final_summary": "Brighton 5-0 SMPK",
+      "final": {
+        "home": null,
+        "away": null,
+        "winner_score": 5,
+        "loser_score": 0,
+        "decided_by": "regulation",
+        "winner": "Brighton",
+        "loser": "SMPK"
+      },
+      "final_orientation_note": "Home/away sides of the final are not stated in the source.",
+      "teams": [
+        "Brighton",
+        "SMPK",
+        "PKSM (SMPK B)",
+        "Worthing",
+        "Golders Green",
+        "Croydon",
+        "Stevenage",
+        "St Mark"
+      ],
+      "matches": [],
+      "goalscorers": [],
+      "awards": {
+        "player_of_the_tournament": {
+          "player": "George Coutlakis",
+          "team": "SMPK"
+        },
+        "top_scorer": {
+          "player": "Demas Ramsis",
+          "team": "Brighton",
+          "goals": null
+        }
+      },
+      "known_gaps": [
+        "Top scorer's goal total not stated.",
+        "No group stage, standings, fixtures or match data.",
+        "No venue.",
+        "No other goalscorers or player data.",
+        "Team list may be incomplete; only entrants named in the notes are recorded."
+      ]
+    },
+    {
+      "id": "conafa-2026",
+      "competition": "CONAFA",
+      "year": 2026,
+      "display_name": "CONAFA 2026",
+      "category": "men",
+      "date_start": "2026-03-21",
+      "date_end": "2026-03-22",
+      "venue": "Pitch A, Pitch B and Pitch C",
+      "data_confidence": "full",
+      "source": "Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 3 (Tournify app export)",
+      "format": "Group A of seven over seven rounds and Group B of six over five rounds, then quarter-finals, semi-finals and a final",
+      "team_count": 13,
+      "match_count": 43,
+      "champion": "Brighton",
+      "runner_up": "Nottingham",
+      "losing_semi_finalists": [
+        "Rotherham",
+        "Hounslow"
+      ],
+      "final_summary": "Nottingham 1-1 Brighton (Brighton won the shootout 5-4)",
+      "third_place_match": null,
+      "third_place_note": "No third-place match appears in any supplied screenshot.",
+      "teams": [
+        "Nottingham",
+        "St Marks",
+        "Rotherham",
+        "Golders Green",
+        "Newcastle",
+        "Birmingham",
+        "Hove",
+        "Brighton",
+        "Manchester",
+        "Hounslow",
+        "Ireland",
+        "Leeds",
+        "St Paul"
+      ],
+      "round_numbering_note": "Round numbering in the app is not chronological: some Round 1 fixtures were played on 22/03 while Round 2 fixtures were played on 21/03. Rounds are recorded exactly as displayed.",
+      "groups": [
+        {
+          "name": "Group A",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "Nottingham",
+              "p": 6,
+              "w": 5,
+              "d": 0,
+              "l": 1,
+              "gf": 12,
+              "ga": 3,
+              "gd": 9,
+              "pts": 15
+            },
+            {
+              "pos": 2,
+              "team": "St Marks",
+              "p": 6,
+              "w": 4,
+              "d": 1,
+              "l": 1,
+              "gf": 11,
+              "ga": 1,
+              "gd": 10,
+              "pts": 13
+            },
+            {
+              "pos": 3,
+              "team": "Rotherham",
+              "p": 6,
+              "w": 4,
+              "d": 0,
+              "l": 2,
+              "gf": 12,
+              "ga": 3,
+              "gd": 9,
+              "pts": 12
+            },
+            {
+              "pos": 4,
+              "team": "Golders Green",
+              "p": 6,
+              "w": 2,
+              "d": 2,
+              "l": 2,
+              "gf": 4,
+              "ga": 6,
+              "gd": -2,
+              "pts": 8
+            },
+            {
+              "pos": 5,
+              "team": "Newcastle",
+              "p": 6,
+              "w": 2,
+              "d": 2,
+              "l": 2,
+              "gf": 3,
+              "ga": 8,
+              "gd": -5,
+              "pts": 8
+            },
+            {
+              "pos": 6,
+              "team": "Birmingham",
+              "p": 6,
+              "w": 1,
+              "d": 0,
+              "l": 5,
+              "gf": 4,
+              "ga": 8,
+              "gd": -4,
+              "pts": 3
+            },
+            {
+              "pos": 7,
+              "team": "Hove",
+              "p": 6,
+              "w": 0,
+              "d": 1,
+              "l": 5,
+              "gf": 0,
+              "ga": 17,
+              "gd": -17,
+              "pts": 1
+            }
+          ]
+        },
+        {
+          "name": "Group B",
+          "standings": [
+            {
+              "pos": 1,
+              "team": "Brighton",
+              "p": 5,
+              "w": 3,
+              "d": 2,
+              "l": 0,
+              "gf": 10,
+              "ga": 0,
+              "gd": 10,
+              "pts": 11
+            },
+            {
+              "pos": 2,
+              "team": "Manchester",
+              "p": 5,
+              "w": 3,
+              "d": 0,
+              "l": 2,
+              "gf": 10,
+              "ga": 6,
+              "gd": 4,
+              "pts": 9
+            },
+            {
+              "pos": 3,
+              "team": "Hounslow",
+              "p": 5,
+              "w": 2,
+              "d": 2,
+              "l": 1,
+              "gf": 8,
+              "ga": 4,
+              "gd": 4,
+              "pts": 8
+            },
+            {
+              "pos": 4,
+              "team": "Ireland",
+              "p": 5,
+              "w": 1,
+              "d": 3,
+              "l": 1,
+              "gf": 4,
+              "ga": 6,
+              "gd": -2,
+              "pts": 6
+            },
+            {
+              "pos": 5,
+              "team": "Leeds",
+              "p": 5,
+              "w": 1,
+              "d": 2,
+              "l": 2,
+              "gf": 2,
+              "ga": 6,
+              "gd": -4,
+              "pts": 5
+            },
+            {
+              "pos": 6,
+              "team": "St Paul",
+              "p": 5,
+              "w": 0,
+              "d": 1,
+              "l": 4,
+              "gf": 2,
+              "ga": 14,
+              "gd": -12,
+              "pts": 1
+            }
+          ]
+        }
+      ],
+      "matches": [
+        {
+          "ref": "CONAFA26-A-R1-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "St Marks",
+          "away": "Newcastle",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": []
+        },
+        {
+          "ref": "CONAFA26-A-R1-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Hove",
+          "away": "Golders Green",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": []
+        },
+        {
+          "ref": "CONAFA26-A-R1-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 1,
+          "date": "2026-03-22",
+          "time": "14:20",
+          "pitch": "Pitch B",
+          "home": "Birmingham",
+          "away": "Rotherham",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Youssef Selim",
+              "minute": 13
+            },
+            {
+              "type": "yellow_card",
+              "team": "Rotherham",
+              "player": "Natnael Zewdi",
+              "minute": 22
+            },
+            {
+              "type": "yellow_card",
+              "team": "Birmingham",
+              "player": "Mina Khalil",
+              "minute": 28
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R2-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2026-03-21",
+          "time": "19:00",
+          "pitch": "Pitch A",
+          "home": "Golders Green",
+          "away": "Nottingham",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Mark Girgis",
+              "minute": 16
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R2-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2026-03-21",
+          "time": "18:20",
+          "pitch": "Pitch C",
+          "home": "Rotherham",
+          "away": "St Marks",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Eduardo Estevez",
+              "minute": 18
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R2-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 2,
+          "date": "2026-03-21",
+          "time": "18:20",
+          "pitch": "Pitch A",
+          "home": "Birmingham",
+          "away": "Hove",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Birmingham",
+              "player": "John Raouf",
+              "minute": 12
+            },
+            {
+              "type": "goal",
+              "team": "Birmingham",
+              "player": "Kofi Senyah",
+              "minute": 29
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R3-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2026-03-21",
+          "time": "13:00",
+          "pitch": "Pitch A",
+          "home": "Newcastle",
+          "away": "Rotherham",
+          "home_score": 0,
+          "away_score": 4,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Mitch Robinson",
+              "minute": 24,
+              "assist": "Mitch Robinson",
+              "assist_note": "self-credited assist, preserved as displayed"
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Andrew Lotfallah",
+              "minute": 40
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Mitch Robinson",
+              "minute": 52
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Andrew Lotfallah",
+              "minute": 64,
+              "assist": "Andrew Lotfallah",
+              "assist_note": "self-credited assist, preserved as displayed"
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R3-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2026-03-22",
+          "time": "15:40",
+          "pitch": "Pitch A",
+          "home": "Nottingham",
+          "away": "Birmingham",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "3 goals with no recorded scorer (2 Nottingham, 1 Birmingham)."
+        },
+        {
+          "ref": "CONAFA26-A-R3-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 3,
+          "date": "2026-03-22",
+          "time": "15:00",
+          "pitch": "Pitch A",
+          "home": "St Marks",
+          "away": "Hove",
+          "home_score": 7,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Stavros Akriviadis",
+              "minute": 13
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Stavros Akriviadis",
+              "minute": 26
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Stavros Akriviadis",
+              "minute": 42
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Fady Khir",
+              "minute": 53
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Kyrelos Khir",
+              "minute": 63
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Nathan Kesete",
+              "minute": 71
+            },
+            {
+              "type": "own_goal",
+              "team": "St Marks",
+              "player": null,
+              "minute": 86,
+              "gap_note": "own goal displayed without a player name"
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R4-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 4,
+          "date": "2026-03-21",
+          "time": "15:40",
+          "pitch": "Pitch A",
+          "home": "Birmingham",
+          "away": "Golders Green",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Ebi Abdelmalik",
+              "minute": 11
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Ebi Abdelmalik",
+              "minute": 24
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R4-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 4,
+          "date": "2026-03-21",
+          "time": "19:00",
+          "pitch": "Pitch A",
+          "home": "Hove",
+          "away": "Newcastle",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "score_only",
+          "events": [],
+          "gap_note": "1 Newcastle goal with no recorded scorer."
+        },
+        {
+          "ref": "CONAFA26-A-R4-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 4,
+          "date": "2026-03-21",
+          "time": "17:40",
+          "pitch": "Pitch A",
+          "home": "St Marks",
+          "away": "Nottingham",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Eddie Geries",
+              "minute": 19
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Kyrelos Khir",
+              "minute": 22
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R5-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 5,
+          "date": "2026-03-22",
+          "time": "13:40",
+          "pitch": "Pitch A",
+          "home": "Rotherham",
+          "away": "Hove",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Alex Wilcox",
+              "minute": 14
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Youssef Selim",
+              "minute": 27
+            },
+            {
+              "type": "yellow_card",
+              "team": "Hove",
+              "player": "Kerolles Kozman",
+              "minute": 35
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R5-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 5,
+          "date": "2026-03-21",
+          "time": "16:20",
+          "pitch": "Pitch A",
+          "home": "Golders Green",
+          "away": "St Marks",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "Golders Green",
+              "player": "Simon Fakhouri",
+              "minute": 13
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "CJ Forbes",
+              "minute": 27
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R5-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 5,
+          "date": "2026-03-22",
+          "time": "14:20",
+          "pitch": "Pitch A",
+          "home": "Newcastle",
+          "away": "Nottingham",
+          "home_score": 0,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Steven Girgis",
+              "minute": 13
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": 24
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": 37
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R6-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 6,
+          "date": "2026-03-21",
+          "time": "13:40",
+          "pitch": "Pitch A",
+          "home": "St Marks",
+          "away": "Birmingham",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Eduardo Estevez",
+              "minute": 18
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R6-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 6,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Nottingham",
+          "away": "Rotherham",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "partial",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": null,
+              "source": "organiser_confirmed",
+              "source_note": "Not from a screenshot; confirmed by the tournament organiser. Minute unknown."
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R6-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 6,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Newcastle",
+          "away": "Golders Green",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": []
+        },
+        {
+          "ref": "CONAFA26-A-R7-01",
+          "stage": "group",
+          "group": "Group A",
+          "round": 7,
+          "date": "2026-03-21",
+          "time": "17:00",
+          "pitch": "Pitch A",
+          "home": "Hove",
+          "away": "Nottingham",
+          "home_score": 0,
+          "away_score": 5,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Khalid Shalan",
+              "minute": 14
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": 16
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Steven Girgis",
+              "minute": 30
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": 42
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Amir Morcos",
+              "minute": 56
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R7-02",
+          "stage": "group",
+          "group": "Group A",
+          "round": 7,
+          "date": "2026-03-21",
+          "time": "15:40",
+          "pitch": "Pitch A",
+          "home": "Birmingham",
+          "away": "Newcastle",
+          "home_score": 1,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Birmingham",
+              "player": "Sirak Amanuel",
+              "minute": 11
+            },
+            {
+              "type": "goal",
+              "team": "Newcastle",
+              "player": "Antony Messag",
+              "minute": 22
+            },
+            {
+              "type": "goal",
+              "team": "Newcastle",
+              "player": "Karim Rizkalla",
+              "minute": 38
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-A-R7-03",
+          "stage": "group",
+          "group": "Group A",
+          "round": 7,
+          "date": "2026-03-21",
+          "time": "19:40",
+          "pitch": "Pitch A",
+          "home": "Rotherham",
+          "away": "Golders Green",
+          "home_score": 5,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Amir Ameen",
+              "minute": 10
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Akon Aguek",
+              "minute": 20
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Akon Aguek",
+              "minute": 29
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Youssef Selim",
+              "minute": 42
+            },
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Youssef Selim",
+              "minute": 56
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Andrew Elnazir",
+              "minute": 66
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R1-01",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2026-03-21",
+          "time": "17:40",
+          "pitch": "Pitch B",
+          "home": "Ireland",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stefano Saleh",
+              "minute": 7
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 16
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 29
+            },
+            {
+              "type": "yellow_card",
+              "team": "Ireland",
+              "player": "Mark Tawfik",
+              "minute": 41
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R1-02",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2026-03-22",
+          "time": "13:40",
+          "pitch": "Pitch B",
+          "home": "St Paul",
+          "away": "Leeds",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Leeds",
+              "player": "Efthymious Kyriacou",
+              "minute": 13
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R1-03",
+          "stage": "group",
+          "group": "Group B",
+          "round": 1,
+          "date": "2026-03-21",
+          "time": "18:20",
+          "pitch": "Pitch B",
+          "home": "Manchester",
+          "away": "Hounslow",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 11
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Zane Seddon",
+              "minute": 20
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Oti Koutlakis",
+              "minute": 32,
+              "assist": "Daniel Kyriacou"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Manchester",
+              "player": "Ciro Tadros",
+              "minute": 46
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R2-01",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": "2026-03-21",
+          "time": "14:20",
+          "pitch": "Pitch B",
+          "home": "Leeds",
+          "away": "Ireland",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "Leeds",
+              "player": "Roger Roman",
+              "minute": 14
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R2-02",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Hounslow",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": []
+        },
+        {
+          "ref": "CONAFA26-B-R2-03",
+          "stage": "group",
+          "group": "Group B",
+          "round": 2,
+          "date": "2026-03-21",
+          "time": "17:00",
+          "pitch": "Pitch B",
+          "home": "Manchester",
+          "away": "St Paul",
+          "home_score": 4,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 12,
+              "assist": "Gino Rassem"
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Gino Rassem",
+              "minute": 14,
+              "assist": "Gino Rassem",
+              "assist_note": "self-credited assist, preserved as displayed"
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 24,
+              "assist": "Gino Rassem"
+            },
+            {
+              "type": "own_goal",
+              "team": "Manchester",
+              "player": "Philo Khalil",
+              "minute": 58
+            },
+            {
+              "type": "goal",
+              "team": "St Paul",
+              "player": "Mark Ayoub",
+              "minute": 69
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R3-01",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2026-03-21",
+          "time": "15:40",
+          "pitch": "Pitch B",
+          "home": "Ireland",
+          "away": "Hounslow",
+          "home_score": 1,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Ireland",
+              "player": "Anthony Mina",
+              "minute": 1,
+              "assist": "Anthony Mina",
+              "assist_note": "self-credited assist, preserved as displayed"
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "George Gamil",
+              "minute": 13,
+              "assist": "George Coutlakis"
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R3-02",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2026-03-21",
+          "time": "16:20",
+          "pitch": "Pitch B",
+          "home": "Leeds",
+          "away": "Manchester",
+          "home_score": 0,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 10,
+              "assist": "Gino Rassem"
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 21,
+              "assist": "Gino Rassem"
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Ciro Tadros",
+              "minute": 31
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R3-03",
+          "stage": "group",
+          "group": "Group B",
+          "round": 3,
+          "date": "2026-03-21",
+          "time": "15:00",
+          "pitch": "Pitch B",
+          "home": "Brighton",
+          "away": "St Paul",
+          "home_score": 5,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "St Paul",
+              "player": "Simon Ghaly",
+              "minute": 15
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stefano Saleh",
+              "minute": 26
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 38
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis",
+              "minute": 48
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis",
+              "minute": 57
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Giorgio Shokralla",
+              "minute": 66
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R4-01",
+          "stage": "group",
+          "group": "Group B",
+          "round": 4,
+          "date": "2026-03-22",
+          "time": "13:00",
+          "pitch": "Pitch B",
+          "home": "Manchester",
+          "away": "Ireland",
+          "home_score": 1,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Ireland",
+              "player": "Daniel Mina",
+              "minute": 9
+            },
+            {
+              "type": "goal",
+              "team": "Manchester",
+              "player": "Solomon Langley",
+              "minute": 13
+            },
+            {
+              "type": "goal",
+              "team": "Ireland",
+              "player": "Daniel Mina",
+              "minute": 27
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R4-02",
+          "stage": "group",
+          "group": "Group B",
+          "round": 4,
+          "date": "2026-03-21",
+          "time": "13:00",
+          "pitch": "Pitch B",
+          "home": "St Paul",
+          "away": "Hounslow",
+          "home_score": 0,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Sam Dhir",
+              "minute": 12,
+              "assist": "George Coutlakis"
+            },
+            {
+              "type": "yellow_card",
+              "team": "St Paul",
+              "player": "Michel Tawil",
+              "minute": 15
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Daniel Kyriacou",
+              "minute": 24,
+              "assist": "George Coutlakis"
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "George Gamil",
+              "minute": 36
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R4-03",
+          "stage": "group",
+          "group": "Group B",
+          "round": 4,
+          "date": "2026-03-21",
+          "time": "19:40",
+          "pitch": "Pitch B",
+          "home": "Brighton",
+          "away": "Leeds",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "Brighton",
+              "player": "Abraam Butrous",
+              "minute": 14
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R5-01",
+          "stage": "group",
+          "group": "Group B",
+          "round": 5,
+          "date": "2026-03-21",
+          "time": "19:00",
+          "pitch": "Pitch B",
+          "home": "Ireland",
+          "away": "St Paul",
+          "home_score": 1,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Ireland",
+              "player": "Kearoles Soliman",
+              "minute": 12
+            },
+            {
+              "type": "goal",
+              "team": "St Paul",
+              "player": "Youki Gamal",
+              "minute": 25
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R5-02",
+          "stage": "group",
+          "group": "Group B",
+          "round": 5,
+          "date": "2026-03-21",
+          "time": "13:40",
+          "pitch": "Pitch B",
+          "home": "Manchester",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 9
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 37
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-B-R5-03",
+          "stage": "group",
+          "group": "Group B",
+          "round": 5,
+          "date": "2026-03-21",
+          "time": "17:00",
+          "pitch": "Pitch C",
+          "home": "Hounslow",
+          "away": "Leeds",
+          "home_score": 3,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Daniel Kyriacou",
+              "minute": 10,
+              "assist": "Bishoy Salib"
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Daniel Kyriacou",
+              "minute": 21,
+              "assist": "George Gamil"
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "George Coutlakis",
+              "minute": 34,
+              "assist": "George Gamil"
+            },
+            {
+              "type": "goal",
+              "team": "Leeds",
+              "player": "Moussa Sy",
+              "minute": 47
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-QF1",
+          "stage": "quarter_final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Manchester",
+          "away": "Rotherham",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Rotherham",
+              "player": "Andrew Lotfallah",
+              "minute": 15
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-QF2",
+          "stage": "quarter_final",
+          "group": null,
+          "round": null,
+          "date": "2026-03-22",
+          "time": "17:11",
+          "pitch": null,
+          "home": "Nottingham",
+          "away": "Ireland",
+          "home_score": 3,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Mark Girgis",
+              "minute": 15
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Amir Morcos",
+              "minute": 28
+            },
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Farhan Dad",
+              "minute": "45+1"
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-QF3",
+          "stage": "quarter_final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Golders Green",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory",
+              "minute": 15
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-QF4",
+          "stage": "quarter_final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Hounslow",
+          "away": "St Marks",
+          "home_score": 1,
+          "away_score": 1,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": 4,
+            "away": 2,
+            "winner": "Hounslow"
+          },
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "Hounslow",
+              "player": "Adrian Boghdady",
+              "minute": 5
+            },
+            {
+              "type": "goal",
+              "team": "Hounslow",
+              "player": "Sam Dhir",
+              "minute": 10,
+              "assist": "Oti Koutlakis"
+            },
+            {
+              "type": "goal",
+              "team": "St Marks",
+              "player": "Stavros Arkiviadis",
+              "minute": 30
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-SF1",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Rotherham",
+          "away": "Nottingham",
+          "home_score": 0,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Nduoma Chilaka",
+              "minute": 19
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-SF2",
+          "stage": "semi_final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Brighton",
+          "away": "Hounslow",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis",
+              "minute": 19
+            }
+          ]
+        },
+        {
+          "ref": "CONAFA26-FINAL",
+          "stage": "final",
+          "group": null,
+          "round": null,
+          "date": null,
+          "time": null,
+          "pitch": null,
+          "home": "Nottingham",
+          "away": "Brighton",
+          "home_score": 1,
+          "away_score": 1,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": 4,
+            "away": 5,
+            "winner": "Brighton"
+          },
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Nottingham",
+              "player": "Amir Morcos",
+              "minute": 15
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis",
+              "minute": 25
+            }
+          ]
+        }
+      ],
+      "goalscorers": [
+        {
+          "rank": 1,
+          "player": "Abanob Fakhory",
+          "team": "Brighton",
+          "goals": 6
+        },
+        {
+          "rank": 1,
+          "player": "Nduoma Chilaka",
+          "team": "Nottingham",
+          "goals": 6
+        },
+        {
+          "rank": 1,
+          "player": "Solomon Langley",
+          "team": "Manchester",
+          "goals": 6
+        },
+        {
+          "rank": 4,
+          "player": "Demas Ramsis",
+          "team": "Brighton",
+          "goals": 4
+        },
+        {
+          "rank": 4,
+          "player": "Youssef Selim",
+          "team": "Rotherham",
+          "goals": 4
+        },
+        {
+          "rank": 6,
+          "player": "Amir Morcos",
+          "team": "Nottingham",
+          "goals": 3
+        },
+        {
+          "rank": 6,
+          "player": "Andrew Lotfallah",
+          "team": "Rotherham",
+          "goals": 3
+        },
+        {
+          "rank": 6,
+          "player": "Daniel Kyriacou",
+          "team": "Hounslow",
+          "goals": 3
+        },
+        {
+          "rank": 6,
+          "player": "Stavros Akriviadis",
+          "team": "St Marks",
+          "goals": 3
+        },
+        {
+          "rank": 10,
+          "player": "Akon Aguek",
+          "team": "Rotherham",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Daniel Mina",
+          "team": "Ireland",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Ebi Abdelmalik",
+          "team": "Golders Green",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Eduardo Estevez",
+          "team": "St Marks",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "George Gamil",
+          "team": "Hounslow",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Kyrelos Khir",
+          "team": "St Marks",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Mark Girgis",
+          "team": "Nottingham",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Mitch Robinson",
+          "team": "Rotherham",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Sam Dhir",
+          "team": "Hounslow",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Stefano Saleh",
+          "team": "Brighton",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Steven Girgis",
+          "team": "Nottingham",
+          "goals": 2
+        },
+        {
+          "rank": 21,
+          "player": "Alex Wilcox",
+          "team": "Rotherham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Amir Ameen",
+          "team": "Rotherham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Andrew Elnazir",
+          "team": "Golders Green",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Anthony Mina",
+          "team": "Ireland",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Antony Messag",
+          "team": "Newcastle",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "CJ Forbes",
+          "team": "Golders Green",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Ciro Tadros",
+          "team": "Manchester",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Eddie Geries",
+          "team": "St Marks",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Efthymious Kyriacou",
+          "team": "Leeds",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Fady Khir",
+          "team": "St Marks",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Farhan Dad",
+          "team": "Nottingham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "George Coutlakis",
+          "team": "Hounslow",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Gino Rassem",
+          "team": "Manchester",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Giorgio Shokralla",
+          "team": "Brighton",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "John Raouf",
+          "team": "Birmingham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Karim Rizkalla",
+          "team": "Newcastle",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Kearoles Soliman",
+          "team": "Ireland",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Khalid Shalan",
+          "team": "Nottingham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Kofi Senyah",
+          "team": "Birmingham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Mark Ayoub",
+          "team": "St Paul",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Moussa Sy",
+          "team": "Leeds",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Nathan Kesete",
+          "team": "St Marks",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Oti Koutlakis",
+          "team": "Hounslow",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Sirak Amanuel",
+          "team": "Birmingham",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Stavros Arkiviadis",
+          "team": "St Marks",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Youki Gamal",
+          "team": "St Paul",
+          "goals": 1
+        },
+        {
+          "rank": 21,
+          "player": "Zane Seddon",
+          "team": "Manchester",
+          "goals": 1
+        }
+      ],
+      "own_goals": [
+        {
+          "minute": 86,
+          "match_ref": "CONAFA26-A-R3-03",
+          "credited_to": "St Marks",
+          "player": null,
+          "note": "No player named in the app"
+        },
+        {
+          "minute": 58,
+          "match_ref": "CONAFA26-B-R2-03",
+          "credited_to": "Manchester",
+          "player": "Philo Khalil",
+          "note": "Named in the app"
+        }
+      ],
+      "cards": [
+        {
+          "player": "Abraam Butrous",
+          "team": "Brighton",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Adrian Boghdady",
+          "team": "Hounslow",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Ciro Tadros",
+          "team": "Manchester",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Kerolles Kozman",
+          "team": "Hove",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Mark Tawfik",
+          "team": "Ireland",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Michel Tawil",
+          "team": "St Paul",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Mina Khalil",
+          "team": "Birmingham",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Natnael Zewdi",
+          "team": "Rotherham",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Roger Roman",
+          "team": "Leeds",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Simon Fakhouri",
+          "team": "Golders Green",
+          "yellow": 1,
+          "red": 0
+        },
+        {
+          "player": "Simon Ghaly",
+          "team": "St Paul",
+          "yellow": 1,
+          "red": 0
+        }
+      ],
+      "player_of_the_match": [
+        {
+          "rank": 1,
+          "player": "Adrian Boghdady",
+          "awards": 3
+        },
+        {
+          "rank": 2,
+          "player": "Youssef Selim",
+          "awards": 2
+        },
+        {
+          "rank": 3,
+          "player": "Chris Tamou",
+          "awards": 2
+        },
+        {
+          "rank": 4,
+          "player": "Abanob Fakhory",
+          "awards": 2
+        },
+        {
+          "rank": 5,
+          "player": "Mark Girgis",
+          "awards": 1
+        },
+        {
+          "rank": 6,
+          "player": "Nduoma Chilaka",
+          "awards": 1
+        },
+        {
+          "rank": 7,
+          "player": "Simon Fakhouri",
+          "awards": 1
+        },
+        {
+          "rank": 8,
+          "player": "Eduardo Estevez",
+          "awards": 1
+        },
+        {
+          "rank": 9,
+          "player": "Akon Aguek",
+          "awards": 1
+        },
+        {
+          "rank": 10,
+          "player": "CJ Forbes",
+          "awards": 1
+        },
+        {
+          "rank": 11,
+          "player": "Oti Koutlakis",
+          "awards": 1
+        },
+        {
+          "rank": 12,
+          "player": "Roger Roman",
+          "awards": 1
+        },
+        {
+          "rank": 13,
+          "player": "Mark Ayoub",
+          "awards": 1
+        },
+        {
+          "rank": 14,
+          "player": "Ebi Abdelmalik",
+          "awards": 1
+        },
+        {
+          "rank": 15,
+          "player": "Sameh Zaki",
+          "awards": 1
+        },
+        {
+          "rank": 16,
+          "player": "Maka Aziz",
+          "awards": 1
+        },
+        {
+          "rank": 17,
+          "player": "Karim Rizkalla",
+          "awards": 1
+        },
+        {
+          "rank": 18,
+          "player": "Micha Abu-Aita",
+          "awards": 1
+        },
+        {
+          "rank": 19,
+          "player": "Danny Tadross",
+          "awards": 1
+        },
+        {
+          "rank": 20,
+          "player": "Steven Girgis",
+          "awards": 1
+        },
+        {
+          "rank": 21,
+          "player": "Demas Ramsis",
+          "awards": 1
+        },
+        {
+          "rank": 22,
+          "player": "Daniel Kyriacou",
+          "awards": 1
+        },
+        {
+          "rank": 23,
+          "player": "Joseph Attia",
+          "awards": 1
+        },
+        {
+          "rank": 24,
+          "player": "Mitch Robinson",
+          "awards": 1
+        },
+        {
+          "rank": 25,
+          "player": "George Coutlakis",
+          "awards": 1
+        },
+        {
+          "rank": 26,
+          "player": "Zane Seddon",
+          "awards": 1
+        },
+        {
+          "rank": 27,
+          "player": "Niall McGivney",
+          "awards": 1
+        }
+      ],
+      "player_of_the_match_note": "Reproduced exactly as displayed. The app shows no team attribution on this screen, so none has been inferred. 32 awards across 27 players captured; the list may extend beyond the 27 entries.",
+      "tournament_stats": {
+        "total_matches": 43,
+        "total_goals": 93,
+        "group_stage_goals": 82,
+        "knockout_goals": 11,
+        "goals_per_match": 2.16,
+        "recorded_goal_events": 89,
+        "goals_with_no_recorded_scorer": 4,
+        "yellow_cards": 11,
+        "red_cards": 0,
+        "own_goals": 2,
+        "penalty_shootouts": 2,
+        "biggest_win": "St Marks 7-0 Hove (Group A Round 3)",
+        "most_goals_in_one_match_by_a_player": "Stavros Akriviadis (St Marks) 3 v Hove, Group A Round 3",
+        "most_clean_sheets": "Brighton, 7 in 8 matches"
+      },
+      "known_gaps": [
+        "Six group matches show score only with no event data: A-R1-01, A-R1-02, A-R3-02, A-R4-02, A-R6-03, B-R2-02.",
+        "Four Group A goals therefore have no recorded scorer (3 in Nottingham 2-1 Birmingham, 1 in Hove 0-1 Newcastle).",
+        "A-R6-02 (Nottingham 1-0 Rotherham): scorer supplied by the organiser, not by a screenshot; minute unknown.",
+        "Date, kick-off and pitch are not displayed for QF1, QF3, QF4, SF1, SF2 and the Final. QF2 shows a date and time but no pitch.",
+        "Own goal at 86' in St Marks 7-0 Hove has no player name.",
+        "Player of the Match leaderboard has no team attribution and may be incomplete.",
+        "No third-place match appears in any supplied screenshot.",
+        "Spelling variants Stavros Akriviadis / Stavros Arkiviadis retained separately, not merged.",
+        "'Antony Messag' may be truncated in the app.",
+        "Self-credited assists preserved as displayed and not corrected."
+      ]
+    },
+    {
+      "id": "cosa-2026",
+      "competition": "COSA",
+      "year": 2026,
+      "display_name": "COSA 2026",
+      "category": "women",
+      "date_start": "2026-06-20",
+      "date_end": "2026-06-20",
+      "venue": null,
+      "venue_note": "Venue not recorded in the source data.",
+      "data_confidence": "full",
+      "source": "Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 4",
+      "format": "Three-team league phase followed by a final",
+      "team_count": 3,
+      "match_count": 7,
+      "champion": "SMPK",
+      "runner_up": "Golders Green",
+      "final_summary": "SMPK 5-0 Golders Green",
+      "teams": [
+        "SMPK",
+        "Golders Green",
+        "Brighton"
+      ],
+      "league_table": null,
+      "league_table_note": "No league table appears in the source; standings are not reproduced here and must not be computed and presented as source data.",
+      "matches": [
+        {
+          "ref": "COSA26-G1",
+          "stage": "league",
+          "label": "Game 1",
+          "date": "2026-06-20",
+          "home": "SMPK",
+          "away": "Golders Green",
+          "home_score": 4,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Salib"
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Joanna Yassa"
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "SMPK",
+              "players": [
+                "Mariam Salib",
+                "Marina Salib",
+                null,
+                null
+              ]
+            }
+          ],
+          "award": {
+            "type": "WOTM",
+            "player": "Mariam Makkar"
+          },
+          "gap_note": "The supplied assist sequence listed three entries for four SMPK goals; per confirmation the fourth goal is recorded as having no assist."
+        },
+        {
+          "ref": "COSA26-G2",
+          "stage": "league",
+          "label": "Game 2",
+          "date": "2026-06-20",
+          "home": "SMPK",
+          "away": "Brighton",
+          "home_score": 4,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Salib"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Theodora Matta"
+            }
+          ],
+          "assists_in_goal_order": [
+            "Jolie Meawad",
+            null,
+            "Mariam Makkar",
+            "Mariam Salib"
+          ],
+          "award": {
+            "type": "WOTM",
+            "player": "Mariam Makkar"
+          }
+        },
+        {
+          "ref": "COSA26-G3",
+          "stage": "league",
+          "label": "Game 3",
+          "date": "2026-06-20",
+          "home": "Golders Green",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [],
+          "award": {
+            "type": "WOTM",
+            "player": "Joanna Yassa"
+          }
+        },
+        {
+          "ref": "COSA26-G4",
+          "stage": "league",
+          "label": "Game 4",
+          "date": "2026-06-20",
+          "home": "SMPK",
+          "away": "Golders Green",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Marina Fakhori"
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Joanna Yassa"
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "SMPK",
+              "players": [
+                "Theodora Matta",
+                null
+              ]
+            }
+          ],
+          "award": {
+            "type": "WOTM",
+            "player": "Theodora Matta"
+          }
+        },
+        {
+          "ref": "COSA26-G5",
+          "stage": "league",
+          "label": "Game 5",
+          "date": "2026-06-20",
+          "home": "SMPK",
+          "away": "Brighton",
+          "home_score": 3,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Myven"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Mona"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Jenny"
+            }
+          ],
+          "assists_unmapped": [
+            {
+              "team": "SMPK",
+              "players": [
+                "Mariam Salib",
+                "Myven",
+                "Marina Salib"
+              ]
+            }
+          ],
+          "award": {
+            "type": "WOTM",
+            "player": "Myven"
+          }
+        },
+        {
+          "ref": "COSA26-G6",
+          "stage": "league",
+          "label": "Game 6",
+          "date": "2026-06-20",
+          "home": "Brighton",
+          "away": "Golders Green",
+          "home_score": 0,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [],
+          "award": {
+            "type": "WOTM",
+            "player": "Karmena",
+            "note": "Brighton goalkeeper"
+          }
+        },
+        {
+          "ref": "COSA26-FINAL",
+          "stage": "final",
+          "label": "Final",
+          "date": "2026-06-20",
+          "home": "SMPK",
+          "away": "Golders Green",
+          "home_score": 5,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Makkar"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Mariam Salib"
+            }
+          ],
+          "assists_in_goal_order": [
+            "Marina Salib",
+            "Myven",
+            "Theodora Matta",
+            null,
+            "Marina Salib"
+          ],
+          "award": {
+            "type": "WOTM",
+            "player": "Mariam Makkar"
+          }
+        }
+      ],
+      "goalscorers": [
+        {
+          "player": "Mariam Makkar",
+          "team": "SMPK",
+          "goals": 12
+        },
+        {
+          "player": "Mariam Salib",
+          "team": "SMPK",
+          "goals": 3
+        },
+        {
+          "player": "Joanna Yassa",
+          "team": "Golders Green",
+          "goals": 2
+        },
+        {
+          "player": "Theodora Matta",
+          "team": "SMPK",
+          "goals": 1
+        },
+        {
+          "player": "Marina Fakhori",
+          "team": "SMPK",
+          "goals": 1
+        },
+        {
+          "player": "Myven",
+          "team": "SMPK",
+          "goals": 1
+        },
+        {
+          "player": "Mona",
+          "team": "Brighton",
+          "goals": 1
+        },
+        {
+          "player": "Jenny",
+          "team": "Brighton",
+          "goals": 1
+        }
+      ],
+      "awards": {
+        "player_of_the_tournament": "Mariam Makkar",
+        "top_scorer": {
+          "player": "Mariam Makkar",
+          "goals": 12
+        },
+        "wotm_summary_as_published": [
+          {
+            "player": "Mariam Makkar",
+            "team": "SMPK",
+            "wotm": 4
+          },
+          {
+            "player": "Joanna Yassa",
+            "team": "Golders Green",
+            "wotm": 1
+          },
+          {
+            "player": "Theodora Matta",
+            "team": "SMPK",
+            "wotm": 1
+          },
+          {
+            "player": "Myven",
+            "team": "SMPK",
+            "wotm": 1
+          },
+          {
+            "player": "Karmena",
+            "team": "Brighton",
+            "wotm": 1
+          }
+        ],
+        "wotm_conflict": "CONFLICT: the published WOTM table gives Mariam Makkar 4 awards and totals 8 awards across 7 matches. The per-match records show Makkar winning 3 (Games 1, 2 and the Final). Do not silently pick one; store the per-match awards as the match data and flag the summary."
+      },
+      "known_gaps": [
+        "Venue not recorded.",
+        "No league table supplied.",
+        "Game 1 assist sequence had three entries for four SMPK goals; fourth goal recorded with no assist.",
+        "No kick-off times, no cards and no minutes anywhere in the source.",
+        "WOTM published totals do not reconcile with the per-match awards (see wotm_conflict)."
+      ]
+    },
+    {
+      "id": "ark-cup-2026",
+      "competition": "The Ark Cup",
+      "year": 2026,
+      "display_name": "The Ark Cup 2026",
+      "category": "men",
+      "edition_note": "St Mary and Archangel Michael Church's inaugural men's football tournament.",
+      "date_start": "2026-06-27",
+      "date_end": "2026-06-28",
+      "venue": "Pitch 1 and Pitch 2",
+      "data_confidence": "full",
+      "source": "Coptic_Football_Tournament_Archive_2024-2026.pdf, Section 5",
+      "format": "Six-team league phase, play-off, semi-finals and final",
+      "team_count": 6,
+      "match_count": 19,
+      "champion": "SMPK",
+      "runner_up": "Stevenage",
+      "final_summary": "Stevenage 0-0 SMPK (SMPK won the shootout 4-3)",
+      "teams": [
+        "Brighton",
+        "SMPK",
+        "Stevenage",
+        "Golders Green",
+        "St Mary's",
+        "St Mark's"
+      ],
+      "league_table": [
+        {
+          "pos": 1,
+          "team": "Brighton",
+          "p": 5,
+          "w": 5,
+          "d": 0,
+          "l": 0,
+          "gd": 25,
+          "pts": 15,
+          "gf_derived": 25,
+          "ga_derived": 0
+        },
+        {
+          "pos": 2,
+          "team": "SMPK",
+          "p": 5,
+          "w": 4,
+          "d": 0,
+          "l": 1,
+          "gd": 4,
+          "pts": 12,
+          "gf_derived": 11,
+          "ga_derived": 7
+        },
+        {
+          "pos": 3,
+          "team": "Stevenage",
+          "p": 5,
+          "w": 3,
+          "d": 0,
+          "l": 2,
+          "gd": 0,
+          "pts": 9,
+          "gf_derived": 6,
+          "ga_derived": 6
+        },
+        {
+          "pos": 4,
+          "team": "Golders Green",
+          "p": 5,
+          "w": 2,
+          "d": 0,
+          "l": 3,
+          "gd": -4,
+          "pts": 6,
+          "gf_derived": 6,
+          "ga_derived": 10
+        },
+        {
+          "pos": 5,
+          "team": "St Mary's",
+          "p": 5,
+          "w": 0,
+          "d": 0,
+          "l": 5,
+          "gd": -13,
+          "pts": 0,
+          "gf_derived": 2,
+          "ga_derived": 15
+        },
+        {
+          "pos": 6,
+          "team": "St Mark's",
+          "p": 5,
+          "w": 1,
+          "d": 0,
+          "l": 4,
+          "gd": -12,
+          "pts": 3,
+          "note": "Displayed 6th despite holding 3 points, below St Mary's on 0. The source UI marks St Mark's with a red exclusion/prohibition symbol, indicating exclusion/disqualification from progression.",
+          "gf_derived": 4,
+          "ga_derived": 16
+        }
+      ],
+      "league_table_note": "The source table shows GD and Pts only; no GF/GA columns were displayed. gf_derived/ga_derived were computed from the fixture list by the compiler and are NOT source data; they reconcile exactly to the published GD. Store them in a derived column or omit.",
+      "matches": [
+        {
+          "ref": "ARK26-L01",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "13:30",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "SMPK",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Naty Musie"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Naty Musie",
+            "team": "SMPK"
+          }
+        },
+        {
+          "ref": "ARK26-L02",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "13:30",
+          "pitch": "Pitch 2",
+          "home": "Brighton",
+          "away": "St Mark's",
+          "home_score": 6,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Peter Barkoci"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Sebastian Chotuis"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Demas Ramsis",
+            "team": "Brighton"
+          }
+        },
+        {
+          "ref": "ARK26-L03",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "14:25",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "St Mark's",
+          "home_score": 2,
+          "away_score": 1,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Daniel Samaan"
+            },
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Robel Hailemichael"
+            },
+            {
+              "type": "goal",
+              "team": "St Mark's",
+              "player": "Mark Ayoub"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Jon Adorante",
+            "team": "Stevenage"
+          }
+        },
+        {
+          "ref": "ARK26-L04",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "14:25",
+          "pitch": "Pitch 2",
+          "home": "St Mary's",
+          "away": "Golders Green",
+          "home_score": 0,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "CJ Forbes"
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "CJ Forbes"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Isaac Boakye",
+            "team": "Golders Green"
+          }
+        },
+        {
+          "ref": "ARK26-L05",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "15:20",
+          "pitch": "Pitch 1",
+          "home": "Brighton",
+          "away": "St Mary's",
+          "home_score": 5,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Abanob Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stavros Akriviadis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Leon Lawandi"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Brighton",
+              "player": "Sebastian Chotuis"
+            },
+            {
+              "type": "yellow_card",
+              "team": "St Mary's",
+              "player": "Jonathan Henein"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Abanob Fakhory",
+            "team": "Brighton"
+          }
+        },
+        {
+          "ref": "ARK26-L06",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "15:20",
+          "pitch": "Pitch 2",
+          "home": "Golders Green",
+          "away": "SMPK",
+          "home_score": 1,
+          "away_score": 2,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Simon Fakhouri"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Naty Musie"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Amanuel Tarkegn"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Amanuel Tarkegn",
+            "team": "SMPK"
+          }
+        },
+        {
+          "ref": "ARK26-L07",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "16:15",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "Brighton",
+          "home_score": 0,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Alessio Saleh"
+            },
+            {
+              "type": "own_goal",
+              "team": "Stevenage",
+              "player": "Abs Fidal"
+            },
+            {
+              "type": "own_goal",
+              "team": "Stevenage",
+              "player": "Abs Fidal"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Brighton",
+              "player": "Oukeen Asad"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Girgis Asad",
+            "team": "Brighton"
+          },
+          "gap_note": "Source records two own goals credited against Abs Fidal (Stevenage)."
+        },
+        {
+          "ref": "ARK26-L08",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "16:15",
+          "pitch": "Pitch 2",
+          "home": "St Mark's",
+          "away": "SMPK",
+          "home_score": 0,
+          "away_score": 4,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Marcelino Aziz"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Daniel Kyriacou"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Andrew Ramzy"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Naty Musie",
+            "team": "SMPK"
+          }
+        },
+        {
+          "ref": "ARK26-L09",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "17:10",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "Golders Green",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Daniel Samaan"
+            },
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Daniel Samaan"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Stevenage",
+              "player": "Karim Rizkallah"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Golders Green",
+              "player": "Simon Fakhouri"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Sherif Rizkallah",
+            "team": "Stevenage"
+          }
+        },
+        {
+          "ref": "ARK26-L10",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "17:10",
+          "pitch": "Pitch 2",
+          "home": "St Mary's",
+          "away": "St Mark's",
+          "home_score": 1,
+          "away_score": 3,
+          "events_status": "partial",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Mary's",
+              "player": "Kaniel Bennett-Flaming"
+            },
+            {
+              "type": "goal",
+              "team": "St Mark's",
+              "player": "Kyro Fawzy Aziz"
+            },
+            {
+              "type": "goal",
+              "team": "St Mark's",
+              "player": "Chris Tamou"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Chris Tamou",
+            "team": "St Mark's"
+          },
+          "gap_note": "Score is 1-3 but only two St Mark's goalscorers are shown; one St Mark's scorer is unrecorded."
+        },
+        {
+          "ref": "ARK26-L11",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "18:05",
+          "pitch": "Pitch 1",
+          "home": "Brighton",
+          "away": "Golders Green",
+          "home_score": 6,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stavros Akriviadis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Keyroulos Fakhory",
+            "team": "Brighton"
+          }
+        },
+        {
+          "ref": "ARK26-L12",
+          "stage": "league",
+          "date": "2026-06-27",
+          "time": "18:05",
+          "pitch": "Pitch 2",
+          "home": "St Mary's",
+          "away": "SMPK",
+          "home_score": 1,
+          "away_score": 3,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "St Mary's",
+              "player": "Kaniel Bennett-Flaming"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Naty Musie"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            },
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Natinael Genene",
+            "team": "SMPK"
+          }
+        },
+        {
+          "ref": "ARK26-L13",
+          "stage": "league",
+          "date": "2026-06-28",
+          "time": "13:30",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "St Mary's",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "John Fahmy"
+            },
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Decio Emmanuel"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Stevenage",
+              "player": "Abs Fidal"
+            },
+            {
+              "type": "yellow_card",
+              "team": "St Mary's",
+              "player": "Cameron Crumlin"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "John Fahmy",
+            "team": "Stevenage"
+          }
+        },
+        {
+          "ref": "ARK26-L14",
+          "stage": "league",
+          "date": "2026-06-28",
+          "time": "13:30",
+          "pitch": "Pitch 2",
+          "home": "Golders Green",
+          "away": "St Mark's",
+          "home_score": 3,
+          "away_score": 0,
+          "events_status": "score_only",
+          "events": [],
+          "award": {
+            "type": "MOTM",
+            "player": "Simon Fakhouri",
+            "team": "Golders Green"
+          },
+          "gap_note": "No goalscorers displayed for Golders Green's three goals."
+        },
+        {
+          "ref": "ARK26-L15",
+          "stage": "league",
+          "date": "2026-06-28",
+          "time": "14:25",
+          "pitch": "Pitch 1",
+          "home": "Brighton",
+          "away": "SMPK",
+          "home_score": 5,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Sebastian Chotuis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stavros Akriviadis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Stavros Akriviadis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Demas Ramsis"
+            },
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Stavros Akriviadis",
+            "team": "Brighton"
+          }
+        },
+        {
+          "ref": "ARK26-PO",
+          "stage": "play_off",
+          "date": "2026-06-28",
+          "time": "15:20",
+          "pitch": "Pitch 2",
+          "home": "Golders Green",
+          "away": "St Mary's",
+          "home_score": 2,
+          "away_score": 0,
+          "events_status": "conflicted",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Marino Rofail",
+              "flag": "event_count_exceeds_score"
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "CJ Forbes",
+              "flag": "event_count_exceeds_score"
+            },
+            {
+              "type": "goal",
+              "team": "Golders Green",
+              "player": "Andrew Louis",
+              "flag": "event_count_exceeds_score"
+            },
+            {
+              "type": "yellow_card",
+              "team": "St Mary's",
+              "player": "Kero Daoud"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Andrew Louis",
+            "team": "Golders Green"
+          },
+          "gap_note": "CONFLICT: the official score is 2-0 but three Golders Green goal events are displayed. Preserve the official score; flag the event data for review."
+        },
+        {
+          "ref": "ARK26-SF1",
+          "stage": "semi_final",
+          "date": "2026-06-28",
+          "time": "16:15",
+          "pitch": "Pitch 1",
+          "home": "Brighton",
+          "away": "Stevenage",
+          "home_score": 1,
+          "away_score": 1,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": 3,
+            "away": 4,
+            "winner": "Stevenage"
+          },
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "Brighton",
+              "player": "Martin Farkas"
+            },
+            {
+              "type": "goal",
+              "team": "Stevenage",
+              "player": "Daniel Samaan"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Brighton",
+              "player": "Keyroulos Fakhory"
+            },
+            {
+              "type": "yellow_card",
+              "team": "Stevenage",
+              "player": "Mina Habib"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "John Fahmy",
+            "team": "Stevenage"
+          },
+          "gap_note": "Per user correction: only Martin Farkas and Daniel Samaan are regulation scorers. Other football-icon entries in the source relate to the penalty shootout and must NOT be recorded as goals."
+        },
+        {
+          "ref": "ARK26-SF2",
+          "stage": "semi_final",
+          "date": "2026-06-28",
+          "time": "16:15",
+          "pitch": "Pitch 2",
+          "home": "SMPK",
+          "away": "Golders Green",
+          "home_score": 1,
+          "away_score": 0,
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "goal",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            },
+            {
+              "type": "yellow_card",
+              "team": "SMPK",
+              "player": "Natinael Genene"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Naty Musie",
+            "team": "SMPK"
+          }
+        },
+        {
+          "ref": "ARK26-FINAL",
+          "stage": "final",
+          "date": "2026-06-28",
+          "time": "17:30",
+          "pitch": "Pitch 1",
+          "home": "Stevenage",
+          "away": "SMPK",
+          "home_score": 0,
+          "away_score": 0,
+          "decided_by": "penalties",
+          "shootout": {
+            "home": 3,
+            "away": 4,
+            "winner": "SMPK"
+          },
+          "events_status": "complete",
+          "events": [
+            {
+              "type": "yellow_card",
+              "team": "Stevenage",
+              "player": "John Fahmy"
+            },
+            {
+              "type": "yellow_card",
+              "team": "SMPK",
+              "player": "Naty Musie"
+            }
+          ],
+          "award": {
+            "type": "MOTM",
+            "player": "Daniel Kyriacou",
+            "team": "SMPK"
+          }
+        }
+      ],
+      "goalscorers_as_published": [
+        {
+          "rank": 1,
+          "player": "Demas Ramsis",
+          "team": "Brighton",
+          "goals": 6
+        },
+        {
+          "rank": 2,
+          "player": "Natinael Genene",
+          "team": "SMPK",
+          "goals": 5
+        },
+        {
+          "rank": 3,
+          "player": "Daniel Samaan",
+          "team": "Stevenage",
+          "goals": 5
+        },
+        {
+          "rank": 4,
+          "player": "Stavros Akriviadis",
+          "team": "Brighton",
+          "goals": 5
+        },
+        {
+          "rank": 5,
+          "player": "Keyroulos Fakhory",
+          "team": "Brighton",
+          "goals": 5
+        },
+        {
+          "rank": 6,
+          "player": "Abanob Fakhory",
+          "team": "Brighton",
+          "goals": 3
+        },
+        {
+          "rank": 7,
+          "player": "CJ Forbes",
+          "team": "Golders Green",
+          "goals": 3
+        },
+        {
+          "rank": 8,
+          "player": "Naty Musie",
+          "team": "SMPK",
+          "goals": 3
+        },
+        {
+          "rank": 9,
+          "player": "Robel Hailemichael",
+          "team": "Stevenage",
+          "goals": 2
+        },
+        {
+          "rank": 10,
+          "player": "Sebastian Chotuis",
+          "team": "Brighton",
+          "goals": 2
+        }
+      ],
+      "goalscorer_reconciliation": {
+        "note": "The published leaderboard exceeds the count derivable from the displayed match events for three players. Store the leaderboard as published AND store the event-derived count, flagged.",
+        "discrepancies": [
+          {
+            "player": "Daniel Samaan",
+            "published": 5,
+            "from_events": 4
+          },
+          {
+            "player": "Stavros Akriviadis",
+            "published": 5,
+            "from_events": 4
+          },
+          {
+            "player": "Robel Hailemichael",
+            "published": 2,
+            "from_events": 1
+          }
+        ],
+        "likely_cause_unconfirmed": "The extra entries may be penalty shootout conversions from the Brighton v Stevenage semi-final, which the archive instructs should not count as goals. NOT CONFIRMED — do not resolve without sign-off."
+      },
+      "man_of_the_match": [
+        {
+          "rank": 1,
+          "player": "Naty Musie",
+          "team": "SMPK",
+          "motm": 3
+        },
+        {
+          "rank": 2,
+          "player": "John Fahmy",
+          "team": "Stevenage",
+          "motm": 2
+        },
+        {
+          "rank": 3,
+          "player": "Natinael Genene",
+          "team": "SMPK",
+          "motm": 1
+        },
+        {
+          "rank": 4,
+          "player": "Sherif Rizkallah",
+          "team": "Stevenage",
+          "motm": 1
+        },
+        {
+          "rank": 5,
+          "player": "Jon Adorante",
+          "team": "Stevenage",
+          "motm": 1
+        },
+        {
+          "rank": 6,
+          "player": "Chris Tamou",
+          "team": "St Mark's",
+          "motm": 1
+        },
+        {
+          "rank": 7,
+          "player": "Abanob Fakhory",
+          "team": "Brighton",
+          "motm": 1
+        },
+        {
+          "rank": 8,
+          "player": "Stavros Akriviadis",
+          "team": "Brighton",
+          "motm": 1
+        },
+        {
+          "rank": 9,
+          "player": "Keyroulos Fakhory",
+          "team": "Brighton",
+          "motm": 1
+        },
+        {
+          "rank": 10,
+          "player": "Demas Ramsis",
+          "team": "Brighton",
+          "motm": 1
+        },
+        {
+          "player": "Isaac Boakye",
+          "team": "Golders Green",
+          "motm": 1,
+          "outside_published_top_10": true
+        },
+        {
+          "player": "Amanuel Tarkegn",
+          "team": "SMPK",
+          "motm": 1,
+          "outside_published_top_10": true
+        },
+        {
+          "player": "Girgis Asad",
+          "team": "Brighton",
+          "motm": 1,
+          "outside_published_top_10": true
+        },
+        {
+          "player": "Simon Fakhouri",
+          "team": "Golders Green",
+          "motm": 1,
+          "outside_published_top_10": true
+        },
+        {
+          "player": "Andrew Louis",
+          "team": "Golders Green",
+          "motm": 1,
+          "outside_published_top_10": true
+        },
+        {
+          "player": "Daniel Kyriacou",
+          "team": "SMPK",
+          "motm": 1,
+          "outside_published_top_10": true
+        }
+      ],
+      "clean_sheets": [
+        {
+          "rank": 1,
+          "team": "Brighton",
+          "clean_sheets": 5
+        },
+        {
+          "rank": 2,
+          "team": "SMPK",
+          "clean_sheets": 4
+        },
+        {
+          "rank": 3,
+          "team": "Stevenage",
+          "clean_sheets": 3
+        },
+        {
+          "rank": 4,
+          "team": "Golders Green",
+          "clean_sheets": 3
+        }
+      ],
+      "awards": {
+        "champions": "SMPK",
+        "top_goalscorer": {
+          "player": "Demas Ramsis",
+          "team": "Brighton",
+          "goals": 6
+        },
+        "player_of_the_tournament": {
+          "player": "Naty Musie",
+          "team": "SMPK",
+          "basis": "3 MOTM"
+        },
+        "most_clean_sheets": {
+          "team": "Brighton",
+          "value": 5
+        }
+      },
+      "squads_named": {
+        "Brighton": [
+          "Demas Ramsis",
+          "Abanob Fakhory",
+          "Peter Barkoci",
+          "Sebastian Chotuis",
+          "Stavros Akriviadis",
+          "Keyroulos Fakhory",
+          "Leon Lawandi",
+          "Alessio Saleh",
+          "Oukeen Asad",
+          "Girgis Asad",
+          "Martin Farkas"
+        ],
+        "SMPK": [
+          "Natinael Genene",
+          "Naty Musie",
+          "Amanuel Tarkegn",
+          "Marcelino Aziz",
+          "Daniel Kyriacou",
+          "Andrew Ramzy"
+        ],
+        "Stevenage": [
+          "Daniel Samaan",
+          "Robel Hailemichael",
+          "Jon Adorante",
+          "Abs Fidal",
+          "Karim Rizkallah",
+          "Sherif Rizkallah",
+          "John Fahmy",
+          "Decio Emmanuel",
+          "Abel Solomon",
+          "Mina Habib"
+        ],
+        "Golders Green": [
+          "CJ Forbes",
+          "Isaac Boakye",
+          "Simon Fakhouri",
+          "Marino Rofail",
+          "Andrew Louis"
+        ],
+        "St Mary's": [
+          "Kaniel Bennett-Flaming",
+          "Jonathan Henein",
+          "Cameron Crumlin",
+          "Kero Daoud"
+        ],
+        "St Mark's": [
+          "Mark Ayoub",
+          "Kyro Fawzy Aziz",
+          "Chris Tamou"
+        ]
+      },
+      "squads_note": "These are the players captured from event data only, not full squad lists.",
+      "known_gaps": [
+        "St Mary's 1-3 St Mark's: one St Mark's goal has no recorded scorer.",
+        "Golders Green 3-0 St Mark's: no goalscorers displayed.",
+        "Play-off Golders Green 2-0 St Mary's: three goal events displayed against an official 2-0 score.",
+        "St Mark's are shown 6th despite holding 3 points; the UI marks them with an exclusion/prohibition symbol.",
+        "No minutes are recorded for any event.",
+        "League table shows GD and Pts only; no GF/GA columns.",
+        "Published goalscorer leaderboard exceeds event-derived counts for three players (see goalscorer_reconciliation)."
+      ],
+      "host_club": "Archangel Michael, Golders Green",
+      "teams_note": "'St Mary's' is Golders Green's second team; both A and B teams of the host club competed."
+    }
+  ],
+  "conflict_register": {
+    "note": "Every item here is an internal inconsistency in the source material or an identity question that cannot be resolved from the sources. Claude Code must NOT silently resolve any of these. Store the data as flagged, and surface the flag in the admin view.",
+    "blocking": [],
+    "data_conflicts": [
+      {
+        "id": "D1",
+        "severity": "high",
+        "scope": "ark-cup-2026",
+        "issue": "Published goalscorer leaderboard exceeds event-derived counts.",
+        "detail": "Daniel Samaan published 5 / events 4; Stavros Akriviadis published 5 / events 4; Robel Hailemichael published 2 / events 1. Possible cause: shootout conversions in the Brighton v Stevenage semi-final counted as goals in the app leaderboard. Unconfirmed.",
+        "resolution": "Store both figures. Do not pick one."
+      },
+      {
+        "id": "D2",
+        "severity": "high",
+        "scope": "ark-cup-2026",
+        "issue": "Play-off event count exceeds score.",
+        "detail": "Golders Green 2-0 St Mary's shows three Golders Green goal events (Marino Rofail, CJ Forbes, Andrew Louis) against an official 2-0.",
+        "resolution": "Preserve the official 2-0. Store all three events flagged."
+      },
+      {
+        "id": "D3",
+        "severity": "high",
+        "scope": "cosa-2026",
+        "issue": "WOTM totals do not reconcile.",
+        "detail": "The published table gives Mariam Makkar 4 WOTM and totals 8 awards across 7 matches. Per-match records give Makkar 3 (Games 1, 2, Final).",
+        "resolution": "Store per-match awards as primary; store the published table flagged."
+      },
+      {
+        "id": "D4",
+        "severity": "medium",
+        "scope": "cofta-2024",
+        "issue": "Source's own count of unattributed goals is wrong and self-contradictory.",
+        "detail": "The summary page says 'three goals have no displayed scorer'; the goalscorer table note says 'two goals are unassigned' then describes four. Arithmetic against the fixtures gives 35 total goals and 31 recorded scorers, i.e. FOUR unattributed: 2 in Archangel Michael 0-2 St Anthony, 1 in the Brighton 1-0 St Mark semi-final, 1 for St George in the final.",
+        "resolution": "Record four unattributed goals. Do not reproduce the source's counts."
+      },
+      {
+        "id": "D5",
+        "severity": "medium",
+        "scope": "cofta-2025",
+        "issue": "Final home/away orientation conflicts within the source.",
+        "detail": "Two places render it 'Archangel Michael, Golders Green 0-1 Anba Abraam, Brighton'; one renders it 'Anba Abraam, Brighton 1-0 Archangel Michael, Golders Green'. Result is identical either way.",
+        "resolution": "Majority orientation stored (Golders Green home). Flag for confirmation."
+      },
+      {
+        "id": "D6",
+        "severity": "medium",
+        "scope": "cofta-2025",
+        "issue": "Three Group B matches display goals with no team attribution.",
+        "detail": "B-R1 Brighton 2-1 St Mark (3 goals: Demas Ramsis, Steven Sava, Sydney Noulton); B-R3 Brighton 2-1 Archangel Michael (Demas Ramsis, Sebastian, Ebi Abdel-Malek); B-R4 Brighton 3-1 St Mark (Stefano, Stavros Akriviadis, Abanoub Fakhoury, Leon Lawandi). Which scorer belongs to the losing side is not determinable.",
+        "resolution": "Store scorers with team = null and a flag. Do NOT infer from squad history in other editions."
+      },
+      {
+        "id": "D7",
+        "severity": "low",
+        "scope": "conafa-2026",
+        "issue": "One goal in the dataset did not come from the source app.",
+        "detail": "Nduoma Chilaka in Nottingham 1-0 Rotherham (A-R6-02) was supplied by the tournament organiser. Minute unknown.",
+        "resolution": "Store with source = 'organiser_confirmed'."
+      }
+    ],
+    "open_questions_for_adam": [
+      {
+        "id": "Q5",
+        "question": "In the Ark Cup semi-final, do the extra Samaan / Akriviadis / Hailemichael entries come from the shootout? If so, the published leaderboard is inflated and the event-derived figures should be treated as canonical."
+      },
+      {
+        "id": "Q10",
+        "question": "Do you want historical editions sharing the live 2026 teams table, or a separate historical teams table?"
+      },
+      {
+        "id": "Q11",
+        "question": "Two player merges were held back: Karim Rizkalla (Newcastle) / Karim Rizkallah (Stevenage), and Kiro Khir / Kyrelos Khir (both St Mark). Merge either?"
+      }
+    ],
+    "resolved": [
+      {
+        "id": "C1",
+        "answer": "SMPK and Pope Kyrillos, Hounslow are the same club. Merged as 'St Mary & Pope Kyrillos VI, Hounslow'. The CONAFA 2025 'St Demiana and Pope Kyrillos VI' entry is the WORTHING club, a separate entity that also carries Pope Kyrillos VI in its name. These two must never be merged."
+      },
+      {
+        "id": "C2",
+        "answer": "The Ark Cup 2026 'St Mary's' is Golders Green's second team. Recorded as 'Archangel Michael, Golders Green B' with per-edition display name \"St Mary's\". The Ark Cup host church is therefore Golders Green."
+      },
+      {
+        "id": "C3",
+        "answer": "All St Mark / St Marks / St Mark's entries are St Mark, Kensington. Merged."
+      },
+      {
+        "id": "Q4",
+        "answer": "COFTA 2023 ran with seven teams. No eighth entrant is missing."
+      },
+      {
+        "id": "Q6",
+        "answer": "COSA, COSTA and Ladies COFTA are three separate competitions."
+      },
+      {
+        "id": "Q7",
+        "answer": "COSTA is a men's tournament. COSTA 2024 and 2025 set to category 'men'."
+      },
+      {
+        "id": "Q8",
+        "answer": "Resolved by C1. The CONAFA 2025 runner-up is Worthing; SMPK is a separate entrant in the same edition."
+      },
+      {
+        "id": "Q9",
+        "answer": "Merge cross-edition spelling variants. Twelve merges applied, two held back, recorded in player_registry."
+      }
+    ]
+  },
+  "player_registry": {
+    "policy": "player_name stores the string exactly as displayed in its source. player_canonical stores the merged identity. Aggregate stats group on player_canonical; match pages render player_name.",
+    "merges": [
+      {
+        "canonical": "Abanob Fakhory",
+        "variants": [
+          "Abanoub Fakhoury",
+          "Abanob Fakhory"
+        ],
+        "confidence": "high",
+        "rationale": "Same Brighton forward; spelling settles from COFTA 2024/25 form to CONAFA/Ark Cup form.",
+        "appearances": {
+          "COFTA 2024": [
+            "Anba Abraam, Brighton"
+          ],
+          "COFTA 2025": [
+            "(unattributed)"
+          ],
+          "CONAFA 2026": [
+            "Brighton"
+          ],
+          "The Ark Cup 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Ebi Abdelmalik",
+        "variants": [
+          "Eli Abdel-Malek",
+          "Ebi Abdel-Malek",
+          "Ebi Abdelmalik"
+        ],
+        "confidence": "medium",
+        "rationale": "Golders Green throughout. 'Eli' in COFTA 2024 is almost certainly a mis-transcription of 'Ebi'.",
+        "appearances": {
+          "COFTA 2024": [
+            "Archangel Michael, Golders Green"
+          ],
+          "COFTA 2025": [
+            "(unattributed)"
+          ],
+          "CONAFA 2026": [
+            "Golders Green"
+          ]
+        }
+      },
+      {
+        "canonical": "Stavros Akriviadis",
+        "variants": [
+          "Stavros Akriviadis",
+          "Stavros Arkiviadis"
+        ],
+        "confidence": "high",
+        "rationale": "Both spellings appear inside CONAFA 2026 alone.",
+        "appearances": {
+          "COFTA 2025": [
+            "(unattributed)"
+          ],
+          "CONAFA 2026": [
+            "St Marks"
+          ],
+          "The Ark Cup 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Andrew Lotfallah",
+        "variants": [
+          "Andy Lotfallah",
+          "Andrew Lotfallah"
+        ],
+        "confidence": "high",
+        "rationale": "Rotherham throughout; short form vs full form.",
+        "appearances": {
+          "COFTA 2025": [
+            "St Anthony, Rotherham"
+          ],
+          "CONAFA 2026": [
+            "Rotherham"
+          ]
+        }
+      },
+      {
+        "canonical": "Micha Abu-Aita",
+        "variants": [
+          "Micha Abu Aita",
+          "Micha Abu-Aita"
+        ],
+        "confidence": "high",
+        "rationale": "Hyphenation only.",
+        "appearances": {
+          "COFTA 2024": [
+            "St George, Stevenage"
+          ]
+        }
+      },
+      {
+        "canonical": "Daniel Samaan",
+        "variants": [
+          "Danny Saaman",
+          "Daniel Samaan"
+        ],
+        "confidence": "medium",
+        "rationale": "Both at Stevenage (COFTA 2025 / Ark Cup 2026); also a Croydon appearance in COFTA 2024. Two spelling shifts at once, so lower confidence than the rest.",
+        "appearances": {
+          "COFTA 2024": [
+            "St Shenouda, Croydon"
+          ],
+          "COFTA 2025": [
+            "St George, Stevenage"
+          ],
+          "The Ark Cup 2026": [
+            "Stevenage"
+          ]
+        }
+      },
+      {
+        "canonical": "Decio Emmanuel",
+        "variants": [
+          "Decio Emanuel",
+          "Decio Emmanuel"
+        ],
+        "confidence": "high",
+        "rationale": "Stevenage throughout; single/double 'm'.",
+        "appearances": {
+          "COFTA 2025": [
+            "(unattributed)"
+          ],
+          "The Ark Cup 2026": [
+            "Stevenage"
+          ]
+        }
+      },
+      {
+        "canonical": "Stefano Saleh",
+        "variants": [
+          "Stefano",
+          "Stefano Saleh"
+        ],
+        "confidence": "high",
+        "rationale": "Brighton. COFTA 2025 showed first name only; CONAFA 2026 gives the full name.",
+        "appearances": {
+          "COFTA 2025": [
+            "(unattributed)",
+            "Anba Abraam, Brighton"
+          ],
+          "CONAFA 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Sebastian Chotuis",
+        "variants": [
+          "Sebastian",
+          "Sebastian Chotuis"
+        ],
+        "confidence": "high",
+        "rationale": "Brighton. Same first-name-only pattern.",
+        "appearances": {
+          "COFTA 2025": [
+            "(unattributed)"
+          ],
+          "The Ark Cup 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Peter Barkoci",
+        "variants": [
+          "Peter",
+          "Peter Barkoci"
+        ],
+        "confidence": "medium",
+        "rationale": "Brighton. 'Peter' is common enough that this is the weakest of the first-name expansions.",
+        "appearances": {
+          "COFTA 2025": [
+            "Anba Abraam, Brighton"
+          ],
+          "The Ark Cup 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Oukeen Asad",
+        "variants": [
+          "Asad Oukeen",
+          "Oukeen Asad"
+        ],
+        "confidence": "high",
+        "rationale": "Brighton. Name order reversed between COFTA 2024 and the Ark Cup.",
+        "appearances": {
+          "COFTA 2024": [
+            "Anba Abraam, Brighton"
+          ],
+          "The Ark Cup 2026": [
+            "Brighton"
+          ]
+        }
+      },
+      {
+        "canonical": "Jon Adorante",
+        "variants": [
+          "Jon Aderanti",
+          "Jon Adorante"
+        ],
+        "confidence": "medium",
+        "rationale": "Stevenage in both. Surname differs by two letters.",
+        "appearances": {
+          "COFTA 2024": [
+            "St George, Stevenage"
+          ],
+          "The Ark Cup 2026": [
+            "Stevenage"
+          ]
+        }
+      }
+    ],
+    "held_back": [
+      {
+        "names": [
+          "Karim Rizkalla",
+          "Karim Rizkallah"
+        ],
+        "reason": "Newcastle (CONAFA 2026) vs Stevenage (Ark Cup 2026), three months apart. Stevenage also field a Sherif Rizkallah, so the surname is not unique there. NOT merged."
+      },
+      {
+        "names": [
+          "Kiro Khir",
+          "Kyrelos Khir"
+        ],
+        "reason": "Both St Mark, now that the club identity is confirmed. Kiro is a standard short form of Kyrelos, but the archive deliberately keeps Fady Khir and Kyrelos Khir apart as different people, so a third Khir is plausible. NOT merged."
+      }
+    ],
+    "same_name_different_club": {
+      "policy": "Identical spelling across clubs is treated as one player who changed club, not as two people. No flag raised.",
+      "cases": [
+        {
+          "name": "Stavros Akriviadis",
+          "clubs": [
+            "St Mark (CONAFA 2026)",
+            "Brighton (Ark Cup 2026, COFTA 2025)"
+          ]
+        },
+        {
+          "name": "Mark Girgis",
+          "clubs": [
+            "Rotherham (COFTA 2024)",
+            "Nottingham (CONAFA 2026)"
+          ]
+        },
+        {
+          "name": "John Raouf",
+          "clubs": [
+            "Rotherham (COFTA 2025)",
+            "Birmingham (CONAFA 2026)"
+          ]
+        },
+        {
+          "name": "Daniel Kyriacou",
+          "clubs": [
+            "Stevenage (COFTA 2025)",
+            "SMPK/Hounslow (CONAFA 2026, Ark Cup 2026)"
+          ]
+        },
+        {
+          "name": "Mark Ayoub",
+          "clubs": [
+            "St Paul (CONAFA 2026)",
+            "St Mark (Ark Cup 2026)"
+          ]
+        },
+        {
+          "name": "Danny Saaman",
+          "clubs": [
+            "Croydon (COFTA 2024)",
+            "Stevenage (COFTA 2025)"
+          ]
+        }
+      ]
+    }
+  }
+}
