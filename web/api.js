@@ -219,7 +219,7 @@ export const setSlot = (slot, teamId) =>
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v3';   // v3: crests, corrected names, split cities
+const ARCHIVE_V = 'v4';   // v4: 2005-2021 backfill, 34 editions, East London
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small
