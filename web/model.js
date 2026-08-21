@@ -645,9 +645,19 @@ const BOARD_TROPHY = {
  * and nothing else: a B team's results are never folded into the A team's,
  * because they are different sides that have met each other.
  *
- * `source` on an honour separates a trophy that was awarded from a board a
- * player merely topped. Leading is not winning, and the archive is the last
- * place to blur that.
+ * TOPPING THE BOARD COUNTS AS WINNING THE TROPHY, for finished tournaments.
+ * Organiser ruling, 2026-08-21. These competitions gave the golden boot to
+ * whoever finished top of the scoring; that a particular year's write-up
+ * records the board and not the ceremony is a gap in the paperwork, not
+ * evidence that nobody got it. The cabinet used to hedge with a small "led"
+ * pill and a footnote saying leading is not winning — technically defensible,
+ * and it meant a reader had to decode a caveat to be told something the
+ * organiser considers plainly true.
+ *
+ * `source` still records where each honour came from ('award' or 'board'),
+ * because provenance is worth keeping even when it is not displayed. Nothing
+ * renders differently on it. This applies to the ARCHIVE only — nothing here
+ * touches the live tournament, which has its own awards.
  */
 export function trophyCabinet(teamId, {
   editions = [], entrants = [], awards = [], boards = [], category = null,
@@ -830,4 +840,81 @@ function archGoalGroups(goals) {
   rows.sort((a, b) => (a.mins.length ? minuteKey(a.mins[0]) : Infinity)
                     - (b.mins.length ? minuteKey(b.mins[0]) : Infinity));
   return rows;
+}
+
+/* ── who has played for a club, as far as the archive knows ── */
+/**
+ * Every player the archive records against one club, newest-first by goals.
+ *
+ * THIS IS NOT A SQUAD LIST AND MUST NEVER BE PRESENTED AS ONE. There are no
+ * archive team sheets — five of the thirty-seven editions carry match detail
+ * at all, and the rest are a year and a champion. What comes back is everyone
+ * who did something the records kept: scored, assisted, was booked, appeared
+ * on a leaderboard, or won an award. A player who turned out every year and
+ * never scored is invisible here, and the view says so in plain words.
+ *
+ * OWN GOALS ARE EXCLUDED FROM ATTRIBUTION. `team_id` on an own-goal row means
+ * two different things across the archive — sometimes the scorer's club,
+ * sometimes the club credited with the goal — which is why `archScorerLines`
+ * places them by scoreline instead. Trusting it here would file a player under
+ * a club they never played for, which is a worse error than omitting them.
+ *
+ * Assists count as an appearance: the assister on a goal is a teammate of the
+ * scorer, so the attribution is sound even though the row has no team of its
+ * own.
+ */
+export function teamRoster(teamId, {
+  events = [], matches = [], boards = [], awards = [], editions = [], category = null,
+} = {}) {
+  if (!teamId) return [];
+
+  const inScope = category ? editions.filter(e => e.category === category) : editions;
+  const edById = Object.fromEntries(inScope.map(e => [e.id, e]));
+  const mine = new Set(inScope.map(e => e.id));
+  const edOfMatch = Object.fromEntries(matches.map(m => [m.id, m.edition_id]));
+
+  const rows = new Map();
+  const touch = (rawName, editionId) => {
+    const name = String(rawName ?? '').trim();
+    if (!name || !mine.has(editionId)) return null;
+    const key = name.toLocaleLowerCase();
+    if (!rows.has(key)) rows.set(key, { name, goals: 0, assists: 0, cards: 0, editionIds: new Set() });
+    const r = rows.get(key);
+    r.editionIds.add(editionId);
+    return r;
+  };
+
+  for (const e of events) {
+    if (e.event_type === 'own_goal') continue;
+    const ed = edOfMatch[e.match_id];
+    if (e.team_id === teamId) {
+      const r = touch(e.player_canonical || e.player_name, ed);
+      if (r) {
+        if (e.event_type === 'goal' || e.event_type === 'penalty_goal') r.goals++;
+        else if (e.event_type === 'yellow_card' || e.event_type === 'red_card') r.cards++;
+      }
+      const a = touch(e.assist_canonical || e.assist_player, ed);
+      if (a) a.assists++;
+    }
+  }
+  for (const b of boards) {
+    if (b.team_id === teamId) touch(b.player_canonical || b.player_name, b.edition_id);
+  }
+  for (const a of awards) {
+    if (a.team_id === teamId) touch(a.player_canonical || a.player_name, a.edition_id);
+  }
+
+  return [...rows.values()]
+    .map(r => ({
+      ...r,
+      // Newest edition first, so a player's line opens on what they did most
+      // recently rather than on something from 2014.
+      editions: [...r.editionIds]
+        .map(id => edById[id]).filter(Boolean)
+        .sort((x, y) => (y.year - x.year)
+          || String(x.competition).localeCompare(String(y.competition))),
+    }))
+    .map(({ editionIds, ...r }) => r)
+    .sort((a, b) => (b.goals - a.goals) || (b.assists - a.assists)
+      || a.name.localeCompare(b.name));
 }

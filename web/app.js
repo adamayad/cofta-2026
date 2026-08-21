@@ -69,6 +69,7 @@ const state = {
   histCat: 'men', histComp: null, histEd: null,
   archTeam: null,          // which club's standalone cabinet is open
   archiveHonours: null, honoursBusy: false, honoursErr: null,
+  archiveRoster: null, rosterBusy: false, rosterErr: null,
   clubTab: 'squad',        // Squad or History on a live club page; never persists
   cabCat: 'men',           // which side's record a cabinet is showing
 };
@@ -2217,6 +2218,23 @@ function loadHonours() {
     .finally(() => { state.honoursBusy = false; render(); });
 }
 
+/**
+ * The roster read, on the same latch-on-failure pattern as the two above.
+ *
+ * Deliberately NOT part of the gate that decides whether a cabinet can render.
+ * The Players list is the least important thing on the page, and a club's
+ * finals and honours must not vanish because one extra read timed out on a
+ * venue's wifi. A failure here costs the section and nothing else.
+ */
+function loadRoster() {
+  if (state.archiveRoster || state.rosterBusy || state.rosterErr) return;
+  state.rosterBusy = true;
+  api.fetchArchiveRoster()
+    .then(r => { state.archiveRoster = r; state.rosterErr = null; })
+    .catch(e => { state.rosterErr = e.message; })
+    .finally(() => { state.rosterBusy = false; render(); });
+}
+
 /** The archive club a live club id maps to: the A team, never a B team. */
 const archiveTeamForLive = (liveId) =>
   (state.archive?.teams || []).find(t => t.live_team_id === liveId && !t.parent_club) ?? null;
@@ -2318,13 +2336,8 @@ function cabinetBody(archTeamId) {
         <b>${esc(TROPHY_LABEL[h.trophy] ?? h.trophy)}</b>
         ${h.player ? `<i>${esc(h.player)}</i>` : ''}
         ${h.value != null ? `<span class="cabhv tnum">${h.value}</span>` : ''}
-        ${h.source === 'board'
-          ? '<span class="cabled" title="Topped the published board; no trophy is recorded">led</span>'
-          : ''}</span>`).join('')}
-    </div>`).join('')}</div>
-    ${cab.honours.some(h => h.source === 'board')
-      ? `<p class="note">Marked <em>led</em> where the club topped the published
-         board and the source records no trophy. Leading is not winning.</p>` : ''}`
+        </span>`).join('')}
+    </div>`).join('')}</div>`
     : '';
 
   const also = cab.alsoCompeted.length ? `<div class="sect">Also competed</div>
@@ -2332,11 +2345,60 @@ function cabinetBody(archTeamId) {
       <button class="alsochip" data-histed="${esc(e.id)}">${esc(e.competition)}
         <span>${e.year}</span></button>`).join('')}</div>` : '';
 
+  const players = rosterSection(archTeamId, cat);
+
   const nothing = !cab.finals.length && !cab.honours.length && !cab.alsoCompeted.length
     ? `<p class="empty">No ${cat === 'women' ? "women's" : "men's"} record for this
          club in the 2022&ndash;2026 archive.</p>` : '';
 
-  return toggle + tally + finals + honours + also + nothing;
+  return toggle + tally + finals + honours + also + players + nothing;
+}
+
+/**
+ * The Players list on a History club page.
+ *
+ * Everyone the archive records for this club, with what it records them for.
+ * It is emphatically NOT a squad list — there are no archive team sheets, only
+ * five of the thirty-seven editions carry match detail, and a player who
+ * turned out every year without scoring leaves no trace at all. The note under
+ * the heading says exactly that, in the reader's words rather than the
+ * database's, because a list of nineteen names under a club badge will
+ * otherwise be read as the squad.
+ *
+ * The live Squads tab is untouched and stays what it is: a real, current team
+ * sheet the organiser maintains. Only History has to hedge, because only
+ * History is reconstructing something nobody wrote down completely.
+ */
+function rosterSection(archTeamId, cat) {
+  loadRoster();
+  if (state.rosterErr) return '';       // the section, and nothing else, is lost
+  if (!state.archiveRoster) {
+    return `<div class="sect">Players</div>
+      <p class="note">Loading the player record&hellip;</p>`;
+  }
+
+  const roster = M.teamRoster(archTeamId, {
+    ...state.archiveRoster,
+    editions: state.archive.editions,
+    category: cat,
+  });
+  if (!roster.length) return '';
+
+  const bits = (p) => [
+    p.goals   ? `${p.goals} goal${p.goals === 1 ? '' : 's'}` : '',
+    p.assists ? `${p.assists} assist${p.assists === 1 ? '' : 's'}` : '',
+  ].filter(Boolean).join(' &middot; ');
+
+  return `<div class="sect">Players</div>
+    <p class="note" style="padding-top:0">Every player the records name for this
+      club. The archive keeps goals, cards and leaderboards, never team sheets,
+      so anyone who played without being written down is missing from this list.</p>
+    <div class="cabsq">${roster.map(p => `<div class="cabsqr">
+      <span class="cabsqn">${esc(p.name)}</span>
+      ${bits(p) ? `<span class="cabsqd">${bits(p)}</span>` : ''}
+      <span class="cabsqe">${p.editions.map(e =>
+        esc(`${e.competition} ${e.year}`)).join(', ')}</span>
+    </div>`).join('')}</div>`;
 }
 
 /** The standalone cabinet, for clubs with no live page to tab within. */

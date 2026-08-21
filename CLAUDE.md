@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v67`. Cache-fill
+  old devices keep stale copies forever. Currently `cofta-v68`. Cache-fill
   fetches use `cache: 'reload'` (`fresh` in sw.js) — see **A VERSION bump was
   not enough** below; without that the bump is theatre.
 
@@ -450,6 +450,19 @@ him goes to the conflict register rather than into the data.
   `believed` — Adam's own hedge, preserved rather than rounded up. Nothing
   renders differently; the distinction exists so a later source settles it
   instead of being assumed to have already agreed.
+- **In the archive, topping the board IS winning the trophy.** Organiser
+  ruling, 2026-08-21, and it reverses what this file used to say. These
+  competitions gave the golden boot to whoever finished top of the scoring;
+  a year whose write-up records the board and not the ceremony has a gap in
+  its paperwork, not proof that nobody was given anything. `trophyCabinet`
+  still fills a missing trophy from a rank-one board and still records which
+  is which in `source`, but the cabinet no longer marks it: the small "led"
+  pill and its "leading is not winning" footnote are gone. A caveat a reader
+  has to decode, attached to something the organiser considers plainly true,
+  costs more than it protects. **This is archive-only.** The live tournament
+  keeps the opposite rule — see `trophy_awards` and `set_trophy` above, where
+  leading is emphatically not winning until an organiser confirms it, because
+  there the ceremony has not happened yet and the app is what records it.
 - **`is_published_summary` hides an award from every cabinet.** It marks a
   figure taken from a published summary table that the archive does not trust
   as the record, and both `fetchArchiveHonours` (`is_published_summary=eq.false`)
@@ -673,6 +686,42 @@ viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
   there and the img element is visible" is not the same claim as "a reader can
   see it", and only the first of those had been checked.
 - Both crests are cache-first, so replacing either needs a `VERSION` bump.
+
+### Players on a History club page
+
+A club's History page lists **every player the archive records for it** —
+`rosterSection` in `app.js`, `teamRoster` in `model.js`, `fetchArchiveRoster`
+in `api.js`. It appears on both surfaces the cabinet serves: the standalone
+archive club page and the History tab of a live club.
+
+- **It is not a squad list and the copy must never let it read as one.** There
+  are no archive team sheets. Five of the thirty-seven editions carry match
+  detail; the rest are a year and a champion. The list is reconstructed from
+  goals, assists, cards, leaderboard rows and awards, so a player who turned
+  out every year and never scored leaves no trace whatsoever. The note under
+  the heading says that in the reader's words — nineteen names under a club
+  badge will be read as the squad unless something says otherwise.
+- **The live Squads tab is untouched and stays a real team sheet.** Only
+  History has to hedge, because only History is reconstructing something
+  nobody wrote down completely. Same word, two different kinds of claim.
+- **Own goals are excluded from attribution.** `team_id` on an own-goal row
+  means the scorer's club in some editions and the credited club in others —
+  the same contradiction that makes `archScorerLines` place them by scoreline.
+  Trusting it here would file a player under a club they never played for,
+  which is worse than leaving them out.
+- **Assists count as an appearance.** The assister on a goal is a teammate of
+  the scorer, so the attribution is sound even though the row carries no team
+  of its own.
+- **Scoped by category, like the cabinet around it.** SMPK's men's page must
+  not list COSA players. `teamRoster` takes `category` and filters editions
+  before it reads a single event; the gender toggle re-renders it.
+- **Names are folded on `player_canonical`**, so "D Ramsis", "Ramsis, D" and
+  "Demas Ramsis" are one row. This is the same reason the cabinet renders
+  honours canonically — a club's list down the years is exactly where two
+  spellings of one man read as two people.
+- **The read is not part of the render gate.** `loadRoster` latches its own
+  failure and the section simply does not appear; a club's finals and honours
+  must not vanish because one extra read timed out on venue wifi.
 
 ### Who runs each competition
 
@@ -1074,7 +1123,25 @@ asserts an organiser does see them. Read `__flagSummary`.
 the edit_event payload instead of sending it, which is the only way to prove
 the full-replace rule holds. Read `__assistSummary`.
 
-Two rules that drill had to learn, and both apply to any drill that navigates:
+Three things every drill here has had to learn, and all of them apply to any drill that navigates:
+
+- **THE BROWSER PANE USED FOR DRILLS IS A HIDDEN PAGE, AND ITS TIMERS ARE
+  THROTTLED HARD.** Measured on 2026-08-21: `document.hidden` is `true`, and
+  ten consecutive `setTimeout(…, 150)` waits took **over 30 seconds** — about
+  3s per timer, roughly twenty times slow. `tabs_select` does not help; it
+  fronts a tab inside a pane that is itself not displayed. Two consequences,
+  and the second is the dangerous one. A drill that walks all 37 editions
+  takes ten minutes rather than forty seconds, which is merely annoying. But
+  every drill here waits with a **fixed iteration budget** — sixty rounds of
+  150ms, "9 seconds" — and under throttling that budget expires long before
+  the page has rendered, so the drill stops waiting and asserts against a
+  half-built DOM. It does not report a timeout; it reports whatever it found.
+  Until those loops are rewritten against a wall-clock deadline (or, better, a
+  `MutationObserver` so the success path is event-driven), **a green drill run
+  from this pane is weaker evidence than it looks**, and anything load-bearing
+  should be verified the way the roster work was: `model_test.mjs` for the
+  logic, which is synchronous and immune to this, plus direct DOM inspection
+  with polling you wrote and can see.
 
 - **Re-query rows by index; never hold a node across a re-render.** It cached
   `[data-match]` once and clicked back to Fixtures between tries, which

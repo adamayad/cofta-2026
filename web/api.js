@@ -319,3 +319,37 @@ export async function fetchArchiveHonours() {
   ]);
   return cache('honours', { awards, boards });
 }
+
+/**
+ * Every player the archive records against a club, for the Players list on a
+ * History club page.
+ *
+ * Four small reads, all of them whole tables: 260 match events, 99 matches,
+ * 216 leaderboard rows, 46 awards. Fetching the lot once and joining in the
+ * client beats a per-club round trip, and beats adding a view or an RPC for
+ * something this size. Cached under ARCHIVE_V like the rest of the archive.
+ *
+ * `archive_matches` comes along only to map a match to its edition — the
+ * events table carries `match_id` and no edition, and a player's years are the
+ * most useful thing on the row after their name.
+ *
+ * Boards are taken at EVERY rank here, not just rank one as `fetchArchiveHonours`
+ * does. That read is looking for winners; this one is looking for anyone who
+ * appeared, and eleventh on the scoring charts still played.
+ */
+export async function fetchArchiveRoster() {
+  const hit = cached('roster');
+  if (hit) return hit;
+  const [events, matches, boards, awards] = await Promise.all([
+    rest('archive_match_events?select=match_id,team_id,player_name,player_canonical,'
+       + 'event_type,assist_player,assist_canonical'),
+    rest('archive_matches?select=id,edition_id'),
+    rest('archive_leaderboards?select=edition_id,player_name,player_canonical,team_id'
+       + '&is_canonical=eq.true'),
+    // Same distrust flag as the honours read: a summary table the archive
+    // keeps for the record is not evidence that anyone turned out.
+    rest('archive_awards?select=edition_id,player_name,player_canonical,team_id'
+       + '&is_published_summary=eq.false'),
+  ]);
+  return cache('roster', { events, matches, boards, awards });
+}

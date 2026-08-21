@@ -567,7 +567,7 @@ test('trophyCabinet maps archive award types onto the three trophies', () => {
   const r = cab('ste');
   const c24 = r.honours.find(h => h.editionId === 'c24');
   eq(c24.trophy, 'golden_boot', 'top scorer is the golden boot');
-  eq(c24.source, 'award', 'it was awarded, not merely led');
+  eq(c24.source, 'award', 'recorded as a real award');
   eq(r.honours.some(h => h.player === 'Not a trophy'), false, 'WOTM is not one of the three');
 });
 
@@ -577,11 +577,11 @@ test('trophyCabinet never counts the flagged published table as an honour', () =
   eq(r.honours.some(h => h.player === 'Published table'), false, 'the flagged summary is skipped');
 });
 
-test('trophyCabinet separates topping a board from winning a trophy', () => {
+test('trophyCabinet fills a missing trophy from the board that stood in for it', () => {
   const r = cab('ste');
   const c22 = r.honours.find(h => h.editionId === 'c22');
   eq(c22.trophy, 'golden_glove', 'most clean sheets stands in for the golden glove');
-  eq(c22.source, 'board', 'marked as led, not awarded');
+  eq(c22.source, 'board', 'provenance kept, though the cabinet no longer marks it');
   eq(r.honours.some(h => h.player === 'Not a leader'), false, 'rank 3 is not an honour');
 });
 
@@ -804,6 +804,98 @@ test('archScorerLines puts a minuteless goal last', () => {
   eq(r.home.map(x => x.name), ['Late', 'Unknown when'], 'a blank minute is not minute zero');
 });
 
+
+/* ── teamRoster: who the archive says played for a club ────
+   The list is reconstructed from goals, cards, leaderboards and awards, so
+   the tests are mostly about what must NOT end up on it: a women's edition
+   under a men's page, an own goal filed against the wrong club, one player
+   appearing twice because two rows spell them differently. */
+const R_EDITIONS = [
+  { id: 'm26', competition: 'CONAFA', year: 2026, category: 'men' },
+  { id: 'm24', competition: 'COFTA',  year: 2024, category: 'men' },
+  { id: 'w26', competition: 'COSA',   year: 2026, category: 'women' },
+];
+const R_MATCHES = [
+  { id: 'M1', edition_id: 'm26' }, { id: 'M2', edition_id: 'm24' },
+  { id: 'W1', edition_id: 'w26' },
+];
+const R_EVENTS = [
+  { match_id: 'M1', team_id: 'bri', event_type: 'goal', player_canonical: 'Demas Ramsis',
+    player_name: 'D Ramsis', assist_canonical: 'Leon Lawandi' },
+  { match_id: 'M1', team_id: 'bri', event_type: 'goal', player_name: 'Demas Ramsis' },
+  { match_id: 'M2', team_id: 'bri', event_type: 'penalty_goal', player_name: 'Demas Ramsis' },
+  { match_id: 'M1', team_id: 'bri', event_type: 'yellow_card', player_name: 'Oukeen Asad' },
+  // an own goal recorded against bri: the column is unreliable, so it must not
+  // put this player on bri's list at all
+  { match_id: 'M1', team_id: 'bri', event_type: 'own_goal', player_name: 'Wrong Club' },
+  // another club's goal, in the same match
+  { match_id: 'M1', team_id: 'ste', event_type: 'goal', player_name: 'Someone Else' },
+  // a women's edition: same church, must not appear on the men's roster
+  { match_id: 'W1', team_id: 'bri', event_type: 'goal', player_name: 'Jenny' },
+];
+const R_BOARDS = [
+  { edition_id: 'm24', team_id: 'bri', player_name: 'Board Only' },
+  { edition_id: 'm26', team_id: 'bri', player_canonical: 'Demas Ramsis', player_name: 'Ramsis, D' },
+];
+const R_AWARDS = [
+  { edition_id: 'm24', team_id: 'bri', player_name: 'Award Only' },
+];
+const roster = (id, category = 'men') => M.teamRoster(id, {
+  events: R_EVENTS, matches: R_MATCHES, boards: R_BOARDS, awards: R_AWARDS,
+  editions: R_EDITIONS, category });
+
+test('teamRoster counts goals, assists and cards for one club', () => {
+  const r = roster('bri');
+  const demas = r.find(p => p.name === 'Demas Ramsis');
+  eq([demas.goals, demas.assists, demas.cards], [3, 0, 0], 'two goals and a penalty');
+  eq(r.find(p => p.name === 'Leon Lawandi').assists, 1, 'the assister is on the list');
+  eq(r.find(p => p.name === 'Oukeen Asad').cards, 1, 'a booking is an appearance');
+});
+
+test('teamRoster folds a canonical name and its variants into one player', () => {
+  const r = roster('bri');
+  eq(r.filter(p => p.name === 'Demas Ramsis').length, 1, 'one row, not three');
+  eq(r.some(p => p.name === 'D Ramsis' || p.name === 'Ramsis, D'), false,
+     'no variant spelling reaches the list');
+});
+
+test('teamRoster never attributes an own goal to a club', () => {
+  eq(roster('bri').some(p => p.name === 'Wrong Club'), false,
+     'the own-goal team_id means two different things and is not trusted');
+});
+
+test('teamRoster keeps another club’s players off the list', () => {
+  eq(roster('bri').some(p => p.name === 'Someone Else'), false, 'wrong club');
+  eq(roster('ste').map(p => p.name), ['Someone Else'], 'and on the right one');
+});
+
+test('teamRoster scopes to a category, so one church has two rosters', () => {
+  eq(roster('bri').some(p => p.name === 'Jenny'), false, 'no women on the men’s list');
+  eq(roster('bri', 'women').map(p => p.name), ['Jenny'], 'and her own list holds her');
+});
+
+test('teamRoster includes a player known only from a board or an award', () => {
+  const r = roster('bri');
+  const b = r.find(p => p.name === 'Board Only');
+  eq([b.goals, b.assists, b.cards], [0, 0, 0], 'nothing recorded but the appearance');
+  eq(r.some(p => p.name === 'Award Only'), true, 'an award is an appearance too');
+});
+
+test('teamRoster orders by goals, then assists, then name', () => {
+  eq(roster('bri').map(p => p.name),
+     ['Demas Ramsis', 'Leon Lawandi', 'Award Only', 'Board Only', 'Oukeen Asad'],
+     'scorer first, assister next, then the goalless alphabetically');
+});
+
+test('teamRoster lists a player’s editions newest first', () => {
+  const demas = roster('bri').find(p => p.name === 'Demas Ramsis');
+  eq(demas.editions.map(e => e.id), ['m26', 'm24'], '2026 before 2024');
+});
+
+test('teamRoster on an unknown club is empty rather than throwing', () => {
+  eq(M.teamRoster(null, {}), [], 'no club, no roster');
+  eq(roster('nobody'), [], 'a club with no records at all');
+});
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };
