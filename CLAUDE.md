@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v58`.
+  old devices keep stale copies forever. Currently `cofta-v59`.
 
 ## Workflow
 
@@ -559,8 +559,16 @@ viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
 - **A crest file that has not landed hides itself** (`onerror` →
   `visibility:hidden`) rather than rendering broken, and never falls back to
   another diocese's crest — the wrong one is worse than none.
-- `web/diocese-midlands.webp`, 192×192 with transparency, to match
-  `diocese.webp`. Both are cache-first, so adding it needs a `VERSION` bump.
+- **The crest slot sizes by HEIGHT, not as a square.** `diocese.webp` is
+  192×192 and fills 24×24; `diocese-midlands.webp` is 203×150, and a square
+  slot letterboxed it to 24×18 — a third smaller on the axis carrying its
+  detail. `height:24px;width:auto;max-width:46px` treats both at the same
+  scale whatever their shape, and the masthead is the same height either way.
+- **Outstanding:** the Midlands artwork is the full lock-up — emblem plus
+  "Coptic Orthodox Patriarchate" and "DIOCESE OF THE MIDLANDS". At 24px tall
+  that text cannot be legible whatever the slot does. A square crop of the
+  emblem alone, as London's appears to be, is the real fix.
+- Both crests are cache-first, so replacing either needs a `VERSION` bump.
 
 ### Who runs each competition
 

@@ -311,7 +311,11 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 
 /* diocese emblem in the masthead */
 .hd .assoc{display:flex;align-items:center;gap:9px}
-.hd .assoc .dio{width:24px;height:24px;object-fit:contain;flex:none}
+/* Fixed HEIGHT, free width. London's crest is square and fills 24x24; the
+   Midlands' is landscape, and a square slot letterboxed it down to 24x18 —
+   a third smaller on the axis that carries its detail. Sizing by height
+   treats both at the same scale whatever their shape. */
+.hd .assoc .dio{height:24px;width:auto;max-width:46px;object-fit:contain;flex:none}
 .hd .assoc span{display:block}
 .hd .assoc span i{display:block;font-style:normal;letter-spacing:.14em;
   color:var(--dim);opacity:.75;margin-top:2px}
