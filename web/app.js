@@ -1459,6 +1459,28 @@ const DIOCESES = {
 };
 /** The live weekend is COFTA's, so that is the masthead off any archive page. */
 const LIVE_COMP = 'cofta';
+
+/**
+ * A competition's own badge, where one exists.
+ *
+ * Ladies COFTA has no file: it is COFTA's women's competition under the same
+ * association and the same badge, so it reads cofta.webp rather than a
+ * duplicate that could drift. COSTA has no badge at all, and none is invented
+ * for it — the same rule the archive applies to a club with no crest. It
+ * falls back to its name in its own identity colour, which `[data-comp]`
+ * already gives every competition.
+ */
+const COMP_LOGO = {
+  cofta: './comps/cofta.webp',
+  'ladies-cofta': './comps/cofta.webp',
+  conafa: './comps/conafa.webp',
+  cosa: './comps/cosa.webp',
+  ark: './comps/ark.webp',
+};
+const compLogo = (id, size) => COMP_LOGO[id]
+  ? `<img class="clogo" src="${COMP_LOGO[id]}" alt="" width="${size}" height="${size}"
+       onerror="this.style.display='none'">`
+  : '';
 const COMP_SLUG = {
   'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
   'The Ark Cup': 'ark', 'COSA': 'cosa', 'Ladies COFTA': 'ladies-cofta',
@@ -1737,7 +1759,12 @@ function viewHistory() {
     // edition whose champion was never recorded is skipped rather than shown
     // as "Unknown".
     const holder = M.reigningChampion(eds);
-    return `<button class="ccard" data-histcomp="${c.id}" data-comp="${c.id}">
+    // The badge sits with the name, not instead of it: COSTA has no badge and
+    // must not read as a card that failed to load, and every badge here has
+    // its own name set into the artwork too small to read at this size.
+    return `<button class="ccard${COMP_LOGO[c.id] ? ' badged' : ''}"
+        data-histcomp="${c.id}" data-comp="${c.id}">
+      ${compLogo(c.id, 34)}
       <span class="cch">
         <span class="ccn">${esc(c.name)}</span>
         <span class="ccm">${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot; ${span}</span>
@@ -1851,7 +1878,9 @@ function viewHistComp() {
   // No <h2> here: the masthead carries the competition's name on this view,
   // and repeating it two lines below is just the same words twice.
   return `${backButton('view:history')}
-    <div class="chead bare" data-comp="${esc(state.histComp)}">
+    <div class="chead bare${COMP_LOGO[state.histComp] ? ' withlogo' : ''}"
+         data-comp="${esc(state.histComp)}">
+      ${compLogo(state.histComp, 46)}
       <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;
          ${c?.cat === 'women' ? "Women's" : "Men's"}${span ? ' &middot; ' + span : ''}</p>
     </div>

@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v61`.
+  old devices keep stale copies forever. Currently `cofta-v62`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0029`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0030`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -532,6 +532,39 @@ tournament.
   masthead the selector matched nothing, the wait timed out, and the drill
   failed for a reason unrelated to anything it tests. An explicit hook cannot
   drift like that.
+
+### Artwork is downscaled before it is served
+
+**Check the dimensions of any supplied image before committing it.** The
+competition badges arrived at ~3464×3464 — 12 megapixels each — to be drawn at
+24–46px. Served as-is that is 3.8 MB across seven files, but the download is
+the smaller half: decoding a 12-megapixel image costs roughly **48 MB of
+memory per image** whatever size it is painted at, and the archive shows
+several at once. On a cheap phone at a venue that is the difference between a
+page that scrolls and one that stutters.
+
+- **224px longest side** for badges and crests, 192px for the diocese crests —
+  eight times the size they render at, so still crisp on retina, and matching
+  the archive crests already in the repo. 3,833 KB became 139 KB.
+- **Originals go in `source-art/`, never `web/`.** Everything under `web/` is
+  published by Cloudflare Pages whether or not anything references it.
+- There is no image tooling on this machine. The downscale runs in the browser
+  (`OffscreenCanvas` → `convertToBlob`) and POSTs to `scratchpad/upload.ps1`,
+  a temporary local sink, so megabytes of base64 never cross the transcript.
+  See `source-art/README.md`.
+
+### Competition badges
+
+`COMP_LOGO` in `app.js`, files in `web/comps/<comp id>.webp`. On the History
+cards at 34px and the competition page at 46px.
+
+- **Ladies COFTA has no file of its own** — it is COFTA's women's competition
+  under the same association and the same badge, so it points at
+  `cofta.webp` rather than a duplicate that could drift.
+- **COSTA has no badge and none is invented**, the same rule the archive
+  applies to a club with no crest. Its card keeps the original three-column
+  grid rather than a badged four-column one with a hole in it, so the absence
+  reads as deliberate rather than as a card that failed to load.
 
 ### Each competition is its own association, in its own diocese
 

@@ -13,7 +13,17 @@ the old cache ever fetches them (see CLAUDE.md → Workflow).
 |---|---|---|
 | club crosswalked to a live club | `<live_team_id>.webp` | `smpk.webp` |
 | women's crest of a crosswalked club | `<live_team_id>-w.webp` | `smpk-w.webp`, `stm-w.webp`, `gg-w.webp` |
+| B team with a badge of its own | `<live_team_id>-b.webp` | `gg-b.webp` |
 | club with no live row | slug of `canonical_name` | `st-mary-st-george.webp` |
+
+**Name the file after the club it belongs to, not after what the badge says.**
+Golders Green's B team is called "St Mary's" and its crest arrived as
+`stm-ggb.webp` — but `stm` is *St Mark's* live_team_id everywhere in this
+codebase, so that filename is one careless glance from being wired to the
+wrong church. It is stored as `gg-b.webp`.
+
+A B team only needs a file at all if it has a badge distinct from its
+parent's; otherwise it inherits, which is the default.
 
 Slug rule for the last case: lowercase, `&` dropped, spaces to hyphens —
 "St Mary & St George" → `st-mary-st-george.webp`.
