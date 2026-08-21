@@ -36,6 +36,7 @@
 
 /app.js
   Cache-Control: no-cache
+  X-Cofta-Headers-Probe: applied
 
 /api.js
   Cache-Control: no-cache
