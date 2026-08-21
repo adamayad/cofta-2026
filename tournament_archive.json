@@ -48,6 +48,22 @@
       "The Ark Cup": "men's",
       "note": "Confirmed by Adam: COSA, COSTA and Ladies COFTA are three separate competitions, not one renamed series."
     },
+    "competition_full_names": {
+      "note": "What each acronym stands for, organiser-confirmed 2026-08-21. Each competition is its own association. The Ark Cup is not an acronym; Ladies COFTA's association name has not been stated, so neither is recorded and neither borrows another competition's.",
+      "COFTA": "Coptic Orthodox Football Tournament Association",
+      "CONAFA": "Coptic Orthodox National Annual Football Association",
+      "COSTA": "Coptic Orthodox Soccer Tournament Association",
+      "COSA": "Coptic Orthodox Soccer Association"
+    },
+    "competition_dioceses": {
+      "note": "Organiser-confirmed 2026-08-21: CONAFA is played in the Diocese of the Midlands, and every London-based competition in the Diocese of London.",
+      "COFTA": "Coptic Orthodox Diocese of London",
+      "Ladies COFTA": "Coptic Orthodox Diocese of London",
+      "COSTA": "Coptic Orthodox Diocese of London",
+      "COSA": "Coptic Orthodox Diocese of London",
+      "The Ark Cup": "Coptic Orthodox Diocese of London",
+      "CONAFA": "Coptic Orthodox Diocese of the Midlands"
+    },
     "competition_hosts": {
       "note": "The church that runs each competition, organiser-confirmed 2026-08-21. Competition-level, not per-edition: an edition whose host differed carries its own notes.host_club, as CONAFA 2015 and 2016 do. Ladies COFTA shares COFTA's host, which is consistent with Shephalbury Park, Stevenage being the COFTA venue of that era.",
       "COFTA": "St George, Stevenage",

@@ -1413,42 +1413,48 @@ function squadSection() {
  * edition — a host club that stood down for a year would be an edition-level
  * `notes.host_club`, which CONAFA 2015 and 2016 already carry.
  */
+/**
+ * `full` is what the acronym stands for, `host` the church that runs it, and
+ * `diocese` the diocese it is played in — all organiser-confirmed.
+ *
+ * Two competitions have no `full` recorded: the Ark Cup, which is not an
+ * acronym, and Ladies COFTA. Neither borrows another competition's
+ * association name; see mastheadBrand().
+ */
 const COMPS = [
-  { id: 'cofta',        name: 'COFTA',        cat: 'men',   host: 'Stevenage' },
-  { id: 'conafa',       name: 'CONAFA',       cat: 'men',   host: 'Nottingham',
-    diocese: 'midlands' },
-  { id: 'costa',        name: 'COSTA',        cat: 'men',   host: 'Croydon' },
-  { id: 'ark',          name: 'The Ark Cup',  cat: 'men',   host: 'Golders Green' },
-  { id: 'cosa',         name: 'COSA',         cat: 'women', host: 'SMPK' },
-  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage' },
+  { id: 'cofta',  name: 'COFTA',  cat: 'men',   host: 'Stevenage',  diocese: 'london',
+    full: 'Coptic Orthodox Football Tournament Association' },
+  { id: 'conafa', name: 'CONAFA', cat: 'men',   host: 'Nottingham', diocese: 'midlands',
+    full: 'Coptic Orthodox National Annual Football Association' },
+  { id: 'costa',  name: 'COSTA',  cat: 'men',   host: 'Croydon',    diocese: 'london',
+    full: 'Coptic Orthodox Soccer Tournament Association' },
+  { id: 'ark',    name: 'The Ark Cup', cat: 'men', host: 'Golders Green', diocese: 'london' },
+  { id: 'cosa',   name: 'COSA',   cat: 'women', host: 'SMPK',       diocese: 'london',
+    full: 'Coptic Orthodox Soccer Association' },
+  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage', diocese: 'london' },
 ];
 
 /**
- * Whose diocese a competition is played in, and therefore whose crest and
- * whose bishop belong at the top of the page.
- *
- * The default is what the app has always shown and is left on every
- * competition nobody has said otherwise about — adding a competition here is
- * a claim about a real diocese, so it waits for someone to make it.
- *
- * CONAFA carries no recorded full name in the archive, unlike COFTA, so its
- * first line is the diocese itself rather than an invented expansion of the
- * acronym.
+ * Whose crest and whose bishop belong at the top of the page. Every
+ * competition names its diocese explicitly rather than falling through to a
+ * default: a host church happening to be in London is not the same statement
+ * as the competition running under that diocese, and only one of those is
+ * something anyone has actually confirmed.
  */
-const DIOCESE_DEFAULT = {
-  org: 'Coptic Orthodox Football Tournament Association',
-  auspices: 'Under the Auspices of HE Archbishop Angaelos',
-  logo: './diocese.webp',
-  alt: 'Coptic Orthodox Diocese of London',
-};
 const DIOCESES = {
+  london: {
+    name: 'Coptic Orthodox Diocese of London',
+    auspices: 'Under the Auspices of HE Archbishop Angaelos',
+    logo: './diocese.webp',
+  },
   midlands: {
-    org: 'Coptic Orthodox Diocese of the Midlands',
+    name: 'Coptic Orthodox Diocese of the Midlands',
     auspices: 'Under the Auspices of HG Bishop Missael',
     logo: './diocese-midlands.webp',
-    alt: 'Coptic Orthodox Diocese of the Midlands',
   },
 };
+/** The live weekend is COFTA's, so that is the masthead off any archive page. */
+const LIVE_COMP = 'cofta';
 const COMP_SLUG = {
   'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
   'The Ark Cup': 'ark', 'COSA': 'cosa', 'Ladies COFTA': 'ladies-cofta',
@@ -2323,16 +2329,33 @@ function mastheadTitle() {
   return null;
 }
 
-/** Which competition the masthead is currently standing for, if any — the
- *  edition's own, or the competition being browsed. */
+/** Which competition the masthead is standing for — the edition's own, the
+ *  competition being browsed, or the live weekend's. */
 function mastheadComp() {
-  if (!state.archive) return null;
-  if (state.view === 'histed') {
-    const e = state.archive.editions.find(x => x.id === state.histEd);
-    return e ? compOf(COMP_SLUG[e.competition]) : null;
+  if (state.archive) {
+    if (state.view === 'histed') {
+      const e = state.archive.editions.find(x => x.id === state.histEd);
+      if (e) return compOf(COMP_SLUG[e.competition]);
+    }
+    if (state.view === 'histcomp') return compOf(state.histComp);
   }
-  if (state.view === 'histcomp') return compOf(state.histComp);
-  return null;
+  return compOf(LIVE_COMP);
+}
+
+/**
+ * The three lines of the masthead's crest block: which body runs this
+ * competition, under whom, and whose crest.
+ *
+ * Where the association's name is known it is used — each competition is its
+ * own association, and printing COFTA's name over a COSTA page was simply
+ * wrong. Where it is NOT known (the Ark Cup, Ladies COFTA) the line falls
+ * back to the diocese rather than borrowing a different competition's name,
+ * which would be an invention rather than a gap.
+ */
+function mastheadBrand() {
+  const c = mastheadComp();
+  const d = DIOCESES[c?.diocese] ?? DIOCESES.london;
+  return { org: c?.full ?? d.name, auspices: d.auspices, logo: d.logo, alt: d.name };
 }
 
 /* ── render ──────────────────────────────────────────────── */
@@ -2371,7 +2394,7 @@ function render() {
   // and the alternative would be a guess about a real diocese.
   const dioEl = $('hd-dio'), assocEl = $('hd-assoc');
   if (dioEl && assocEl) {
-    const d = DIOCESES[mastheadComp()?.diocese] ?? DIOCESE_DEFAULT;
+    const d = mastheadBrand();
     if (dioEl.getAttribute('src') !== d.logo) {
       // A crest file that has not landed yet hides rather than rendering
       // broken — the wrong diocese's crest would be worse than none.

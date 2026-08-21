@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v57`.
+  old devices keep stale copies forever. Currently `cofta-v58`.
 
 ## Workflow
 
@@ -532,24 +532,33 @@ tournament.
   failed for a reason unrelated to anything it tests. An explicit hook cannot
   drift like that.
 
-### The diocese follows the competition
+### Each competition is its own association, in its own diocese
 
-CONAFA is played in the **Coptic Orthodox Diocese of the Midlands**, so its
-pages carry that crest and **HG Bishop Missael** rather than London's crest and
-HE Archbishop Angaelos. Driven by `COMPS[].diocese` against `DIOCESES`, with
-`DIOCESE_DEFAULT` for everything else.
+The masthead's crest block names the body that runs the competition being
+viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
 
-- **The default is left in place for every competition nobody has spoken
-  about.** Adding one to `DIOCESES` asserts something about a real diocese and
-  a real bishop, so it waits to be told rather than being inferred from where
-  the host club happens to be.
-- CONAFA's first line is the **diocese**, not an expansion of the acronym.
-  COFTA has `competition_full` recorded in the archive; CONAFA has none, and
-  inventing one on the masthead is not the place to start.
+| | association | diocese |
+|---|---|---|
+| COFTA | Coptic Orthodox Football Tournament Association | London |
+| CONAFA | Coptic Orthodox National **Annual** Football Association | **Midlands** |
+| COSTA | Coptic Orthodox **Soccer** Tournament Association | London |
+| COSA | Coptic Orthodox Soccer Association | London |
+| The Ark Cup | *not an acronym* | London |
+| Ladies COFTA | *not stated* | London |
+
+- **Printing COFTA's name over a COSTA page was simply wrong**, and it did
+  until `COMPS[].full` existed. Each competition names itself.
+- **Where the association is not known the line falls back to the diocese**,
+  never to another competition's name — the Ark Cup and Ladies COFTA read
+  "Coptic Orthodox Diocese of London". A gap is a gap; borrowing would be an
+  invention.
+- **Every competition states its diocese explicitly; there is no default.** A
+  host church happening to be in London is not the same statement as the
+  competition running under that diocese, and only one of those is a thing
+  anyone has confirmed.
 - **A crest file that has not landed hides itself** (`onerror` →
-  `visibility:hidden`) rather than rendering broken. On a Midlands page the
-  wrong diocese's crest would be worse than no crest, so it never falls back
-  to London's.
+  `visibility:hidden`) rather than rendering broken, and never falls back to
+  another diocese's crest — the wrong one is worse than none.
 - `web/diocese-midlands.webp`, 192×192 with transparency, to match
   `diocese.webp`. Both are cache-first, so adding it needs a `VERSION` bump.
 
