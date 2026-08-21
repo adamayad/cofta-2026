@@ -579,9 +579,10 @@
           "away": null
         },
         "winner": "Brighton",
-        "loser": "SMPK",
-        "note": "Score and shootout added 2026-08-21 from Adam, organiser-confirmed. The archive previously held both as null - silence, not a contradicting value, so this is an enrichment rather than a correction. Home/away orientation is still unknown, so the shootout is recorded as winner/loser rather than home/away. See conflict_register resolved C11."
+        "loser": "SMPK"
       },
+      "final_orientation_note": "Home and away sides of the final are not recorded. The 1-1 and the 3-1 shoot-out are.",
+      "compiler_note": "Score and shoot-out added 2026-08-21, organiser-confirmed, where the archive previously held nulls - an enrichment rather than a correction. Not a rendered key; see conflict_register resolved C11.",
       "teams": [
         "Brighton",
         "SMPK",
@@ -4996,7 +4997,8 @@
           "ga_derived": 16
         }
       ],
-      "league_table_note": "The source table shows GD and Pts only; no GF/GA columns were displayed. gf_derived/ga_derived were computed from the fixture list by the compiler and are NOT source data; they reconcile exactly to the published GD. Store them in a derived column or omit.",
+      "league_table_note": "The published table showed goal difference and points only. Goals for and against are computed from the fixture list and reconcile exactly to the published goal difference.",
+      "compiler_note": "gf_derived/ga_derived are NOT source data. Store them in a derived column or omit. Not a rendered key.",
       "matches": [
         {
           "ref": "ARK26-L01",
@@ -6019,7 +6021,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Adam gives Shephalbury Park, Stevenage as the venue for this era of COFTA. Recorded as an era-level statement, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6052,7 +6054,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6083,7 +6085,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6114,7 +6116,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6145,7 +6147,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6176,7 +6178,7 @@
       "date_start": "2010-09-10",
       "date_end": "2010-09-12",
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6214,7 +6216,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6253,7 +6255,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed; further detail from http://copticyouthuk.blogspot.com/2012/10/cofta-coptic-orthodox-football-tries.html",
       "format": null,
@@ -6295,7 +6297,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed; awards also published in the COFTA 2014 report",
       "format": null,
@@ -6318,11 +6320,11 @@
       "goalscorers": [],
       "awards": {
         "top_scorer": {
-          "player_name": "Nduoma Chilaka",
+          "player_name": "Nduoma Chilaki",
           "player_canonical": "Nduoma Chilaka",
           "team": "Nottingham",
           "value": 5,
-          "is_published_summary": true,
+          "is_published_summary": false,
           "source_spelling": "Chilaki",
           "note": "Adam's spelling 'Chilaka' is canonical. The published 2014 report prints 'Chilaki'; that spelling is preserved as a registry variant and as the source string."
         },
@@ -6331,14 +6333,14 @@
           "player_canonical": "Ashley Brown",
           "team": "Brighton",
           "value": null,
-          "is_published_summary": true
+          "is_published_summary": false
         },
         "golden_glove": {
           "player_name": "Mark Khalil",
           "player_canonical": "Mark Khalil",
           "team": "Nottingham",
           "value": null,
-          "is_published_summary": true
+          "is_published_summary": false
         }
       },
       "known_gaps": [
@@ -6358,7 +6360,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll and awards, organiser-confirmed",
       "format": null,
@@ -6415,7 +6417,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll and awards, organiser-confirmed",
       "format": null,
@@ -6454,7 +6456,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6485,7 +6487,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6516,7 +6518,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6555,7 +6557,7 @@
       "date_start": null,
       "date_end": null,
       "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Era-level statement from Adam, not a per-edition record.",
+      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
       "source": "Adam's COFTA champions roll, organiser-confirmed",
       "format": null,
@@ -6641,7 +6643,8 @@
       "goalscorers": [],
       "awards": {},
       "edition_note": "A spring tournament, unlike the September COFTA.",
-      "teams_note": "The timetable prints 'Brighton A' and 'Brighton B'. 'Brighton A' is St Mary & St Abraam, Brighton. 'Brighton B' is in fact St Demiana & Pope Kyrillos VI, WORTHING, per Adam - it is not a Brighton second team. This identification is scoped to COSTA 2022 only and is deliberately NOT a global alias, in case a genuine Brighton B appears later. Standing guard: Worthing is not SMPK.",
+      "teams_note": "The timetable prints \"Brighton A\" and \"Brighton B\". Brighton A is St Mary & St Abraam, Brighton. Brighton B is St Demiana & Pope Kyrillos VI, Worthing - a separate church, not a Brighton second team.",
+      "compiler_note": "The Brighton B identification is organiser-confirmed and scoped to COSTA 2022 only - deliberately NOT a global alias, in case a genuine Brighton B appears later. Standing guard: Worthing is not SMPK. Not a rendered key; see merge_guards G3.",
       "source_labels": {
         "Brighton A": "St Mary & St Abraam, Brighton",
         "Brighton B": "St Demiana & Pope Kyrillos VI, Worthing"
@@ -6650,7 +6653,7 @@
         "Runner-up unknown.",
         "Exact dates not recorded; the timetable was posted 29 March 2022.",
         "No venue.",
-        "The per-fixture timetable text was not supplied to the compiler - only its structure (six teams, five rounds, 30-minute matches, 10:00-16:00, midday lunch). The fifteen individual fixtures are NOT recorded and have not been invented.",
+        "The individual fixtures are not recorded; only the format - six teams, five rounds of 30-minute matches, 10:00 to 16:00 with a midday lunch break.",
         "No standings, scores or match data.",
         "No goalscorers, awards or player data."
       ]
@@ -6785,8 +6788,7 @@
         "No dates or venue.",
         "Six of the eleven entrants are not named.",
         "No standings or match data.",
-        "No goalscorers, awards or player data.",
-        "The full report text was not supplied to the compiler; the cited URL is the record."
+        "No goalscorers, awards or player data."
       ]
     },
     {

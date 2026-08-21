@@ -1983,13 +1983,29 @@ function archAwards(d) {
     player_of_the_tournament: 'Player of the tournament',
     top_scorer: 'Top scorer', most_clean_sheets: 'Most clean sheets',
   };
+  // The canonical spelling, not the source's. `player_name` holds the string
+  // exactly as its source printed it — that is what the column is for, and
+  // match pages still render it — but an award is a summary rather than a
+  // quotation, and the 2014 report's "Chilaki" against 2026's "Chilaka" reads
+  // as two different players.
   return `<div class="sect">Awards</div>
     <div class="aawards">${named.map(a => `<div class="aaw">
       <span class="aawl">${esc(LAB[a.award_type] ?? a.award_type)}</span>
-      <span class="aawn">${a.player_name ? esc(a.player_name) : archTeamLink(a.team_id)}
+      <span class="aawn">${a.player_canonical || a.player_name
+        ? esc(a.player_canonical || a.player_name) : archTeamLink(a.team_id)}
         ${a.value != null ? `<i>${a.value}</i>` : ''}</span>
       ${a.team_id && a.player_name ? `<span class="aawt">${archTeamLink(a.team_id, { inline: true })}</span>` : ''}
     </div>`).join('')}</div>`;
+}
+
+/** The same awards block as a full edition, off the honours read. Renders
+ *  nothing at all until that read lands, and nothing ever for the many
+ *  editions that have no awards recorded. */
+function thinAwards(e) {
+  const all = state.archiveHonours?.awards;
+  if (!all) return '';
+  const mine = all.filter(a => a.edition_id === e.id && !a.match_id);
+  return mine.length ? archAwards({ awards: mine }) : '';
 }
 
 function viewHistEdition() {
@@ -2009,7 +2025,21 @@ function viewHistEdition() {
   </div>`;
 
   if (e.data_confidence === 'minimal') {
-    return `${back}${head}${thinEdition(e)}${archNotes(e)}`;
+    // A thin edition can still have awards — COFTA 2015 records a top scorer
+    // and a player of the tournament and nothing else at all — and this
+    // branch used to return before anything went looking for them, so they
+    // existed in the database and appeared on the club's cabinet but never
+    // on the edition's own page.
+    //
+    // They come from the honours read rather than the per-edition one: that
+    // is a single query for the whole archive, already cached for the
+    // cabinets, where loadEdition would fire six and five of them would come
+    // back empty for a record this thin. The page renders immediately from
+    // the index and the awards drop in when the read settles, so there is no
+    // spinner over content that is already on screen.
+    loadHonours();
+    return `${back}${head}${thinEdition(e)}${thinAwards(e)}`
+         + archNotes(e, { skip: ['teams_note'] });
   }
 
   loadEdition(e.id);
@@ -2032,11 +2062,16 @@ function viewHistEdition() {
 }
 
 /** What the source could not tell us, said plainly rather than hidden. */
-function archNotes(e) {
+/** `skip` names notes the caller has already put on screen. A thin edition
+ *  prints `teams_note` directly under its entrant list, where it belongs —
+ *  it qualifies that list — and without this it appeared a second time under
+ *  About this record, word for word. */
+function archNotes(e, { skip = [] } = {}) {
   const gaps = e.notes?.known_gaps || [];
   const extra = ['competition_note', 'teams_note', 'round_numbering_note',
                  'league_table_note', 'final_orientation_note', 'venue_note',
                  'third_place_note', 'squads_note', 'edition_note']
+    .filter(k => !skip.includes(k))
     .map(k => e.notes?.[k]).filter(Boolean);
   // `e.source` is deliberately not rendered. It names the import's own
   // working file — a PDF filename and a section number — which tells a

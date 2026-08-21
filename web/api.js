@@ -219,7 +219,7 @@ export const setSlot = (slot, teamId) =>
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v4';   // v4: 2005-2021 backfill, 34 editions, East London
+const ARCHIVE_V = 'v7';   // v7: honours read carries player_canonical
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small
@@ -309,7 +309,10 @@ export async function fetchArchiveHonours() {
   const hit = cached('honours');
   if (hit) return hit;
   const [awards, boards] = await Promise.all([
-    rest('archive_awards?select=edition_id,award_type,player_name,team_id,value'
+    // player_canonical too: an award is rendered under the canonical spelling,
+    // so leaving it out silently fell back to the source's — the 2014 report's
+    // "Chilaki" against the same player's "Chilaka" everywhere else.
+    rest('archive_awards?select=edition_id,award_type,player_name,player_canonical,team_id,value'
        + '&is_published_summary=eq.false&match_id=is.null'),
     rest('archive_leaderboards?select=edition_id,board_type,rank,player_name,team_id,value'
        + '&rank=eq.1&is_canonical=eq.true'),

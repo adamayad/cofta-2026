@@ -705,6 +705,29 @@ test('reigningChampion of an unwon competition is null', () => {
   eq(M.reigningChampion([]), null, 'null');
 });
 
+test('trophyCabinet lists an honour under the canonical spelling', () => {
+  // The 2014 report prints "Chilaki"; the same player is "Chilaka" everywhere
+  // else. player_name keeps the source string, but a cabinet that showed both
+  // would read as two different people.
+  const eds = [{ id: 'e14', year: 2014, competition: 'COFTA', category: 'men',
+                 champion_team_id: 'notts', runner_up_team_id: null }];
+  const awards = [{ edition_id: 'e14', award_type: 'top_scorer', team_id: 'notts',
+                    player_name: 'Nduoma Chilaki', player_canonical: 'Nduoma Chilaka',
+                    value: 5, is_published_summary: false }];
+  const c = M.trophyCabinet('notts', { editions: eds, entrants: [], awards, boards: [], category: 'men' });
+  eq(c.honours.map(h => h.player), ['Nduoma Chilaka'], 'canonical wins');
+});
+
+test('trophyCabinet falls back to the source spelling when there is no canonical', () => {
+  const eds = [{ id: 'e1', year: 2020, competition: 'COFTA', category: 'men',
+                 champion_team_id: 't', runner_up_team_id: null }];
+  const awards = [{ edition_id: 'e1', award_type: 'top_scorer', team_id: 't',
+                    player_name: 'Only One Spelling', player_canonical: null,
+                    value: null, is_published_summary: false }];
+  const c = M.trophyCabinet('t', { editions: eds, entrants: [], awards, boards: [], category: 'men' });
+  eq(c.honours.map(h => h.player), ['Only One Spelling'], 'falls back');
+});
+
 /* ── archive scorer lines ─────────────────────────────────
    The two own-goal cases are taken from the real archive, because they are
    the reason this cannot read team_id: the two editions disagree about what

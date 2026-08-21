@@ -686,7 +686,12 @@ export function trophyCabinet(teamId, {
     if (!trophy) continue;
     honours.push({
       edition: byId[a.edition_id] ?? null, editionId: a.edition_id, trophy,
-      player: a.player_name ?? null, value: a.value ?? null, source: 'award',
+      // Canonical spelling, falling back to the source's. A cabinet lists one
+      // club's honours down the years, so it is exactly where two spellings of
+      // one player read as two people: the 2014 report's "Chilaki" directly
+      // above the same man's "Chilaka" in 2026.
+      player: a.player_canonical || a.player_name || null,
+      value: a.value ?? null, source: 'award',
     });
   }
   for (const b of boards) {

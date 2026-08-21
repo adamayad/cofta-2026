@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v52`.
+  old devices keep stale copies forever. Currently `cofta-v55`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0026`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0028`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -404,10 +404,41 @@ him goes to the conflict register rather than into the data.
   first. One competition owns its article: the sentence reads "The Ark Cup
   was first played in", not "The first The Ark Cup".
 - **`is_published_summary` hides an award from every cabinet.** It marks a
-  figure taken from a published summary table rather than from the record,
-  and both `fetchArchiveHonours` (`is_published_summary=eq.false`) and
-  `trophyCabinet` drop those rows. It is a distrust flag, not a citation —
-  cite the source in `source`/`notes` instead. See the COFTA 2014 awards.
+  figure taken from a published summary table that the archive does not trust
+  as the record, and both `fetchArchiveHonours` (`is_published_summary=eq.false`)
+  and `trophyCabinet` drop those rows. It is a **distrust flag, not a
+  citation** — cite the source in `source`/`notes` instead. `0026` set it on
+  the COFTA 2014 awards because they came from the published report, which
+  read as a citation; `0028` cleared it, because they are organiser-confirmed
+  and therefore are the record. The genuinely flagged rows — the Ark Cup
+  goalscorer table, the COSA WOTM totals, both of which contradict their own
+  event data — keep it.
+- **A thin edition can still have awards.** `viewHistEdition` used to return
+  from the `minimal` branch before anything went looking, so COFTA 2015's top
+  scorer sat in the database and on the club's cabinet but never on the
+  edition's own page. Thin editions now render `thinAwards()`, sourced from
+  the **honours read** rather than `loadEdition` — one query for the whole
+  archive, already cached for the cabinets, where the per-edition read fires
+  six and five come back empty for a record this thin.
+- **Awards render `player_canonical`; `player_name` keeps the source string.**
+  The column still holds the spelling its source printed, and match pages
+  still render that. An award is a summary rather than a quotation, and a
+  cabinet lists one club down the years — which is exactly where the 2014
+  report's "Chilaki" sitting above the same man's "Chilaka" in 2026 reads as
+  two players. `fetchArchiveHonours` must therefore **select
+  `player_canonical`**; leaving it out fails silently back to the source
+  spelling.
+- **Notes are written for a reader, not for the compilation.** No note that
+  reaches the screen names the organiser or the compiler — provenance lives
+  in `source`, which is stored and deliberately never rendered. `0027`
+  rewrote eighteen of them and asserts none come back. A note says what is
+  missing or uncertain **about the tournament**, and stops. `notes.compiler_note`
+  is the parking space for anything genuinely about the import; nothing
+  renders it.
+- A note printed beside the thing it qualifies is not repeated under **About
+  this record**: `archNotes(e, { skip: [...] })`. A thin edition prints
+  `teams_note` under its entrant list, where it explains that list, and skips
+  it below.
 
 **A sparse edition is not labelled as one.** Edition rows used to carry a
 "THIN" pill; it is gone, and should not come back. It was internal vocabulary
