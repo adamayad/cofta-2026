@@ -1747,7 +1747,23 @@ function viewHistory() {
         aria-pressed="${cat === c}">${c === 'men' ? 'Men' : 'Women'}</button>`).join('')}
   </div>`;
 
-  const cards = COMPS.filter(c => c.cat === cat).map(c => {
+  // Most-contested competition first. COFTA's nineteen editions should not sit
+  // level with a competition that has been played once, and the order is
+  // derived rather than hard-coded so it stays true as editions are added —
+  // the array order was only coincidentally right for the men's side and
+  // already wrong for the women's.
+  //
+  // Ties break on the older competition, which is the same idea measured a
+  // different way: a competition that has been running longer outranks a
+  // newer one on the same count. Name last, so the order is never arbitrary.
+  const seasoned = (a, b) => {
+    const ea = state.archive.byComp[a.id] || [], eb = state.archive.byComp[b.id] || [];
+    if (eb.length !== ea.length) return eb.length - ea.length;
+    const first = (e) => e.length ? Math.min(...e.map(x => x.year)) : Infinity;
+    return (first(ea) - first(eb)) || a.name.localeCompare(b.name);
+  };
+
+  const cards = COMPS.filter(c => c.cat === cat).sort(seasoned).map(c => {
     const eds = state.archive.byComp[c.id] || [];
     if (!eds.length) return '';
     const years = eds.map(e => e.year);

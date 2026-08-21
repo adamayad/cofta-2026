@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v62`.
+  old devices keep stale copies forever. Currently `cofta-v63`.
 
 ## Workflow
 
@@ -552,6 +552,18 @@ page that scrolls and one that stutters.
   (`OffscreenCanvas` → `convertToBlob`) and POSTs to `scratchpad/upload.ps1`,
   a temporary local sink, so megabytes of base64 never cross the transcript.
   See `source-art/README.md`.
+
+### History lists competitions by how seasoned they are
+
+Most editions first, so COFTA's nineteen do not sit level with a competition
+played once. **Derived from the data, not from `COMPS` order** — that array was
+only coincidentally right for the men's side and already wrong for the
+women's, where Ladies COFTA's two editions sat below COSA's one.
+
+Ties break on the older competition — the same idea measured another way —
+then on name, so the order is never arbitrary. `.filter()` returns a new array,
+so the `.sort()` does not reorder `COMPS` itself; verified by switching
+categories repeatedly and confirming the order does not drift.
 
 ### Competition badges
 
