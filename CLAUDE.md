@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v60`.
+  old devices keep stale copies forever. Currently `cofta-v61`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0028`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0029`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -376,11 +376,12 @@ pass and must never gate the score moving.
 
 ## History: the archive of previous tournaments
 
-**Thirty-four finished tournaments, 2005–2026.** `0021` imported thirteen
-from 2022–2026; `0026` backfilled twenty-one more reaching back to the first
-COFTA in 2005. Five editions survive in full; the other twenty-nine are
-sometimes no more than a year and a champion. **Thin records stay thin** — no
-synthesised fixtures, no zero-filled stats, and `null` never rendered as `0`.
+**Thirty-five finished tournaments, 2005–2026.** `0021` imported thirteen
+from 2022–2026, `0026` backfilled twenty-one reaching back to the first COFTA
+in 2005, and `0029` added COSTA 2023. Five editions survive in full; the other
+thirty are sometimes no more than a year and a champion. **Thin records stay
+thin** — no synthesised fixtures, no zero-filled stats, and `null` never
+rendered as `0`.
 
 `tournament_archive.json` is the source of truth and is edited first; the
 migration follows it. Adam's word is canonical, published sources fill in
