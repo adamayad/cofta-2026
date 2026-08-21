@@ -1415,12 +1415,40 @@ function squadSection() {
  */
 const COMPS = [
   { id: 'cofta',        name: 'COFTA',        cat: 'men',   host: 'Stevenage' },
-  { id: 'conafa',       name: 'CONAFA',       cat: 'men',   host: 'Nottingham' },
+  { id: 'conafa',       name: 'CONAFA',       cat: 'men',   host: 'Nottingham',
+    diocese: 'midlands' },
   { id: 'costa',        name: 'COSTA',        cat: 'men',   host: 'Croydon' },
   { id: 'ark',          name: 'The Ark Cup',  cat: 'men',   host: 'Golders Green' },
   { id: 'cosa',         name: 'COSA',         cat: 'women', host: 'SMPK' },
   { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage' },
 ];
+
+/**
+ * Whose diocese a competition is played in, and therefore whose crest and
+ * whose bishop belong at the top of the page.
+ *
+ * The default is what the app has always shown and is left on every
+ * competition nobody has said otherwise about — adding a competition here is
+ * a claim about a real diocese, so it waits for someone to make it.
+ *
+ * CONAFA carries no recorded full name in the archive, unlike COFTA, so its
+ * first line is the diocese itself rather than an invented expansion of the
+ * acronym.
+ */
+const DIOCESE_DEFAULT = {
+  org: 'Coptic Orthodox Football Tournament Association',
+  auspices: 'Under the Auspices of HE Archbishop Angaelos',
+  logo: './diocese.webp',
+  alt: 'Coptic Orthodox Diocese of London',
+};
+const DIOCESES = {
+  midlands: {
+    org: 'Coptic Orthodox Diocese of the Midlands',
+    auspices: 'Under the Auspices of HG Bishop Missael',
+    logo: './diocese-midlands.webp',
+    alt: 'Coptic Orthodox Diocese of the Midlands',
+  },
+};
 const COMP_SLUG = {
   'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
   'The Ark Cup': 'ark', 'COSA': 'cosa', 'Ladies COFTA': 'ladies-cofta',
@@ -2295,6 +2323,18 @@ function mastheadTitle() {
   return null;
 }
 
+/** Which competition the masthead is currently standing for, if any — the
+ *  edition's own, or the competition being browsed. */
+function mastheadComp() {
+  if (!state.archive) return null;
+  if (state.view === 'histed') {
+    const e = state.archive.editions.find(x => x.id === state.histEd);
+    return e ? compOf(COMP_SLUG[e.competition]) : null;
+  }
+  if (state.view === 'histcomp') return compOf(state.histComp);
+  return null;
+}
+
 /* ── render ──────────────────────────────────────────────── */
 function render() {
   const age = Date.now() - state.lastFetch;
@@ -2323,6 +2363,24 @@ function render() {
            aria-label="Back to COFTA 2026, the live tournament"
          ><span aria-hidden="true">&larr;</span> COFTA 2026</button>`
       : '12&ndash;13 September';
+  }
+
+  // The diocese follows the competition: CONAFA is played in the Midlands, so
+  // its pages carry that crest and that bishop rather than London's. Every
+  // other competition keeps the default, because nobody has said otherwise
+  // and the alternative would be a guess about a real diocese.
+  const dioEl = $('hd-dio'), assocEl = $('hd-assoc');
+  if (dioEl && assocEl) {
+    const d = DIOCESES[mastheadComp()?.diocese] ?? DIOCESE_DEFAULT;
+    if (dioEl.getAttribute('src') !== d.logo) {
+      // A crest file that has not landed yet hides rather than rendering
+      // broken — the wrong diocese's crest would be worse than none.
+      dioEl.onerror = () => { dioEl.style.visibility = 'hidden'; };
+      dioEl.style.visibility = '';
+      dioEl.setAttribute('src', d.logo);
+      dioEl.setAttribute('alt', d.alt);
+    }
+    assocEl.innerHTML = `${esc(d.org)}<i>${esc(d.auspices)}</i>`;
   }
 
   // Never repaint over someone mid-type. The 5-second poll was replacing the

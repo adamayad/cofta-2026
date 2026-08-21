@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v56`.
+  old devices keep stale copies forever. Currently `cofta-v57`.
 
 ## Workflow
 
@@ -531,6 +531,27 @@ tournament.
   masthead the selector matched nothing, the wait timed out, and the drill
   failed for a reason unrelated to anything it tests. An explicit hook cannot
   drift like that.
+
+### The diocese follows the competition
+
+CONAFA is played in the **Coptic Orthodox Diocese of the Midlands**, so its
+pages carry that crest and **HG Bishop Missael** rather than London's crest and
+HE Archbishop Angaelos. Driven by `COMPS[].diocese` against `DIOCESES`, with
+`DIOCESE_DEFAULT` for everything else.
+
+- **The default is left in place for every competition nobody has spoken
+  about.** Adding one to `DIOCESES` asserts something about a real diocese and
+  a real bishop, so it waits to be told rather than being inferred from where
+  the host club happens to be.
+- CONAFA's first line is the **diocese**, not an expansion of the acronym.
+  COFTA has `competition_full` recorded in the archive; CONAFA has none, and
+  inventing one on the masthead is not the place to start.
+- **A crest file that has not landed hides itself** (`onerror` →
+  `visibility:hidden`) rather than rendering broken. On a Midlands page the
+  wrong diocese's crest would be worse than no crest, so it never falls back
+  to London's.
+- `web/diocese-midlands.webp`, 192×192 with transparency, to match
+  `diocese.webp`. Both are cache-first, so adding it needs a `VERSION` bump.
 
 ### Who runs each competition
 
