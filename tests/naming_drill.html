@@ -17,6 +17,7 @@
   Serve the repo root and open /tests/naming_drill.html; read
   globalThis.__namingSummary. Needs a connection.
 -->
+<script src="./until.js"></script>
 <script>
 localStorage.clear();
 const results = [];
@@ -24,7 +25,10 @@ const check = (name, cond, detail) => results.push({ name, ok: !!cond, detail })
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 window.addEventListener('load', async () => {
-  await wait(2500);
+  // Boot is a condition, not a duration. A fixture row means the snapshot
+  // landed and app.js is running; under a throttled timer the old fixed
+  // 2.5s sleep cost nearer fifty seconds and still promised nothing.
+  await untilOr(() => document.querySelector('.fx'), 'app boot (a fixture row)', 30000);
 
   const R = (p) => fetch('https://faodniafqglgzmdosgfq.supabase.co/rest/v1/' + p, {
     headers: { apikey: 'sb_publishable_9P1vft0yq7PuQ1RvaALB7g_bUJE1nbF',
@@ -53,19 +57,18 @@ window.addEventListener('load', async () => {
   // Walk every edition page and harvest every element that renders a club.
   const seen = [], strays = [], missingB = [];
   document.getElementById('nav-history').click();
-  for (let i = 0; i < 60 && !document.querySelector('.ccard'); i++) await wait(150);
+  await untilOr(() => document.querySelector('.ccard'), 'History competition cards');
 
   for (const ed of editions) {
     location.hash = '';
-    document.getElementById('nav-history').click(); await wait(200);
+    document.getElementById('nav-history').click();
+    await untilOr(() => document.querySelector('.ccard'), 'back to History for ' + ed.id);
     // reach the edition directly through the app's own handler
     const btn = document.createElement('button');
     btn.dataset.histed = ed.id; btn.style.display = 'none';
     document.body.appendChild(btn); btn.click(); btn.remove();
-    for (let i = 0; i < 60; i++) {
-      await wait(150);
-      if (document.querySelector('.thincard') || document.querySelector('.afxr')) break;
-    }
+    await untilOr(() => document.querySelector('.thincard') || document.querySelector('.afxr'),
+      'edition page ' + ed.id);
     // every surface that renders a club name
     // the primary name line on every surface that renders a club
     // Only the club-name elements. A player row's .albn also contains the
@@ -95,6 +98,8 @@ window.addEventListener('load', async () => {
     }
   }
 
+  check('no wait timed out - every page rendered before it was read',
+    __untilTimeouts.length === 0, __untilTimeouts.slice(0, 8));
   check('team names were harvested from every edition', seen.length > 50, seen.length);
   check('no alias-only spelling renders anywhere in History',
     strays.length === 0, strays.slice(0, 8));

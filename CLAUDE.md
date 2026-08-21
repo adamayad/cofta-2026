@@ -1125,25 +1125,39 @@ asserts an organiser does see them. Read `__flagSummary`.
 the edit_event payload instead of sending it, which is the only way to prove
 the full-replace rule holds. Read `__assistSummary`.
 
-Three things every drill here has had to learn, and all of them apply to any drill that navigates:
+What every drill here has had to learn, and all of it applies to any drill that navigates:
 
-- **THE BROWSER PANE USED FOR DRILLS IS A HIDDEN PAGE, AND ITS TIMERS ARE
-  THROTTLED HARD.** Measured on 2026-08-21: `document.hidden` is `true`, and
-  ten consecutive `setTimeout(…, 150)` waits took **over 30 seconds** — about
-  3s per timer, roughly twenty times slow. `tabs_select` does not help; it
-  fronts a tab inside a pane that is itself not displayed. Two consequences,
-  and the second is the dangerous one. A drill that walks all 37 editions
-  takes ten minutes rather than forty seconds, which is merely annoying. But
-  every drill here waits with a **fixed iteration budget** — sixty rounds of
-  150ms, "9 seconds" — and under throttling that budget expires long before
-  the page has rendered, so the drill stops waiting and asserts against a
-  half-built DOM. It does not report a timeout; it reports whatever it found.
-  Until those loops are rewritten against a wall-clock deadline (or, better, a
-  `MutationObserver` so the success path is event-driven), **a green drill run
-  from this pane is weaker evidence than it looks**, and anything load-bearing
-  should be verified the way the roster work was: `model_test.mjs` for the
-  logic, which is synchronous and immune to this, plus direct DOM inspection
-  with polling you wrote and can see.
+- **THE BROWSER PANE THESE RUN IN IS A HIDDEN PAGE, AND ITS TIMERS ARE
+  THROTTLED HARD.** Measured 2026-08-21: `document.hidden` is `true` and a
+  single `setTimeout(…, 150)` actually takes about **three seconds** — ten of
+  them ran to over 30s, roughly twenty times slow. `tabs_select` does not help;
+  it fronts a tab inside a pane that is itself not displayed.
+  The slowness was the visible half. The dangerous half was that every drill
+  waited on a **fixed iteration budget** — `for (let i = 0; i < 60; i++) await
+  wait(150)`, which reads as "nine seconds" and is really "sixty timers". Under
+  throttling that ran out long before the page rendered, and then the loop
+  simply carried on: no error, no timeout, no line in the report. The drill
+  asserted against a half-built DOM and reported the result as though it had
+  waited properly. **A drill that cannot fail honestly is worse than no drill.**
+- **`tests/until.js` is the fix, and every navigating drill now uses it.**
+  `untilOr(cond, label, timeout)` takes a **wall-clock** deadline, resolves off
+  a `MutationObserver` so it fires the instant the app renders rather than on
+  the next throttled tick, and **returns false on timeout** — callers push
+  those into `__untilTimeouts`, and each drill ends with a
+  `no wait timed out` check so a timeout appears in the report AS a timeout.
+  The effect is not subtle: the naming drill went from **over 25 minutes to
+  under a second**, and gender (14) and archive-flags (6) run instantly too.
+  Any new drill uses `untilOr`; a counted `await wait(…)` loop is a bug.
+- **A drill with `<base href="../web/">` must load the helper as
+  `../tests/until.js`.** `gender_drill.html` sets that base so the app's
+  relative crest paths resolve, which also rewrites `./until.js` into
+  `web/until.js` — a 404 that leaves `untilOr` undefined and kills the drill on
+  its first call, silently, because a dead drill sets no summary at all. It
+  looked exactly like "still running".
+- **Bare settle sleeps (`await wait(300)` after a click) are left alone.**
+  `assist_drill` and `boot_drill` use only those and have no counted condition
+  loops, so throttling makes them slow and never wrong — a sleep that runs long
+  is safe in a way that a counted wait which gives up early is not.
 
 - **Re-query rows by index; never hold a node across a re-render.** It cached
   `[data-match]` once and clicked back to Fixtures between tries, which

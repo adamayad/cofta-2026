@@ -22,6 +22,10 @@
   Serve the repo root and open /tests/gender_drill.html; read
   globalThis.__genderSummary. Needs a connection.
 -->
+<!-- NOT "./until.js": the <base href="../web/"> above rewrites it to
+     web/until.js, which 404s, leaving untilOr undefined and the drill dead
+     before its first assertion. Relative to the BASE, not to this file. -->
+<script src="../tests/until.js"></script>
 <script>
 localStorage.clear();
 // An existing file, so the category switch is observable: were this a
@@ -57,16 +61,14 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 // that failed for a reason entirely unrelated to what it tests. `data-ed` is
 // an explicit hook so it can name the edition it is waiting for.
 const openEdition = async (id) => {
-  document.getElementById('nav-history').click(); await wait(250);
+  document.getElementById('nav-history').click();
+  await untilOr(() => document.querySelector('.ccard'), 'History cards before ' + id);
   const b = document.createElement('button');
   b.dataset.histed = id; b.style.display = 'none';
   document.body.appendChild(b); b.click(); b.remove();
-  for (let i = 0; i < 80; i++) {
-    await wait(150);
-    const head = document.querySelector(`.chead[data-ed="${id}"]`);
-    const body = document.querySelector('.afxr') || document.querySelector('.thincard');
-    if (head && body) return;
-  }
+  const ready = () => document.querySelector(`.chead[data-ed="${id}"]`)
+    && (document.querySelector('.afxr') || document.querySelector('.thincard'));
+  if (await untilOr(ready, 'edition page ' + id)) return;
   throw new Error('edition ' + id + ' never rendered');
 };
 // Must be a link that actually draws a badge: goal-event links name the club
@@ -80,7 +82,8 @@ window.addEventListener('load', async () => {
   const kill = document.createElement('style');
   kill.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
   document.head.appendChild(kill);
-  await wait(3000);
+  // Boot is a condition, not a duration - see until.js.
+  await untilOr(() => document.querySelector('.fx'), 'app boot (a fixture row)', 30000);
 
   /* ── the crest follows the edition's category ── */
   await openEdition('ark-cup-2026');
@@ -111,14 +114,16 @@ window.addEventListener('load', async () => {
   /* ── the cabinet no longer pools the two records ── */
   await openEdition('ark-cup-2026');
   linkFor('St Mary & Pope Kyrillos VI').click();
-  for (let i = 0; i < 60 && !document.querySelector('.cabtally'); i++) await wait(150);
+  await untilOr(() => document.querySelector('.cabtally'), 'cabinet body');
   const men = finals();
   check('entering from a mens edition opens on Men',
     document.querySelector('.cabseg button.on')?.textContent.trim() === 'Men');
   check('the mens cabinet holds no womens competition',
     men.length > 0 && !men.includes('COSA') && !men.includes('Ladies COFTA'), men);
 
-  document.querySelector('[data-cabcat="women"]').click(); await wait(250);
+  const menSeen = finals().join('|');
+  document.querySelector('[data-cabcat="women"]').click();
+  await untilOr(() => finals().join('|') !== menSeen, 'cabinet switched to Women');
   const women = finals();
   check('switching to Women shows only womens competitions',
     women.length > 0 && women.every(c => c === 'COSA' || c === 'Ladies COFTA'), women);
@@ -140,8 +145,11 @@ window.addEventListener('load', async () => {
   /* ── a club that only played one category gets no toggle ── */
   await openEdition('conafa-2026');
   linkFor('St Mary & St George').click();
-  for (let i = 0; i < 60 && !document.querySelector('.cabtally'); i++) await wait(150);
+  await untilOr(() => document.querySelector('.cabtally'), 'cabinet body');
   check('a club with one category gets no toggle', !document.querySelector('.cabseg'));
+
+  check('no wait timed out - every page rendered before it was read',
+    __untilTimeouts.length === 0, __untilTimeouts.slice(0, 8));
 
   kill.remove();
   const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results };

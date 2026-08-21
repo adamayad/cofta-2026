@@ -14,6 +14,7 @@
   Serve the repo root and open /tests/archive_flags.html; read
   globalThis.__flagSummary. Needs a connection — it reads the live archive.
 -->
+<script src="./until.js"></script>
 <script>
 localStorage.clear();
 localStorage.setItem('cofta.session.v1', JSON.stringify({ access_token: 'drill', refresh_token: 'drill' }));
@@ -39,18 +40,23 @@ const check = (name, ok, detail) => results.push({ name, ok: !!ok, detail });
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 window.addEventListener('load', async () => {
-  await wait(2500);
+  // Boot is a condition, not a duration. A fixture row means the snapshot
+  // landed and app.js is running; under a throttled timer the old fixed
+  // 2.5s sleep cost nearer fifty seconds and still promised nothing.
+  await untilOr(() => document.querySelector('.fx'), 'app boot (a fixture row)', 30000);
   document.getElementById('nav-history').click();
-  for (let i = 0; i < 60 && !document.querySelector('.ccard'); i++) await wait(150);
+  await untilOr(() => document.querySelector('.ccard'), 'History competition cards');
   const ark = [...document.querySelectorAll('.ccard')].find(c => c.textContent.includes('Ark'));
   check('History reached and the Ark Cup card is present', !!ark);
   if (ark) {
-    ark.click(); await wait(300);
+    ark.click();
+    await untilOr(() => document.querySelector('[data-histed="ark-cup-2026"]'),
+      'Ark Cup edition list');
     const row = document.querySelector('[data-histed="ark-cup-2026"]');
     check('the 2026 edition is listed', !!row);
     if (row) {
       row.click();
-      for (let i = 0; i < 60 && !document.querySelector('.afxr'); i++) await wait(150);
+      await untilOr(() => document.querySelector('.afxr'), 'Ark Cup 2026 fixtures');
       const flags = [...document.querySelectorAll('.flagline')].map(f => f.textContent.trim());
       check('organiser sees the flagged play-off events',
         flags.some(f => f.includes('event_count_exceeds_score')), flags);
@@ -60,6 +66,9 @@ window.addEventListener('load', async () => {
         [...document.querySelectorAll('.gap')].some(g => g.textContent.trim() === 'conflicted'));
     }
   }
+
+  check('no wait timed out - every page rendered before it was read',
+    __untilTimeouts.length === 0, __untilTimeouts.slice(0, 8));
 
   const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results };
   globalThis.__flagSummary = summary;
