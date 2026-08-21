@@ -29,8 +29,11 @@
       </svg><i class="gdot" aria-hidden="true"></i></button>
     <p class="assoc"><img class="dio" src="./diocese.webp" alt="Coptic Diocese of London" width="24" height="24">
       <span>Coptic Orthodox Football Tournament Association<i>Under the Auspices of HE Archbishop Angaelos</i></span></p>
-    <h1>COFTA 2026</h1>
-    <p class="meta"><span>12&ndash;13 September</span><span class="pip" id="pip"><i></i>Live</span></p>
+    <h1 id="hd-title">COFTA 2026</h1>
+    <!-- hd-when holds the dates on a live page and the way back to the live
+         tournament on an archive one. The pip is a sibling and is never
+         rebuilt, because render() writes its state before this runs. -->
+    <p class="meta"><span id="hd-when">12&ndash;13 September</span><span class="pip" id="pip"><i></i>Live</span></p>
   </header>
   <nav class="nav">
     <button id="nav-fixtures" data-view="fixtures" class="on">Fixtures</button>

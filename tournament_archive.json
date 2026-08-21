@@ -47,6 +47,15 @@
       "Ladies COFTA": "women's",
       "The Ark Cup": "men's",
       "note": "Confirmed by Adam: COSA, COSTA and Ladies COFTA are three separate competitions, not one renamed series."
+    },
+    "competition_hosts": {
+      "note": "The church that runs each competition, organiser-confirmed 2026-08-21. Competition-level, not per-edition: an edition whose host differed carries its own notes.host_club, as CONAFA 2015 and 2016 do. Ladies COFTA shares COFTA's host, which is consistent with Shephalbury Park, Stevenage being the COFTA venue of that era.",
+      "COFTA": "St George, Stevenage",
+      "Ladies COFTA": "St George, Stevenage",
+      "CONAFA": "St Mary & St George, Nottingham",
+      "COSTA": "St Mary & St Shenouda, Croydon",
+      "COSA": "St Mary & Pope Kyrillos VI, Hounslow",
+      "The Ark Cup": "Archangel Michael, Golders Green"
     }
   },
   "team_registry": {

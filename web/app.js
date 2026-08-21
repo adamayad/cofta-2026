@@ -1406,13 +1406,20 @@ function squadSection() {
  * The archive is immutable and never rides in the polled snapshot — it is
  * fetched on demand from the archive_* tables and cached hard (see api.js).
  */
+/**
+ * `host` is the church that runs the competition, organiser-confirmed, given
+ * as the archive registry's short_name and resolved to a canonical name and a
+ * link at render time. It belongs to the competition rather than to any one
+ * edition — a host club that stood down for a year would be an edition-level
+ * `notes.host_club`, which CONAFA 2015 and 2016 already carry.
+ */
 const COMPS = [
-  { id: 'cofta',        name: 'COFTA',        cat: 'men'   },
-  { id: 'conafa',       name: 'CONAFA',       cat: 'men'   },
-  { id: 'costa',        name: 'COSTA',        cat: 'men'   },
-  { id: 'ark',          name: 'The Ark Cup',  cat: 'men'   },
-  { id: 'cosa',         name: 'COSA',         cat: 'women' },
-  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women' },
+  { id: 'cofta',        name: 'COFTA',        cat: 'men',   host: 'Stevenage' },
+  { id: 'conafa',       name: 'CONAFA',       cat: 'men',   host: 'Nottingham' },
+  { id: 'costa',        name: 'COSTA',        cat: 'men',   host: 'Croydon' },
+  { id: 'ark',          name: 'The Ark Cup',  cat: 'men',   host: 'Golders Green' },
+  { id: 'cosa',         name: 'COSA',         cat: 'women', host: 'SMPK' },
+  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage' },
 ];
 const COMP_SLUG = {
   'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
@@ -1794,12 +1801,23 @@ function viewHistComp() {
       ? `<p class="note" style="padding-top:0">${esc(originsUnknown)}</p>`
       : '';
 
+  // Whose tournament this is. Resolved through the registry so the host reads
+  // as its full church name and opens that club's record, rather than being a
+  // second place where a club's name is spelt out by hand.
+  const hostTeam = c?.host
+    ? (state.archive.teams || []).find(t => t.short_name === c.host && !t.parent_club)
+    : null;
+  const host = hostTeam
+    ? `<p class="chost">Hosted by ${archTeamLink(hostTeam.id, { inline: true })}</p>` : '';
+
+  // No <h2> here: the masthead carries the competition's name on this view,
+  // and repeating it two lines below is just the same words twice.
   return `${backButton('view:history')}
-    <div class="chead" data-comp="${esc(state.histComp)}">
-      <h2>${esc(c?.name ?? state.histComp)}</h2>
+    <div class="chead bare" data-comp="${esc(state.histComp)}">
       <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;
          ${c?.cat === 'women' ? "Women's" : "Men's"}${span ? ' &middot; ' + span : ''}</p>
     </div>
+    ${host}
     ${origins}
     ${honours}
     <div class="sect">Editions</div>
@@ -2018,9 +2036,13 @@ function viewHistEdition() {
   const slug = COMP_SLUG[e.competition];
   const back = backButton('view:history');
 
-  const head = `<div class="chead ehead" data-comp="${esc(slug)}">
-    <h2>${esc(e.display_name)}</h2>
-    <p>${esc(archDates(e))}${e.venue ? ' &middot; ' + esc(e.venue) : ''}</p>
+  // Same again: the edition's name is the masthead title on this view.
+  const detail = [archDates(e), e.venue].filter(Boolean).join(' · ');
+  // data-ed is an explicit hook for the drills. They used to wait for the
+  // <h2> text to change, which broke silently the moment the heading moved to
+  // the masthead: the selector simply never matched and the wait ran out.
+  const head = `<div class="chead ehead bare" data-comp="${esc(slug)}" data-ed="${esc(e.id)}">
+    ${detail ? `<p>${esc(detail)}</p>` : ''}
     ${e.format ? `<p class="efmt">${esc(e.format)}</p>` : ''}
   </div>`;
 
@@ -2252,6 +2274,27 @@ function viewArchTeam() {
     ${cabinetBody(t.id)}`;
 }
 
+/**
+ * What the masthead should say.
+ *
+ * Opening a tournament from 2015 and still reading "COFTA 2026" at the top of
+ * the screen puts the reader in the wrong year — the page they are on is the
+ * 2015 tournament, so that is the title. COFTA 2026 does not disappear; it
+ * becomes the small line underneath, and the way back to the live weekend.
+ *
+ * Only the two views that ARE a tournament take the title: a competition and
+ * an edition. A club's cabinet is not a tournament, and the History index is
+ * a list of them, so both leave the masthead alone.
+ */
+function mastheadTitle() {
+  if (!state.archive) return null;
+  if (state.view === 'histed') {
+    return state.archive.editions.find(e => e.id === state.histEd)?.display_name ?? null;
+  }
+  if (state.view === 'histcomp') return compOf(state.histComp)?.name ?? null;
+  return null;
+}
+
 /* ── render ──────────────────────────────────────────────── */
 function render() {
   const age = Date.now() - state.lastFetch;
@@ -2262,6 +2305,25 @@ function render() {
     ? `<i></i>${q} unsent`
     : `<i></i>${state.error ? 'Reconnecting' : stale ? 'Stale' : 'Live'}`;
   $('pip').className = `pip ${q || stale ? 'stale' : ''}`;
+
+  // The masthead follows the page. `hd-when` swaps between the live dates and
+  // a real button back to the live tournament; the pip beside it is a sibling
+  // and is never rebuilt, so the state written just above survives.
+  //
+  // Optional, like the nav and the gear above: every test drill ships its own
+  // cut-down header, and render() must not assume any piece of the chrome is
+  // present. Without the guards this threw on a null element on every drill
+  // page, which is not a caught error — it is an infinite "Loading…".
+  const arch = mastheadTitle();
+  const hdTitle = $('hd-title'), hdWhen = $('hd-when');
+  if (hdTitle) hdTitle.textContent = arch ?? 'COFTA 2026';
+  if (hdWhen) {
+    hdWhen.innerHTML = arch
+      ? `<button class="tolive" data-live="1"
+           aria-label="Back to COFTA 2026, the live tournament"
+         ><span aria-hidden="true">&larr;</span> COFTA 2026</button>`
+      : '12&ndash;13 September';
+  }
 
   // Never repaint over someone mid-type. The 5-second poll was replacing the
   // whole view, which wiped the sign-in form as it was being filled in. While
@@ -2329,7 +2391,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],#signin,#signout');
   if (!t) return;
 
   // Back before view: a back button carries only data-back, but checking it
@@ -2363,6 +2425,15 @@ document.addEventListener('click', async (ev) => {
     if (t.dataset.view === 'history') {
       state.histCat = 'men'; state.histComp = null; state.histEd = null;
     }
+    render(); return;
+  }
+
+  // Out of the archive entirely, back to the live weekend. This is not the
+  // back button — that walks the trail one step. This leaves.
+  if (t.dataset.live !== undefined) {
+    state.hist = [];
+    state.histComp = null; state.histEd = null; state.archTeam = null;
+    state.view = 'fixtures';
     render(); return;
   }
 

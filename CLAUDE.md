@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v55`.
+  old devices keep stale copies forever. Currently `cofta-v56`.
 
 ## Workflow
 
@@ -506,6 +506,44 @@ are about the tournament, not about the compiler.
   Anything added later that fetches from a render path needs the same latch
   and its own error branch; a loader that renders on failure without one is
   this bug again.
+### The masthead belongs to the page
+
+Opening the 2015 tournament and still reading "COFTA 2026" across the top puts
+the reader in the wrong year. On the two views that **are** a tournament — a
+competition and an edition — the masthead takes that name, and COFTA 2026
+becomes the small line beneath it and the way back (`.tolive`, `data-live`).
+A club's cabinet and the History index leave it alone: neither is a
+tournament.
+
+- **`data-live` leaves the archive; the back button walks it.** One clears the
+  history stack and returns to Fixtures, the other steps back one page. They
+  are not the same control and both are needed.
+- **Neither view prints its own `<h2>` any more** (`.chead.bare`) — the
+  masthead has the name, and repeating it two lines below is the same words
+  twice.
+- **`render()` must not assume any part of the chrome exists.** Every drill
+  ships its own cut-down header, so `hd-title` and `hd-when` are read through
+  `if` guards exactly as `nav-admin` is read through `?.`. Without them
+  render() threw on a null element on every drill page — and a throw in
+  render() is not a caught error, it is an infinite "Loading…".
+- **Drills wait on `.chead[data-ed="…"]`, never on heading text.** The gender
+  drill used to poll the `<h2>` for a change; when that heading moved to the
+  masthead the selector matched nothing, the wait timed out, and the drill
+  failed for a reason unrelated to anything it tests. An explicit hook cannot
+  drift like that.
+
+### Who runs each competition
+
+`COMPS[].host` carries the church that runs it, organiser-confirmed: COFTA and
+Ladies COFTA to Stevenage, CONAFA to Nottingham, COSTA to Croydon, COSA to
+SMPK, the Ark Cup to Golders Green. It is stored as the registry's
+`short_name` and resolved at render time, so the host reads as its full church
+name and opens that club's record rather than being a second place a club's
+name is spelt by hand. Also in `archive_meta.competition_hosts`.
+
+This is **competition-level**. An edition whose host differed carries its own
+`notes.host_club`, as CONAFA 2015 and 2016 do.
+
 ### Identity guards, and the ones that nearly collided
 
 - **THREE clubs carry St George, and two of them share a church name
