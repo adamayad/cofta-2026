@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v59`.
+  old devices keep stale copies forever. Currently `cofta-v60`.
 
 ## Workflow
 
@@ -544,12 +544,12 @@ viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
 | COSTA | Coptic Orthodox **Soccer** Tournament Association | London |
 | COSA | Coptic Orthodox Soccer Association | London |
 | The Ark Cup | *not an acronym* | London |
-| Ladies COFTA | *not stated* | London |
+| Ladies COFTA | Coptic Orthodox Football Tournament Association (COFTA's women's competition) | London |
 
 - **Printing COFTA's name over a COSTA page was simply wrong**, and it did
   until `COMPS[].full` existed. Each competition names itself.
 - **Where the association is not known the line falls back to the diocese**,
-  never to another competition's name — the Ark Cup and Ladies COFTA read
+  never to another competition's name — the Ark Cup reads
   "Coptic Orthodox Diocese of London". A gap is a gap; borrowing would be an
   invention.
 - **Every competition states its diocese explicitly; there is no default.** A

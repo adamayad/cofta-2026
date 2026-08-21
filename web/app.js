@@ -1431,7 +1431,11 @@ const COMPS = [
   { id: 'ark',    name: 'The Ark Cup', cat: 'men', host: 'Golders Green', diocese: 'london' },
   { id: 'cosa',   name: 'COSA',   cat: 'women', host: 'SMPK',       diocese: 'london',
     full: 'Coptic Orthodox Soccer Association' },
-  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage', diocese: 'london' },
+  // Ladies COFTA is COFTA's women's competition, so it is the same
+  // association under the same name — not a separate body that happens to
+  // sound similar, which is how CONAFA, COSTA and COSA each differ.
+  { id: 'ladies-cofta', name: 'Ladies COFTA', cat: 'women', host: 'Stevenage', diocese: 'london',
+    full: 'Coptic Orthodox Football Tournament Association' },
 ];
 
 /**

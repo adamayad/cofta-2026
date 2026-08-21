@@ -49,8 +49,9 @@
       "note": "Confirmed by Adam: COSA, COSTA and Ladies COFTA are three separate competitions, not one renamed series."
     },
     "competition_full_names": {
-      "note": "What each acronym stands for, organiser-confirmed 2026-08-21. Each competition is its own association. The Ark Cup is not an acronym; Ladies COFTA's association name has not been stated, so neither is recorded and neither borrows another competition's.",
+      "note": "What each acronym stands for, organiser-confirmed 2026-08-21. CONAFA, COSTA and COSA are each their own association despite the similar names. Ladies COFTA is COFTA's women's competition and shares its name exactly. The Ark Cup is not an acronym and has no association name recorded, so it names its diocese instead rather than borrowing another competition's.",
       "COFTA": "Coptic Orthodox Football Tournament Association",
+      "Ladies COFTA": "Coptic Orthodox Football Tournament Association",
       "CONAFA": "Coptic Orthodox National Annual Football Association",
       "COSTA": "Coptic Orthodox Soccer Tournament Association",
       "COSA": "Coptic Orthodox Soccer Association"
