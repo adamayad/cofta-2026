@@ -219,7 +219,7 @@ export const setSlot = (slot, teamId) =>
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v9';   // v9: Golders Green B crest
+const ARCHIVE_V = 'v11';   // v11: CONAFA 2018-19, COSTA founded 2022
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small

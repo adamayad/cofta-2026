@@ -3,7 +3,7 @@
     "title": "Coptic Football Tournament Archive",
     "compiled": "2026-08-19",
     "last_extended": "2026-08-21",
-    "editions": 35,
+    "editions": 37,
     "sources": [
       "Coptic_Football_Tournament_Archive_2024-2026.pdf (5 rich editions)",
       "Adam notes (8 thin editions)",
@@ -21,21 +21,29 @@
       {
         "competition": "COFTA",
         "year": 2013,
+        "confidence": "confirmed",
         "reason": "No tournament held. Organiser-confirmed. No edition row exists; this is the record of its absence."
       },
       {
         "competition": "COFTA",
         "year": 2020,
+        "confidence": "confirmed",
         "reason": "No tournament held. Organiser-confirmed. No edition row exists; this is the record of its absence."
+      },
+      {
+        "competition": "CONAFA",
+        "years": [2020, 2021, 2022],
+        "confidence": "believed",
+        "reason": "Adam's words, 2026-08-21: 'I believe there was no CONAFA 2020-22.' Recorded as a belief and deliberately NOT promoted to a confirmed non-event - 'we checked and it did not happen' and 'we are fairly sure it did not happen' are different facts, and the COFTA entries above are the first kind. No edition rows exist either way, so nothing is displayed differently; the distinction is here so a later source can settle it rather than be assumed to have already agreed."
       }
     ],
     "records_being_sought": [
       "COFTA 2007 champion - unknown.",
       "COFTA 2008 champion - unknown.",
-      "COSTA founding year and early editions - Adam does not know when COSTA began; the earliest archived edition is not known to be the first.",
       "COFTA 2015 player of the tournament: Amir Ameen's club.",
       "CONAFA 2016 final scoreline.",
       "CONAFA 2017 runner-up and all detail beyond the champion.",
+      "CONAFA 2020, 2021 and 2022 - believed not held, per Adam, but not confirmed. See no_tournament_years.",
       "COSTA 2022 per-fixture timetable text (screenshot held by Adam, not yet transcribed into the archive)."
     ],
     "principle": "Faithful transcription only. Absent fields are null, never zero, never inferred. Thin records stay thin.",
@@ -53,7 +61,7 @@
       "COFTA": "Coptic Orthodox Football Tournament Association",
       "Ladies COFTA": "Coptic Orthodox Football Tournament Association",
       "CONAFA": "Coptic Orthodox National Annual Football Association",
-      "COSTA": "Coptic Orthodox Soccer Tournament Association",
+      "COSTA": "Coptic Orthodox Southern Tournament Association",
       "COSA": "Coptic Orthodox Soccer Association"
     },
     "competition_dioceses": {
@@ -6664,6 +6672,8 @@
       "runner_up": null,
       "final_summary": null,
       "final": null,
+      "inaugural": true,
+      "edition_note": "The first COSTA.",
       "teams": ["Golders Green", "Brighton", "Worthing", "St Mark", "Croydon", "Rotherham"],
       "matches": [],
       "goalscorers": [],
@@ -6849,6 +6859,66 @@
       ]
     },
     {
+      "id": "conafa-2018",
+      "competition": "CONAFA",
+      "year": 2018,
+      "display_name": "CONAFA 2018",
+      "category": "men",
+      "date_start": null,
+      "date_end": null,
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam, organiser-confirmed",
+      "format": null,
+      "team_count": null,
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": null,
+      "final_summary": null,
+      "final": null,
+      "teams": ["Brighton"],
+      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No runner-up, final or scoreline.",
+        "No dates or venue.",
+        "No entrant list, group stage, standings or match data.",
+        "No goalscorers, awards or player data."
+      ]
+    },
+    {
+      "id": "conafa-2019",
+      "competition": "CONAFA",
+      "year": 2019,
+      "display_name": "CONAFA 2019",
+      "category": "men",
+      "date_start": null,
+      "date_end": null,
+      "venue": null,
+      "data_confidence": "minimal",
+      "source": "Adam, organiser-confirmed",
+      "format": null,
+      "team_count": null,
+      "match_count": null,
+      "champion": "Brighton",
+      "runner_up": null,
+      "final_summary": null,
+      "final": null,
+      "teams": ["Brighton"],
+      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "matches": [],
+      "goalscorers": [],
+      "awards": {},
+      "known_gaps": [
+        "No runner-up, final or scoreline.",
+        "No dates or venue.",
+        "No entrant list, group stage, standings or match data.",
+        "No goalscorers, awards or player data."
+      ]
+    },
+    {
       "id": "costa-2023",
       "competition": "COSTA",
       "year": 2023,
@@ -6990,6 +7060,14 @@
       {
         "id": "C13",
         "answer": "COSTA 2022 'Brighton B' identification, 2026-08-21. The Facebook timetable's 'Brighton B' is St Demiana & Pope Kyrillos VI, WORTHING, per Adam - not a Brighton second team. Recorded on the COSTA 2022 edition only, in source_labels and teams_note. Deliberately NOT a global alias: a genuine Brighton B may appear in a later source. See merge_guards G3."
+      },
+      {
+        "id": "C14",
+        "answer": "COSTA CORRECTIONS, 2026-08-21. Two things Adam corrected after the backfill. (1) COSTA stands for Coptic Orthodox SOUTHERN Tournament Association, not Soccer - the earlier expansion recorded on 2026-08-21 was wrong and is superseded. (2) COSTA began in 2022, so costa-2022 IS the inaugural edition. The origins_unrecorded note that 0026 put on every COSTA edition existed precisely to stop the earliest archived row being read as the first tournament played; that guard is now obsolete and 0031 removes it. 'COSTA founding year' is struck from records_being_sought."
+      },
+      {
+        "id": "C15",
+        "answer": "CONAFA 2018 and 2019, 2026-08-21. Adam first wrote that Brighton won 2018 and 2019 in a sentence about COSTA, then corrected it within the minute to CONAFA. The correction is the record: two CONAFA editions are added, champion Brighton, minimal confidence, nothing else known. COSTA gains nothing from this - it did not exist in 2018. Adam separately believes there was no CONAFA in 2020, 2021 or 2022; that is held as a belief in no_tournament_years, not as a confirmed absence."
       },
       {
         "id": "Q4",

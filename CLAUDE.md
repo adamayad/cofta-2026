@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v63`.
+  old devices keep stale copies forever. Currently `cofta-v65`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0030`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0032`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -376,12 +376,12 @@ pass and must never gate the score moving.
 
 ## History: the archive of previous tournaments
 
-**Thirty-five finished tournaments, 2005–2026.** `0021` imported thirteen
+**Thirty-seven finished tournaments, 2005–2026.** `0021` imported thirteen
 from 2022–2026, `0026` backfilled twenty-one reaching back to the first COFTA
-in 2005, and `0029` added COSTA 2023. Five editions survive in full; the other
-thirty are sometimes no more than a year and a champion. **Thin records stay
-thin** — no synthesised fixtures, no zero-filled stats, and `null` never
-rendered as `0`.
+in 2005, `0029` added COSTA 2023 and `0032` CONAFA 2018–2019. Five editions
+survive in full; the other thirty-two are sometimes no more than a year and a
+champion. **Thin records stay thin** — no synthesised fixtures, no zero-filled
+stats, and `null` never rendered as `0`.
 
 `tournament_archive.json` is the source of truth and is edited first; the
 migration follows it. Adam's word is canonical, published sources fill in
@@ -399,11 +399,20 @@ him goes to the conflict register rather than into the data.
   invited someone to fix it by guessing.
 - **The competition page states origins only where they are known.** An
   edition carrying `notes.inaugural` makes its competition say so — COFTA
-  2005, CONAFA 2014, Ark Cup 2026. COSTA carries `notes.origins_unrecorded`
-  on every edition instead, because its founding year is genuinely unknown
-  and the oldest row the archive holds (2022) must never be presented as the
-  first. One competition owns its article: the sentence reads "The Ark Cup
-  was first played in", not "The first The Ark Cup".
+  2005, CONAFA 2014, COSTA 2022, Ark Cup 2026. A competition whose founding
+  year is genuinely unknown carries `notes.origins_unrecorded` on every
+  edition instead, so the oldest row the archive happens to hold is never
+  presented as the first. **No competition needs that guard today**: COSTA
+  did until `0031`, when its 2022 start was confirmed and the guard was
+  removed as obsolete. Keep the mechanism — the next backfill will want it.
+  One competition owns its article: the sentence reads "The Ark Cup was first
+  played in", not "The first The Ark Cup".
+- **"No tournament held" and "no record" are different facts, and so is
+  "believed not held".** `archive_meta.no_tournament_years` carries a
+  `confidence`: COFTA 2013 and 2020 are `confirmed`, CONAFA 2020–2022 are
+  `believed` — Adam's own hedge, preserved rather than rounded up. Nothing
+  renders differently; the distinction exists so a later source settles it
+  instead of being assumed to have already agreed.
 - **`is_published_summary` hides an award from every cabinet.** It marks a
   figure taken from a published summary table that the archive does not trust
   as the record, and both `fetchArchiveHonours` (`is_published_summary=eq.false`)
@@ -587,7 +596,7 @@ viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
 |---|---|---|
 | COFTA | Coptic Orthodox Football Tournament Association | London |
 | CONAFA | Coptic Orthodox National **Annual** Football Association | **Midlands** |
-| COSTA | Coptic Orthodox **Soccer** Tournament Association | London |
+| COSTA | Coptic Orthodox **Southern** Tournament Association | London |
 | COSA | Coptic Orthodox Soccer Association | London |
 | The Ark Cup | *not an acronym* | London |
 | Ladies COFTA | Coptic Orthodox Football Tournament Association (COFTA's women's competition) | London |

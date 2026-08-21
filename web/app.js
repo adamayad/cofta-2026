@@ -1427,7 +1427,7 @@ const COMPS = [
   { id: 'conafa', name: 'CONAFA', cat: 'men',   host: 'Nottingham', diocese: 'midlands',
     full: 'Coptic Orthodox National Annual Football Association' },
   { id: 'costa',  name: 'COSTA',  cat: 'men',   host: 'Croydon',    diocese: 'london',
-    full: 'Coptic Orthodox Soccer Tournament Association' },
+    full: 'Coptic Orthodox Southern Tournament Association' },
   { id: 'ark',    name: 'The Ark Cup', cat: 'men', host: 'Golders Green', diocese: 'london' },
   { id: 'cosa',   name: 'COSA',   cat: 'women', host: 'SMPK',       diocese: 'london',
     full: 'Coptic Orthodox Soccer Association' },
