@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v68`. Cache-fill
+  old devices keep stale copies forever. Currently `cofta-v69`. Cache-fill
   fetches use `cache: 'reload'` (`fresh` in sw.js) — see **A VERSION bump was
   not enough** below; without that the bump is theatre.
 
@@ -97,20 +97,22 @@ the bare domain).
   anyone sees the app at all. That path also cannot be exercised locally — the
   PowerShell dev server cannot register a worker ("unknown error occurred when
   fetching the script"), so its first real execution would be a spectator's
-  phone on the day. The HTML gets its freshness from `web/_headers` instead.
-- **`web/_headers` puts code and HTML on `no-cache`.** Not "do not cache" —
-  "revalidate before reuse", so a reload costs one conditional request and
-  gets a bodiless 304 when nothing changed. Artwork and fonts keep the Pages
-  default, because the worker already governs them and a revalidation per
-  crest per load would spend egress for nothing.
-- **Pages `_headers` has no extension globs, and says nothing when you use
-  one.** The first version of that file used `/*.js` and `/*.css`. It deployed
-  clean, matched nothing, and left `app.js` on the four-hour default while `/`
-  and `/index.html` went to `no-cache` exactly as written — a half-working
-  config that reads as working. Only `/path` and `/dir/*` splats match, so
-  **every module and stylesheet is listed by hand and a new one must be added
-  there**. Check a header change the way you check a crest: `curl -sI` each
-  path afterwards and read the value back.
+  phone on the day. **`index.html` may therefore sit up to four hours stale in
+  a browser's own cache, and that is accepted**: it is a small unchanging shell
+  whose whole job is to load the modules, and every one of those goes through
+  `fresh`, so the code is current even when the wrapper is not.
+- **`web/_headers` was tried for that gap and does not work on this project.**
+  Pages *consumed* the file — it stopped serving `/_headers` as a static asset
+  — and applied none of its rules. Proven rather than guessed: a custom
+  `X-Cofta-Headers-Probe` header on the `/app.js` rule never appeared across
+  seven checks over two and a half minutes, well past deploy time, and
+  `/app.js` stayed on `max-age=14400`. Two dead ends were burned getting
+  there, and both are the same shape — **a config that deploys clean, matches
+  nothing, and reads as working**. The first used `/*.js` and `/*.css`, which
+  Pages does not support (only `/path` and `/dir/*` splats); listing every
+  file by hand fixed the syntax and changed nothing. The file is deleted. If
+  it is ever tried again, put a custom header on the rule FIRST and confirm
+  that lands before believing any Cache-Control value.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it

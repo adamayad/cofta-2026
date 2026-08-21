@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v68';
+const VERSION = 'cofta-v69';
 const SHELL = [
   './', './index.html', './styles.css', './fonts.css', './themes.css', './diocese.webp',
   './app.js', './api.js', './model.js', './queue.js', './crests.js',
@@ -55,9 +55,15 @@ const SHELL = [
  * from its URL does work, but it silently changes mode and redirect handling on
  * the single code path that decides whether anyone sees the app at all, and
  * this cannot be tested locally: the dev server cannot register a worker, so
- * the first real execution of that path would be a spectator's phone. The HTML
- * gets its freshness from `Cache-Control: no-cache` in `web/_headers` instead,
- * which needs no code and cannot fail closed.
+ * the first real execution of that path would be a spectator's phone.
+ *
+ * So index.html itself can be up to four hours stale in a browser's own cache,
+ * and that is accepted. It is a small unchanging shell whose entire job is to
+ * load the modules — and every one of those goes through `fresh` below, so the
+ * CODE is current even when the wrapper around it is not. A `web/_headers`
+ * file was tried to close the gap and removed again: Pages consumed it (it
+ * stopped serving `/_headers`) and applied none of it, proven by a custom
+ * probe header that never appeared on `/app.js` across seven checks.
  *
  * The try/catch is the same instinct. If an engine dislikes any of this the
  * fallback is the original request — an asset a version behind, which is where
