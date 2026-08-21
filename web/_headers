@@ -11,6 +11,14 @@
 # 304 with no body whenever nothing changed. That is the right trade for the
 # handful of files listed here.
 #
+# EVERY PATH IS LISTED IN FULL, and it has to be. Pages does NOT support
+# extension globs: an earlier version of this file used `/*.js` and `/*.css`,
+# which deployed without complaint, matched nothing, and left app.js on the
+# four-hour default while `/` and `/index.html` correctly went to no-cache.
+# A rule that silently matches nothing is the worst kind. Only `/` and
+# `/dir/*` splats work, so **a new module or stylesheet must be added here by
+# hand** - there is no pattern doing it for you.
+#
 # Artwork and fonts deliberately keep the default. They are cache-first inside
 # the service worker, which only refetches them when VERSION moves, and that
 # refetch bypasses the HTTP cache (see `fresh` in sw.js). Putting them on
@@ -23,10 +31,31 @@
 /index.html
   Cache-Control: no-cache
 
-/*.js
+/sw.js
   Cache-Control: no-cache
 
-/*.css
+/app.js
+  Cache-Control: no-cache
+
+/api.js
+  Cache-Control: no-cache
+
+/model.js
+  Cache-Control: no-cache
+
+/queue.js
+  Cache-Control: no-cache
+
+/crests.js
+  Cache-Control: no-cache
+
+/styles.css
+  Cache-Control: no-cache
+
+/fonts.css
+  Cache-Control: no-cache
+
+/themes.css
   Cache-Control: no-cache
 
 /manifest.webmanifest

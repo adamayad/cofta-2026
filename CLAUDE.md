@@ -103,6 +103,14 @@ the bare domain).
   gets a bodiless 304 when nothing changed. Artwork and fonts keep the Pages
   default, because the worker already governs them and a revalidation per
   crest per load would spend egress for nothing.
+- **Pages `_headers` has no extension globs, and says nothing when you use
+  one.** The first version of that file used `/*.js` and `/*.css`. It deployed
+  clean, matched nothing, and left `app.js` on the four-hour default while `/`
+  and `/index.html` went to `no-cache` exactly as written — a half-working
+  config that reads as working. Only `/path` and `/dir/*` splats match, so
+  **every module and stylesheet is listed by hand and a new one must be added
+  there**. Check a header change the way you check a crest: `curl -sI` each
+  path afterwards and read the value back.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it
