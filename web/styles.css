@@ -555,6 +555,10 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .edm{min-width:0}
 .edm b{display:block;font-family:var(--disp);font-weight:700;font-size:16px}
 .edd{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+/* A tournament nobody recorded the winner of. Says so, rather than leaving a
+   blank where a crest goes — a blank reads as a bug and invites a guess. */
+.nowin{font-style:normal;font-size:10px;letter-spacing:.06em;color:var(--dim);
+  text-align:right;display:block;max-width:9em;line-height:1.25}
 
 /* crest or monogram */
 .acrest,.mono{display:inline-flex;align-items:center;justify-content:center;

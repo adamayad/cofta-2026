@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v51`.
+  old devices keep stale copies forever. Currently `cofta-v52`.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0025`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0026`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -72,7 +72,7 @@ the bare domain).
   reader must not have to work that out. `short_name` is **not** a display
   string — it survives only as the monogram's initials, because half these
   clubs are "St Mary & …" and canonical names would collide on "SM".
-  `tests/naming_drill.html` walks all thirteen editions and fails if anything
+  `tests/naming_drill.html` walks every edition and fails if anything
   but a canonical name reaches a name line.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
@@ -376,10 +376,38 @@ pass and must never gate the score moving.
 
 ## History: the archive of previous tournaments
 
-Thirteen finished tournaments, 2022–2026, imported by `0021` from
-`tournament_archive.json`. Five editions survive in full; eight are barely
-more than a date and a champion. **Thin records stay thin** — no synthesised
-fixtures, no zero-filled stats, and `null` never rendered as `0`.
+**Thirty-four finished tournaments, 2005–2026.** `0021` imported thirteen
+from 2022–2026; `0026` backfilled twenty-one more reaching back to the first
+COFTA in 2005. Five editions survive in full; the other twenty-nine are
+sometimes no more than a year and a champion. **Thin records stay thin** — no
+synthesised fixtures, no zero-filled stats, and `null` never rendered as `0`.
+
+`tournament_archive.json` is the source of truth and is edited first; the
+migration follows it. Adam's word is canonical, published sources fill in
+around it and are cited on the row, and a published source that contradicts
+him goes to the conflict register rather than into the data.
+
+- **Two COFTA years have no tournament at all: 2013 and 2020.** There is no
+  edition row for either. Their absence is recorded in
+  `archive_meta.no_tournament_years`, because "we checked and it did not
+  happen" is a different fact from "we have no record".
+- **Two COFTA years have no champion: 2007 and 2008.** The tournaments were
+  played; who won them is not recorded. The edition row exists with a null
+  champion and the row renders **"Champion not recorded"** (`.nowin`) where
+  the crest would go. An empty cell there read as a rendering fault and
+  invited someone to fix it by guessing.
+- **The competition page states origins only where they are known.** An
+  edition carrying `notes.inaugural` makes its competition say so — COFTA
+  2005, CONAFA 2014, Ark Cup 2026. COSTA carries `notes.origins_unrecorded`
+  on every edition instead, because its founding year is genuinely unknown
+  and the oldest row the archive holds (2022) must never be presented as the
+  first. One competition owns its article: the sentence reads "The Ark Cup
+  was first played in", not "The first The Ark Cup".
+- **`is_published_summary` hides an award from every cabinet.** It marks a
+  figure taken from a published summary table rather than from the record,
+  and both `fetchArchiveHonours` (`is_published_summary=eq.false`) and
+  `trophyCabinet` drop those rows. It is a distrust flag, not a citation —
+  cite the source in `source`/`notes` instead. See the COFTA 2014 awards.
 
 **A sparse edition is not labelled as one.** Edition rows used to carry a
 "THIN" pill; it is gone, and should not come back. It was internal vocabulary
@@ -447,6 +475,28 @@ are about the tournament, not about the compiler.
   Anything added later that fetches from a render path needs the same latch
   and its own error branch; a loader that renders on failure without one is
   this bug again.
+### Identity guards, and the ones that nearly collided
+
+- **THREE clubs carry St George, and two of them share a church name
+  exactly.** St George, Stevenage; St Mary & St George, **Nottingham**; and
+  St Mary & St George, **East London** (CONAFA 2016 debutants, added by
+  `0026`). Nottingham and East London differ by *city alone*. Any dedupe pass
+  that matches on `canonical_name` would merge two real clubs and destroy
+  both records, so `0026` ends with an assertion that all three survive as
+  separate rows, and `merge_guards` G1 in the JSON says so in the data.
+  G2 restates the older SMPK / Worthing guard beside it.
+- **"Brighton B" is not Brighton's second team.** The COSTA 2022 timetable
+  prints "Brighton A" and "Brighton B"; per Adam the B side is in fact
+  **Worthing**. That identification is scoped to `costa-2022` alone, in
+  `notes.source_labels`, and deliberately is NOT a global alias — a genuine
+  Brighton B may yet appear. `0026` asserts no team anywhere carries
+  `Brighton B` in `aliases`.
+- **Rotherham is spelt St Anthony here.** Adam's 2005–2021 roll writes
+  "St Antony". Same club, one row; the roll's spelling is an alias.
+- **Chilaka, not Chilaki.** Adam's spelling is canonical and lives in
+  `player_canonical`; the 2014 report's spelling stays in `player_name`,
+  which exists precisely to hold the string as its source printed it.
+
 - **Read-only by construction.** No insert/update/delete policy and no RPC:
   the archive changes by migration or not at all.
 - **Six competitions, not one renamed series.** COFTA, CONAFA, COSTA and The
@@ -829,7 +879,7 @@ Two rules that drill had to learn, and both apply to any drill that navigates:
   edit and replays it into every following snapshot, which is what the real
   RPC would have caused. Without that the drill was timing-dependent on a
   five-second poll and passed only by being fast enough.
-`tests/naming_drill.html` walks all thirteen editions and fails if any
+`tests/naming_drill.html` walks every edition and fails if any
 alias-only team spelling reaches the DOM, or if a B-team render loses its
 marker. Read `__namingSummary`.
 

@@ -1728,13 +1728,19 @@ function viewHistComp() {
 
   const c = compOf(state.histComp);
   const eds = state.archive.byComp[state.histComp] || [];
+  // A tournament whose winner nobody recorded still happened. COFTA 2007 and
+  // 2008 are the cases: an empty crest cell would read as a rendering fault
+  // and invite someone to "fix" it by guessing, so the row says outright that
+  // the champion is not recorded.
   const rows = eds.map(e => `<button class="edrow" data-histed="${esc(e.id)}">
       <span class="edy">${e.year}</span>
       <span class="edm">
         <b>${esc(e.display_name)}</b>
         <span class="edd">${esc(archDates(e))}${e.venue ? ' &middot; ' + esc(e.venue) : ''}</span>
       </span>
-      <span class="edw">${e.champion_team_id ? archCrest(archTeam(e.champion_team_id), 24) : ''}</span>
+      <span class="edw">${e.champion_team_id
+        ? archCrest(archTeam(e.champion_team_id), 24)
+        : '<i class="nowin">Champion not recorded</i>'}</span>
       <span class="chev" aria-hidden="true"></span>
     </button>`).join('');
 
@@ -1765,12 +1771,36 @@ function viewHistComp() {
     </div>`).join('')}</div>${missing}`
     : '';
 
+  // Two facts about a competition's beginning, and they pull opposite ways.
+  // An edition that IS the first says so. A competition whose start is simply
+  // unknown must say THAT, or the oldest row the archive happens to hold gets
+  // read as the first tournament ever played — which for COSTA it is not.
+  const years = eds.map(e => e.year);
+  const span = years.length
+    ? (years.length === 1 ? `${years[0]}`
+       : `${Math.min(...years)}–${Math.max(...years)}`)
+    : '';
+
+  const first = eds.find(e => e.notes?.inaugural);
+  const originsUnknown = eds.map(e => e.notes?.origins_unrecorded).find(Boolean);
+  // "The first The Ark Cup" — one competition carries its own article, so the
+  // sentence has to borrow the name's rather than add a second.
+  const compName = c?.name ?? '';
+  const origins = first
+    ? `<p class="note" style="padding-top:0">${/^The /.test(compName)
+         ? `${esc(compName)} was first played in`
+         : `The first ${esc(compName)} was played in`} ${first.year}.</p>`
+    : originsUnknown
+      ? `<p class="note" style="padding-top:0">${esc(originsUnknown)}</p>`
+      : '';
+
   return `${backButton('view:history')}
     <div class="chead" data-comp="${esc(state.histComp)}">
       <h2>${esc(c?.name ?? state.histComp)}</h2>
       <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;
-         ${c?.cat === 'women' ? "Women's" : "Men's"}</p>
+         ${c?.cat === 'women' ? "Women's" : "Men's"}${span ? ' &middot; ' + span : ''}</p>
     </div>
+    ${origins}
     ${honours}
     <div class="sect">Editions</div>
     <div class="edrows">${rows || '<p class="empty">No editions recorded.</p>'}</div>`;
