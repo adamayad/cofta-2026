@@ -27,7 +27,7 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v65`.
+  old devices keep stale copies forever. Currently `cofta-v66`.
 
 ## Workflow
 
@@ -614,15 +614,27 @@ viewed, under whom, and shows that diocese's crest. All organiser-confirmed:
 - **A crest file that has not landed hides itself** (`onerror` →
   `visibility:hidden`) rather than rendering broken, and never falls back to
   another diocese's crest — the wrong one is worse than none.
-- **The crest slot sizes by HEIGHT, not as a square.** `diocese.webp` is
-  192×192 and fills 24×24; `diocese-midlands.webp` is 203×150, and a square
-  slot letterboxed it to 24×18 — a third smaller on the axis carrying its
-  detail. `height:24px;width:auto;max-width:46px` treats both at the same
-  scale whatever their shape, and the masthead is the same height either way.
-- **Outstanding:** the Midlands artwork is the full lock-up — emblem plus
-  "Coptic Orthodox Patriarchate" and "DIOCESE OF THE MIDLANDS". At 24px tall
-  that text cannot be legible whatever the slot does. A square crop of the
-  emblem alone, as London's appears to be, is the real fix.
+- **The crest slot sizes by HEIGHT, not as a square**, because the artwork is
+  not guaranteed to be square. An earlier Midlands file was 203×150 and a
+  square slot letterboxed it to 24×18 — a third smaller on the axis carrying
+  its detail. `height:24px;width:auto;max-width:46px` treats any shape at the
+  same scale, and the masthead is the same height either way. Both files
+  happen to be 192×192 today; the rule is what keeps the next one safe.
+- **A diocesan seal is cropped to its emblem before it is served.** The
+  Midlands artwork as supplied is a full seal: the coat of arms inside a ring
+  of lettering. It loaded and rendered correctly and still looked like nothing
+  — at 24px the ring is sub-pixel and averages to grey haze, and the emblem
+  that carries the identity was left occupying about a third of the frame.
+  `web/diocese-midlands.webp` is now a square crop of the central emblem
+  (source 587×587, centre 294,295, half-side 180 → 192×192), which doubles the
+  emblem on screen: dark pixels in a 24×24 render go from 86 to 158, against
+  100 for London's. **`source-art/` keeps the uncropped seal** — the crop is a
+  rendering decision for a 24px slot, not a correction to the artwork, and the
+  original has to survive for the next time it is needed at a readable size.
+  Measure this the same way rather than by eye: render to a 24×24 canvas,
+  composite over white and count pixels below 180 luminance. "The file is
+  there and the img element is visible" is not the same claim as "a reader can
+  see it", and only the first of those had been checked.
 - Both crests are cache-first, so replacing either needs a `VERSION` bump.
 
 ### Who runs each competition
