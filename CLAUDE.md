@@ -27,7 +27,9 @@ the bare domain).
 - **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
   reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
   whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v66`.
+  old devices keep stale copies forever. Currently `cofta-v67`. Cache-fill
+  fetches use `cache: 'reload'` (`fresh` in sw.js) — see **A VERSION bump was
+  not enough** below; without that the bump is theatre.
 
 ## Workflow
 
@@ -74,6 +76,33 @@ the bare domain).
   clubs are "St Mary & …" and canonical names would collide on "SM".
   `tests/naming_drill.html` walks every edition and fails if anything
   but a canonical name reaches a name line.
+- **A VERSION bump was not enough, and for months it was silently not enough.**
+  Cloudflare Pages serves everything `public, max-age=14400, must-revalidate`.
+  A plain `fetch()` inside a service worker **still reads the browser's HTTP
+  cache**, so the sequence was: bump VERSION → `activate` deletes the old cache
+  → the next request misses → the worker fetches → *the browser hands back its
+  four-hour-old copy of the very file the bump existed to replace* → that stale
+  copy is written into the new cache under the new VERSION. Everything looks
+  correct from outside. `curl` returns the new bytes, the CDN is right, the
+  cache key is the new one, and the phone draws the old image. This is what
+  "the crest is still not there" meant after two deploys that each verified
+  clean. Cache-fill fetches now go through `fresh()` (`cache: 'reload'`), which
+  bypasses the HTTP cache on the way out and refreshes it on the way back.
+  **Verify a replaced asset by its BYTE COUNT from inside the page**
+  (`(await (await fetch(url)).blob()).size`), never by `curl` and never by
+  whether the element is visible — both of those said it had shipped.
+- **`fresh()` does not touch navigations, on purpose.** `new Request(navReq,
+  {…})` throws TypeError in Chrome, and rebuilding one from its URL quietly
+  changes mode and redirect handling on the one code path that decides whether
+  anyone sees the app at all. That path also cannot be exercised locally — the
+  PowerShell dev server cannot register a worker ("unknown error occurred when
+  fetching the script"), so its first real execution would be a spectator's
+  phone on the day. The HTML gets its freshness from `web/_headers` instead.
+- **`web/_headers` puts code and HTML on `no-cache`.** Not "do not cache" —
+  "revalidate before reuse", so a reload costs one conditional request and
+  gets a bodiless 304 when nothing changed. Artwork and fonts keep the Pages
+  default, because the worker already governs them and a revalidation per
+  crest per load would spend egress for nothing.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it
