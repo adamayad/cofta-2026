@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0046`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0047`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -409,6 +409,16 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 - **The rehearsal data is gone**: no played matches, no events, no active
   players, no managers. `reset_tournament()` remains for clearing scores
   mid-weekend; it is not what cleared this.
+- **Kidane Mihret changed kit and now play in dark royal blue**, `#1E3A8A`
+  with white ink (`0047`, 24 August). One column moves three things at once:
+  their half of the match header, their side of a fixture row, and their goal
+  notification circle. **It fixed the collision that mattered** — they and
+  Pope Kyrillos VI were both in white and are both in Group A, so they meet.
+  It creates a quieter one with Rotherham's `#1E2E63`, hue 226 against 224 and
+  1.25:1 apart, but those two are in different groups and cannot meet before a
+  semi-final; revisit the colour only if they do. The placeholder KM monogram
+  reads *better* on the new colour than the old one — 60.4% of the crest tile
+  now differs from the ground it sits on, against 20.1% on white.
 - **SQUADS AND MANAGERS ARE NOT IN YET** — the association has not submitted
   them. Every club currently reads "No squad list loaded". This is the last
   substantial thing outstanding, and it is a paste-in job: Organiser → Squads.
@@ -602,7 +612,7 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   closest to the dark grey circle, while being obviously green and blue to
   anyone looking at the shirt. Hue matching keeps dark green green and navy
   blue, and the whole current mapping is:
-  **🟢 Archangel Michael · ⚪ Kidane Mihret · ⚪ Pope Kyrillos VI ·
+  **🟢 Archangel Michael · 🔵 Kidane Mihret · ⚪ Pope Kyrillos VI ·
   🔴 St George · 🟡 Anba Abraam · 🔵 St Shenouda · 🔵 St Anthony.**
 - **NAVY IS BLUE AND THE COLLISION IS TOLERATED.** Unicode has one blue circle,
   so Croydon's light blue and Rotherham's navy are both 🔵 — and those two meet
