@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v82';
-import * as api from './api.js?b=cofta-v82';
-import * as M from './model.js?b=cofta-v82';
-import { WriteQueue } from './queue.js?b=cofta-v82';
+import { CREST } from './crests.js?b=cofta-v84';
+import * as api from './api.js?b=cofta-v84';
+import * as M from './model.js?b=cofta-v84';
+import { WriteQueue } from './queue.js?b=cofta-v84';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -3321,6 +3321,60 @@ const SHARE_GLYPH = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden
   <path d="M6 12.5v7A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5v-7"/></svg>`;
 
 /**
+ * THE ACTUAL TAPS, for a reader who wants to do this rather than be told it
+ * exists. The bar is one line and has to be; this is where the steps live.
+ *
+ * Four different sets of instructions, because there are genuinely four
+ * different answers and a generic one would be wrong for most readers. The
+ * order matters: `deferredInstall` is checked FIRST because a browser that
+ * offers us the real dialog should be given a button, not a description of a
+ * menu it does not need.
+ *
+ * EVERY VERSION ENDS BY OPENING IT FROM THE HOME SCREEN. That is the step
+ * people skip — they add the icon, stay in the tab they were already in, and
+ * nothing about the app appears to have changed. On iOS it is also the step
+ * that makes notifications possible at all.
+ */
+function installHowTo() {
+  if (deferredInstall) {
+    return `<ol class="howto">
+        <li>Tap <b>Install</b> below and confirm.
+          <span class="hnote">No menu to hunt through — your browser offers it directly.</span></li>
+        <li>Open COFTA from your home screen.</li>
+        <li>Tap the bell up in the corner and pick your club.</li>
+      </ol>
+      <button class="act" data-install="go">Install</button>`;
+  }
+  if (IOS_OTHER_BROWSER) {
+    return `<ol class="howto">
+        <li>Open <b>cofta.co.uk</b> in <b>Safari</b>.
+          <span class="hnote">Only Safari can put an app on an iPhone home screen.
+            Chrome, Firefox and Edge on iPhone cannot, however they look.</span></li>
+        <li>Tap ${SHARE_GLYPH} in the toolbar at the bottom.</li>
+        <li>Scroll down the list and choose <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+        <li>Open COFTA from your home screen and tap the bell to pick your club.</li>
+      </ol>`;
+  }
+  if (IOS) {
+    return `<ol class="howto">
+        <li>Tap ${SHARE_GLYPH} in the toolbar at the bottom of the screen.</li>
+        <li>Scroll down the list and choose <b>Add to Home Screen</b>.</li>
+        <li>Tap <b>Add</b>, top right.</li>
+        <li>Open COFTA from your home screen and tap the bell to pick your club.
+          <span class="hnote">This last one matters: alerts reach the app on your
+            home screen, never the Safari tab you are reading this in.</span></li>
+      </ol>`;
+  }
+  return `<ol class="howto">
+      <li>Open your browser's menu — the three dots, usually top right.</li>
+      <li>Choose <b>Install app</b>, or <b>Add to Home screen</b>.
+        <span class="hnote">If neither is there, this browser cannot install web
+          apps. Chrome, Edge and Safari can.</span></li>
+      <li>Open COFTA from your home screen and tap the bell to pick your club.</li>
+    </ol>`;
+}
+
+/**
  * Shown once someone has actually used the app a little — never on the first
  * paint. A banner over a page a reader has not read yet is an interruption,
  * not an offer.
@@ -3341,15 +3395,21 @@ function installBar() {
   bar.setAttribute('role', 'region');
   bar.setAttribute('aria-label', 'Add COFTA to your home screen');
 
+  // BOTH VERSIONS NAME THE NOTIFICATIONS, because for most readers that is the
+  // reason to bother — "full screen" is a nicety, "your phone buzzes when your
+  // club scores" is a reason. The full steps are in the alerts panel behind the
+  // bell; a fixed bar over someone's thumb is not the place for four of them.
   bar.innerHTML = deferredInstall
     ? `<div class="ibtext"><b>Add COFTA to your home screen</b>
-         <span>Full screen, and it opens straight to the scores.</span></div>
+         <span>Opens straight to the scores — and you can get a buzz when a goal
+           goes in.</span></div>
        <div class="ibacts">
          <button class="ibgo" data-install="go">Add</button>
          <button class="ibno" data-install="no" aria-label="Not now">Not now</button>
        </div>`
     : `<div class="ibtext"><b>Add COFTA to your home screen</b>
-         <span>Tap ${SHARE_GLYPH} in the toolbar, then <b>Add to Home Screen</b>.</span></div>
+         <span>Tap ${SHARE_GLYPH} then <b>Add to Home Screen</b> — and get alerts
+           when a goal goes in.</span></div>
        <div class="ibacts">
          <button class="ibno" data-install="no" aria-label="Dismiss">Got it</button>
        </div>`;
@@ -3608,12 +3668,18 @@ function notifySection() {
       <p class="note" style="padding-top:0">This browser cannot show match notifications.</p>`;
   }
 
+  // NOT INSTALLED IS NOT A DEAD END. This used to say "add it to your home
+  // screen first" and stop, which tells someone what is wrong and nothing
+  // about how to fix it — and this panel is exactly where a reader arrives
+  // having decided they want the alerts. The steps go here.
   if (!installed()) {
     return `<div class="sect">Notifications</div>
-      <p class="note" style="padding-top:0">Get a buzz when a goal goes in.
-        <b>Add COFTA to your home screen first</b> — on iPhone, notifications only
-        reach an app that has been added, never a Safari tab. Open the app from
-        your home screen and this will be here waiting.</p>`;
+      <p class="note" style="padding-top:0">A buzz when a goal goes in, and again at
+        full time — for one club, or the whole tournament. It needs COFTA on your
+        home screen first: an alert can reach an app that has been added, never a
+        browser tab. It takes about fifteen seconds.</p>
+      <div class="sect">Add COFTA to your home screen</div>
+      ${installHowTo()}`;
   }
 
   if (p.permission === 'denied') {

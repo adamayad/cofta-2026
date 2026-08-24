@@ -948,6 +948,28 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 @keyframes installbar-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.installbar{animation:none}}
 
+/* How to add the app, for a reader who has not.
+
+   NUMBERED, and not styled as `.note` like everything else on this panel.
+   `.note` is dim and italic, which is right for an aside and wrong for a set
+   of instructions someone is following with their thumb: this is the one block
+   on the page a reader has to ACT on, so it is upright, full-contrast body
+   text, and the count tells them how far they have to go before it works. */
+.howto{counter-reset:howto;list-style:none;margin:0;padding:4px 0 12px;
+  display:flex;flex-direction:column;gap:10px}
+.howto li{counter-increment:howto;position:relative;padding-left:28px;
+  font-size:12.5px;line-height:1.5;color:var(--fg2)}
+.howto li::before{content:counter(howto);position:absolute;left:0;top:1px;
+  width:19px;height:19px;border-radius:999px;
+  background:var(--acc);color:var(--accfg);
+  font-family:var(--disp);font-weight:800;font-size:11px;
+  display:flex;align-items:center;justify-content:center}
+.howto li b{font-weight:600;color:var(--fg)}
+/* The caveat under a step — why Safari, what to do if the menu item is
+   missing. Dim and smaller, because it is only for the reader it applies to. */
+.howto .hnote{display:block;color:var(--dim);font-size:11.5px;line-height:1.45;
+  margin-top:3px}
+
 /* Notification club choice. Same visual family as the theme picker: a wrapped
    row of real buttons where the current one is filled with the accent, so the
    choice is legible without reading the label above it. */

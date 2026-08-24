@@ -22,6 +22,7 @@
     ?m=standalone already installed -> nothing, ever
     ?m=dismissed inside cooldown -> nothing, ever
     ?m=notify    installed, no permission yet -> the ALERTS bar, not the install one
+    ?m=howto     NOT installed, opens the bell -> the numbered how-to, not a dead end
 -->
 <script src="../tests/until.js"></script>
 <script>
@@ -34,6 +35,7 @@ const UA = {
   standalone:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
   dismissed: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
   notify:    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  howto:     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
 };
 Object.defineProperty(navigator, 'userAgent', { get: () => UA[MODE], configurable: true });
 
@@ -125,6 +127,50 @@ window.addEventListener('load', async () => {
     await untilOr(() => document.querySelector('.fx'), 'back to fixtures');
     check('it does not come straight back on the next page',
       !document.getElementById('installbar'));
+  } else if (MODE === 'howto') {
+    // The bar first — it is the one surface a reader who has not installed will
+    // see without going looking, so it has to name the payoff.
+    check('the bar names the notifications, not just "full screen"',
+      !!bar && /goal goes in/i.test(bar.textContent), bar?.textContent.trim());
+    check('and still carries the actual instruction',
+      !!bar && /Add to Home Screen/i.test(bar.textContent));
+
+    // Then the panel behind the bell, which is where someone who has decided
+    // they want alerts arrives — and where the steps live.
+    document.getElementById('nav-admin').click();
+    await untilOr(() => document.querySelector('.howto'), 'the how-to steps', 6000);
+    const ol = document.querySelector('.howto');
+    check('opening the bell while not installed gives STEPS, not a dead end', !!ol);
+    check('four of them on iOS, ending at the home screen',
+      ol?.querySelectorAll('li').length === 4,
+      [...(ol?.querySelectorAll('li') ?? [])].map(li => li.textContent.trim().slice(0, 44)));
+    check('the share step is DRAWN, not a text glyph that renders as tofu',
+      !!ol?.querySelector('li svg'));
+    check('it names the Add to Home Screen item by its real label',
+      /Add to Home Screen/.test(ol?.textContent ?? ''));
+    check('and the last step is opening it from the home screen',
+      /home screen/i.test(ol?.lastElementChild?.textContent ?? ''),
+      ol?.lastElementChild?.textContent.trim());
+    check('no Install button on iOS, where no such API exists',
+      !document.querySelector('[data-install="go"]'));
+    check('the panel still says what the alerts actually are',
+      /full time/i.test(document.getElementById('body').textContent));
+
+    // Computed style, transitions off first: a value read mid-transition is
+    // the START value in a hidden pane and looks exactly like a dead rule.
+    const kill = document.createElement('style');
+    kill.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+    document.head.appendChild(kill);
+    const li = ol.querySelector('li');
+    const num = getComputedStyle(li, '::before');
+    check('each step is really numbered — the counter renders as a drawn pip',
+      parseFloat(num.width) >= 18 && num.content !== 'none',
+      { width: num.width, content: num.content });
+    check('instructions are upright, not the dim italic used for asides',
+      getComputedStyle(li).fontStyle === 'normal', getComputedStyle(li).fontStyle);
+    check('the steps do not overflow the page at this width',
+      document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth });
   } else if (MODE === 'notify') {
     check('the INSTALL bar stays away — they are already installed', !bar);
 
@@ -190,6 +236,7 @@ window.addEventListener('load', async () => {
 <body>
 <div class="app">
   <header class="hd">
+    <button id="nav-admin" class="gear" data-view="admin" aria-label="Alerts and organiser"></button>
     <p class="assoc"><span id="hd-assoc"></span></p>
     <h1 id="hd-title">COFTA 2026</h1>
     <p class="meta"><span id="hd-when"></span><span class="pip" id="pip"><i></i>Live</span></p>

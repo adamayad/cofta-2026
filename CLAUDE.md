@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v82`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v84`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -472,8 +472,8 @@ how this gets built badly. `installBar()` and friends in `app.js`.
   two fixed bars over the same thumb is worse than either.
 - `tests/install_drill.html` stubs the user agent **before `app.js` evaluates**
   — `IOS` and `IOS_SAFARI` are module-level constants, so a later stub is too
-  late — and drives five cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
-  `dismissed`, `notify`. 15/15, 4/4, 4/4, 4/4, 14/14.
+  late — and drives six cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
+  `dismissed`, `notify`, `howto`. 15/15, 4/4, 4/4, 4/4, 14/14, 14/14.
 
 ### And once they are in, the alerts offer
 
@@ -509,6 +509,36 @@ installed.
   `denied` on purpose — that path exercises gesture, request and teardown while
   returning from `enablePush` **before** `subscribe_push`, so the drill can
   never write a junk subscription into the production table.
+
+### Telling someone who has NOT installed how to
+
+- **"Not installed" is not a dead end.** The alerts panel used to say "add it
+  to your home screen first" and stop, which names the obstacle and nothing
+  about clearing it — and that panel is exactly where a reader arrives having
+  decided they want the alerts. `installHowTo()` puts the actual taps there.
+- **Four different sets of steps, because there are four different answers.**
+  `deferredInstall` is checked FIRST: a browser that hands us the real dialog
+  gets an Install button, not a description of a menu it does not need. Then
+  iOS-in-another-browser (open it in Safari — Chrome, Firefox and Edge on
+  iPhone genuinely cannot do this), then iOS Safari (the share sheet), then a
+  generic browser-menu fallback. A single set of instructions would be wrong
+  for most readers.
+- **Every version ends by opening it from the home screen.** That is the step
+  people skip — they add the icon, stay in the tab they were already in, and
+  nothing appears to have changed. On iOS it is also the step that makes
+  notifications possible at all.
+- **The steps are `.howto`, not `.note`.** `.note` is dim and italic, right for
+  an aside and wrong for instructions someone is following with their thumb.
+  This is the one block on the page a reader has to *act* on, so it is upright
+  full-contrast body text with a drawn number on each step.
+- **The install bar names the notifications too**, in both variants — for most
+  readers that is the reason to bother, where "full screen" is a nicety. Kept
+  to two lines at 375px **and 320px**, measured by cloning the bar into a
+  fixed-width box (the browser pane will not resize): the first phrasing ran to
+  three lines and 98.6px of a bottom bar, against 81.2px for the one shipped.
+  The full steps stay behind the bell; a fixed bar over someone's thumb is not
+  the place for four of them.
+- `?m=howto` in the install drill covers both surfaces, 14/14.
 
 ## Goal and full-time notifications
 
