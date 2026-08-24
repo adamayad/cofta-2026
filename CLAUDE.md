@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v74`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v82`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -472,8 +472,43 @@ how this gets built badly. `installBar()` and friends in `app.js`.
   two fixed bars over the same thumb is worse than either.
 - `tests/install_drill.html` stubs the user agent **before `app.js` evaluates**
   — `IOS` and `IOS_SAFARI` are module-level constants, so a later stub is too
-  late — and drives four cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
-  `dismissed`. 15/15, 4/4, 4/4, 4/4.
+  late — and drives five cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
+  `dismissed`, `notify`. 15/15, 4/4, 4/4, 4/4, 14/14.
+
+### And once they are in, the alerts offer
+
+`notifyBar()` / `canOfferNotify()` / `dismissNotifyBar()`, same shape and the
+same `.installbar` styling as above, shown on the page after a reader has
+installed.
+
+- **The moment after installing is the only good moment to ask**, and on iOS it
+  is the FIRST moment the question can be asked at all: Apple will not deliver
+  push to a Safari tab, so before the install there was nothing to offer.
+  Waiting for someone to discover the bell in the masthead on their own wastes
+  that. Android's `appinstalled` needs no special handling — the tab it fires in
+  is not `display-mode: standalone`, so the offer appears when they open the
+  installed app, which is the same story on both platforms.
+- **It is our bar first, and the OS dialog only after a tap.** Raising
+  `Notification.requestPermission()` unprompted is how people end up tapping
+  "Don't allow", which the app cannot undo and cannot ask about again.
+- **THE TAP IS THE PERMISSION GESTURE.** The `data-notifybar` branch in the
+  click handler calls `enablePush` with nothing in front of it — iOS silently
+  refuses a permission request whose gesture has been spent on an await.
+- **`permission !== 'default'` suppresses it entirely.** `denied` can only be
+  undone in Settings; nagging about something the app cannot fix is noise.
+  A dismissal is remembered for the same seven days
+  (`cofta.notify.dismissed`), and a refusal at the OS dialog counts as one.
+- **Unlike `installBar()`, this one also takes itself DOWN.** An install ends
+  with the page being replaced, so that bar never has to remove itself; this
+  one is answered in place, and the state it is asking about changes while it
+  is still on screen. `notifyBar()` removes the node when `canOfferNotify()`
+  goes false.
+- The two bars cannot stack: that one only shows when NOT installed, this one
+  only when installed.
+- `?m=notify` in the install drill covers it. `requestPermission` answers
+  `denied` on purpose — that path exercises gesture, request and teardown while
+  returning from `enablePush` **before** `subscribe_push`, so the drill can
+  never write a junk subscription into the production table.
 
 ## Goal and full-time notifications
 

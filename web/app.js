@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v81';
-import * as api from './api.js?b=cofta-v81';
-import * as M from './model.js?b=cofta-v81';
-import { WriteQueue } from './queue.js?b=cofta-v81';
+import { CREST } from './crests.js?b=cofta-v82';
+import * as api from './api.js?b=cofta-v82';
+import * as M from './model.js?b=cofta-v82';
+import { WriteQueue } from './queue.js?b=cofta-v82';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2629,6 +2629,10 @@ function render() {
   // repaint \u2014 which runs every five seconds \u2014 never rebuilds it underneath
   // someone's finger. installBar() is a no-op once the bar exists.
   installBar();
+  // And once they are in: the alerts offer. Mutually exclusive with the one
+  // above by construction — that one only shows when NOT installed, this one
+  // only when installed — so the two can never stack.
+  notifyBar();
 }
 
 /** The clock ticks locally between polls, so the minute never looks frozen. */
@@ -2656,7 +2660,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notify],[data-alert],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notifybar],[data-notify],[data-alert],#signin,#signout');
   if (!t) return;
 
   // The install bar sits outside #body and is not a view, so it is handled
@@ -2664,6 +2668,24 @@ document.addEventListener('click', async (ev) => {
   // always respected — see DISMISS_DAYS.
   if (t.dataset.install) {
     if (t.dataset.install === 'go') await doInstall(); else dismissInstall();
+    return;
+  }
+
+  // The alerts offer that follows an install. Handled here rather than folded
+  // into data-notify below because THE TAP ITSELF IS THE PERMISSION GESTURE:
+  // iOS refuses requestPermission() once the gesture has been spent on an
+  // await, so this branch runs enablePush directly with nothing in front of
+  // it. Failure keeps the bar up — telling someone it worked when it did not
+  // is how a phone stays silent all weekend with nobody any the wiser.
+  if (t.dataset.notifybar) {
+    if (t.dataset.notifybar !== 'go') { dismissNotifyBar(); return; }
+    try {
+      await enablePush(pushTeam() || null);
+      // Enabled, or refused at the OS dialog. Either way this bar has had its
+      // answer and must not ask again; render() takes it down through
+      // canOfferNotify, and the key stops a 'denied' from re-offering later.
+      dismissNotifyBar();
+    } catch (e) { alert(e.message || 'Could not turn on alerts.'); }
     return;
   }
 
@@ -3332,6 +3354,68 @@ function installBar() {
          <button class="ibno" data-install="no" aria-label="Dismiss">Got it</button>
        </div>`;
   document.body.appendChild(bar);
+}
+
+/* ── and once they are in, offer the alerts ──────────────── */
+/**
+ * THE MOMENT AFTER INSTALLING IS THE ONLY GOOD MOMENT TO ASK.
+ *
+ * Someone who has just put COFTA on their home screen has declared an interest
+ * in a way nobody else has, and on iOS this is the FIRST instant the question
+ * can even be asked — Apple will not deliver push to a Safari tab, so before
+ * installing there was nothing to offer. Waiting for them to discover the bell
+ * on their own wastes that.
+ *
+ * Not a permission request straight away: iOS requires a real gesture, and a
+ * system dialog nobody invited is how people end up tapping "Don't allow",
+ * which cannot be undone from inside the app. This is our own bar first, and
+ * the OS prompt only after a tap.
+ */
+const NOTIFY_DISMISS_KEY = 'cofta.notify.dismissed';
+
+function notifyDismissedRecently() {
+  try {
+    const at = Number(localStorage.getItem(NOTIFY_DISMISS_KEY) || 0);
+    return at > 0 && (Date.now() - at) < DISMISS_DAYS * 864e5;
+  } catch { return false; }
+}
+
+function canOfferNotify() {
+  if (!installed()) return false;              // iOS cannot deliver to a tab
+  if (!state.push?.supported) return false;
+  if (state.push.subscribed) return false;
+  // 'denied' means they have already refused at OS level, and the app cannot
+  // ask again. Nagging about something only Settings can fix is just noise.
+  if (state.push.permission !== 'default') return false;
+  if (notifyDismissedRecently()) return false;
+  if ($('newbuild') || $('installbar')) return false;   // one bar at a time
+  return state.views >= 2 || state.installEarned;
+}
+
+function notifyBar() {
+  // Unlike installBar this also has to take the bar DOWN. Install ends with
+  // the page being replaced, so that bar never needs removing from under
+  // itself; this one is answered in place — tap Turn on, and the state it is
+  // asking about changes while the bar is still on screen.
+  if (!canOfferNotify()) { $('notifybar')?.remove(); return; }
+  if ($('notifybar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'notifybar';
+  bar.className = 'installbar';
+  bar.setAttribute('role', 'region');
+  bar.setAttribute('aria-label', 'Turn on match alerts');
+  bar.innerHTML = `<div class="ibtext"><b>Get a buzz when a goal goes in</b>
+      <span>Goals and full time. Pick one club, or turn it off, any time.</span></div>
+    <div class="ibacts">
+      <button class="ibgo" data-notifybar="go">Turn on</button>
+      <button class="ibno" data-notifybar="no" aria-label="Not now">Not now</button>
+    </div>`;
+  document.body.appendChild(bar);
+}
+
+function dismissNotifyBar() {
+  try { localStorage.setItem(NOTIFY_DISMISS_KEY, String(Date.now())); } catch {}
+  $('notifybar')?.remove();
 }
 
 async function doInstall() {

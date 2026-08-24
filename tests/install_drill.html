@@ -21,6 +21,7 @@
     ?m=crios     Chrome on iOS   -> nothing, ever
     ?m=standalone already installed -> nothing, ever
     ?m=dismissed inside cooldown -> nothing, ever
+    ?m=notify    installed, no permission yet -> the ALERTS bar, not the install one
 -->
 <script src="../tests/until.js"></script>
 <script>
@@ -32,6 +33,7 @@ const UA = {
   crios:     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.108 Mobile/15E148 Safari/604.1',
   standalone:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
   dismissed: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  notify:    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
 };
 Object.defineProperty(navigator, 'userAgent', { get: () => UA[MODE], configurable: true });
 
@@ -40,11 +42,25 @@ if (MODE === 'dismissed') {
   // Dismissed an hour ago: well inside the seven-day cooldown.
   localStorage.setItem('cofta.install.dismissed', String(Date.now() - 3600e3));
 }
-if (MODE === 'standalone') {
+if (MODE === 'standalone' || MODE === 'notify') {
   const realMM = window.matchMedia.bind(window);
   window.matchMedia = (q) => q.includes('display-mode: standalone')
     ? { matches: true, addEventListener(){}, removeEventListener(){} }
     : realMM(q);
+}
+
+// The alerts bar's own stubs. requestPermission answers 'denied', which is the
+// one outcome that exercises the whole tap path — gesture, permission call,
+// bar taken down — WITHOUT reaching the network: enablePush returns before
+// subscribe_push, so this drill can never write a junk subscription into the
+// production table. What it proves is that the tap is spent on the permission
+// request itself, which is the part iOS is strict about.
+let permissionAsks = 0;
+if (MODE === 'notify') {
+  window.Notification = {
+    permission: 'default',
+    requestPermission: async () => { permissionAsks++; return 'denied'; },
+  };
 }
 
 const results = [];
@@ -109,6 +125,42 @@ window.addEventListener('load', async () => {
     await untilOr(() => document.querySelector('.fx'), 'back to fixtures');
     check('it does not come straight back on the next page',
       !document.getElementById('installbar'));
+  } else if (MODE === 'notify') {
+    check('the INSTALL bar stays away — they are already installed', !bar);
+
+    const nb = await untilOr(() => document.getElementById('notifybar'),
+      'the alerts bar', 6000) && document.getElementById('notifybar');
+    check('an installed reader with no permission yet is offered alerts', !!nb);
+    check('it says what they will actually get, in their words',
+      !!nb && /goal/i.test(nb.textContent), nb?.textContent.trim());
+    check('Turn on is a real button', nb?.querySelector('[data-notifybar="go"]')?.tagName === 'BUTTON');
+    check('so is Not now, and it carries a label',
+      nb?.querySelector('[data-notifybar="no"]')?.tagName === 'BUTTON'
+      && !!nb?.querySelector('[data-notifybar="no"]')?.getAttribute('aria-label'));
+
+    const cs = getComputedStyle(nb);
+    check('it takes the install bar\'s styling rather than rendering unstyled',
+      cs.position === 'fixed' && parseFloat(cs.bottom) >= 12,
+      { position: cs.position, bottom: cs.bottom });
+    check('the tap targets are big enough to hit',
+      parseFloat(getComputedStyle(nb.querySelector('[data-notifybar="go"]')).minHeight) >= 38);
+    check('it does not overflow the page at this width',
+      document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth });
+
+    // The tap. Permission is refused here, which is the harder case: the bar
+    // must still come down and must not ask again.
+    nb.querySelector('[data-notifybar="go"]').click();
+    await untilOr(() => permissionAsks > 0, 'the permission request', 4000);
+    check('the tap asks for permission — the gesture is spent on the request',
+      permissionAsks === 1, permissionAsks);
+    await untilOr(() => !document.getElementById('notifybar'), 'bar answered', 6000);
+    check('a refusal takes the bar down rather than leaving it up', !document.getElementById('notifybar'));
+    check('and is remembered, so a refusal is not re-asked next page',
+      !!localStorage.getItem('cofta.notify.dismissed'));
+    document.getElementById('nav-fixtures').click();
+    await untilOr(() => document.querySelector('.fx'), 'back to fixtures');
+    check('it does not come straight back', !document.getElementById('notifybar'));
   } else {
     const why = { crios: 'Chrome on iOS cannot install this app',
                   standalone: 'already installed',
