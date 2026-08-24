@@ -107,8 +107,29 @@ async function encrypt(payload: string, p256dh: string, auth: string) {
   return cat(salt, rs, new Uint8Array([localPub.length]), localPub, ct);
 }
 
+/**
+ * CORS. THIS IS NOT BOILERPLATE - its absence is what stopped notifications
+ * working from a second device. The browser sends an OPTIONS preflight before
+ * any cross-origin POST carrying Authorization and apikey headers, and this
+ * function used to answer that with 405 and no CORS headers - so the browser
+ * blocked the real POST before it ever left the device. Nothing reached the
+ * server, nothing appeared in any log except a lone OPTIONS 405, and the
+ * symptom was "it works on my phone but not the other one", because whether a
+ * preflight is sent at all differs between browsers and contexts.
+ *
+ * Every response below carries these, not just the preflight: a POST reply
+ * without them is unreadable to the page that asked for it.
+ */
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
+};
+
 Deno.serve(async (req) => {
-  if (req.method !== 'POST') return new Response('POST only', { status: 405 });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method !== 'POST') return new Response('POST only', { status: 405, headers: CORS });
 
   // FAIL LOUDLY AND EARLY IF THE KEY IS MISSING. Without this the first
   // subscriber's importKey() throws, the catch below treats it as a dead
@@ -116,7 +137,7 @@ Deno.serve(async (req) => {
   // list on the first goal of the tournament.
   if (!Deno.env.get('VAPID_PRIVATE_KEY')) {
     return Response.json({ error: 'VAPID_PRIVATE_KEY is not set on this project',
-      sent: 0, of: 0 }, { status: 500 });
+      sent: 0, of: 0 }, { status: 500, headers: CORS });
   }
 
   const admin = createClient(
@@ -129,18 +150,18 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authz } } });
   const { data: isAdmin } = await asCaller.rpc('is_admin');
-  if (!isAdmin) return new Response('not an organiser', { status: 403 });
+  if (!isAdmin) return new Response('not an organiser', { status: 403, headers: CORS });
 
   const { match_id, kind } = await req.json().catch(() => ({}));
   if (!match_id || !['goal', 'full_time', 'test'].includes(kind)) {
-    return new Response('match_id and kind required', { status: 400 });
+    return new Response('match_id and kind required', { status: 400, headers: CORS });
   }
 
   // EVERY WORD IS READ BACK FROM THE DATABASE, not taken from the request.
   const { data: m } = await admin.from('matches')
     .select('id, stage, home_team, away_team, home_score, away_score, status')
     .eq('id', match_id).single();
-  if (!m) return new Response('no such match', { status: 404 });
+  if (!m) return new Response('no such match', { status: 404, headers: CORS });
 
   const { data: teams } = await admin.from('teams').select('id, name, city');
   const by = Object.fromEntries((teams ?? []).map((t) => [t.id, t]));
@@ -220,5 +241,5 @@ Deno.serve(async (req) => {
     of: (subs ?? []).length,
     // Surfaced so a dry run can see WHY nothing arrived without reading logs.
     problems: problems.slice(0, 3),
-  });
+  }, { headers: CORS });
 });
