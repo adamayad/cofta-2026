@@ -166,7 +166,8 @@ Deno.serve(async (req) => {
     .eq('id', match_id).single();
   if (!m) return new Response('no such match', { status: 404, headers: CORS });
 
-  const { data: teams } = await admin.from('teams').select('id, name, city, short_label');
+  const { data: teams } = await admin.from('teams')
+    .select('id, name, city, short_label, colour');
   const by = Object.fromEntries((teams ?? []).map((t) => [t.id, t]));
   // THE CHURCH, NOT THE TOWN. A notification has room for a scoreline and
   // little else, so the app's usual full-name-over-city is impossible here and
@@ -183,13 +184,57 @@ Deno.serve(async (req) => {
   // someone glancing at a lock screen wants. A notification reading "GOAL!"
   // with the score buried underneath makes you open the app to learn it.
   //
-  // AND THE BALL MARKS WHO SCORED. A notification has no bold, no colour and
-  // no styling, so the only way to show which side the goal belongs to is
-  // POSITION: the ball sits at that club's end of the scoreline.
-  //   ⚽ Brighton 2–1 Croydon     home scored
-  //   Brighton 2–1 Croydon ⚽     away scored
-  // Those are different at a glance in a way "GOAL! Brighton 2–1 Croydon" is
-  // not — and glancing is the entire interaction.
+  /**
+   * The scoring club's colour, as one of the nine circles Unicode offers.
+   *
+   * MATCHED ON HUE, NOT RGB DISTANCE. Plain nearest-colour arithmetic turns a
+   * dark green kit and a navy kit BLACK — both are genuinely closest to the
+   * dark grey circle, while being obviously green and blue to anyone looking
+   * at the shirt. Golders Green's #14532D is dark green and must read green.
+   *
+   * THE ONE EXCEPTION IS DARK BLUE, and the alphabet forces it: there is
+   * exactly one blue circle. Croydon's light blue and Rotherham's navy would
+   * otherwise both be 🔵 — and those two meet TWICE this year. Navy therefore
+   * takes ⚫, not because navy is black, but because "the dark one" is the only
+   * distinction available. Green needs no such rule: 🟢 is the only green
+   * there is, so dark green simply stays green.
+   */
+  const dotFor = (hex: string | null) => {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const l = (mx + mn) / 2, d = mx - mn;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let h = 0;
+    if (d !== 0) {
+      if (mx === r) h = 60 * (((g - b) / d) % 6);
+      else if (mx === g) h = 60 * (((b - r) / d) + 2);
+      else h = 60 * (((r - g) / d) + 4);
+    }
+    if (h < 0) h += 360;
+    if (s < 0.15) return l > 0.6 ? '⚪' : '⚫';    // a colourless kit: white or black
+    if (h < 15 || h >= 345) return '🔴';
+    if (h < 45)  return l < 0.35 ? '🟤' : '🟠';
+    if (h < 70)  return '🟡';
+    if (h < 170) return '🟢';                     // dark green included
+    if (h < 260) return l < 0.35 ? '⚫' : '🔵';    // navy: see above
+    if (h < 320) return '🟣';
+    return '🔴';
+  };
+  const dotOf = (id: string | null) => id ? dotFor(by[id]?.colour ?? null) : '';
+
+  // THE SCORING SIDE IS MARKED BY POSITION, and its colour is what marks it:
+  // the club's circle sits at that club's end of the scoreline.
+  //   🟠 Anba Abraam 2–1 St Shenouda   home scored
+  //   Anba Abraam 2–1 St Shenouda 🔵   away scored
+  //
+  // POSITION CARRIES THE MEANING AND COLOUR IS THE FLAVOUR, in that order and
+  // deliberately: Kidane Mihret and Pope Kyrillos VI both play in white and
+  // meet in Group A, so their circles are identical. Because the circle sits
+  // at the scoring END rather than merely appearing somewhere in the string,
+  // the notification stays unambiguous even where the colours are not.
   const home = nameOf(m.home_team), away = nameOf(m.away_team);
   const line = `${home} ${m.home_score}–${m.away_score} ${away}`;
 
@@ -256,7 +301,9 @@ Deno.serve(async (req) => {
       ev = data;
     }
 
-    title = (ev?.side ?? 'home') === 'home' ? `⚽ ${line}` : `${line} ⚽`;
+    const scoredHome = (ev?.side ?? 'home') === 'home';
+    const dot = dotOf(scoredHome ? m.home_team : m.away_team);
+    title = scoredHome ? `${dot} ${line}`.trim() : `${line} ${dot}`.trim();
 
     let scorer = '';
     if (ev?.player_id) {

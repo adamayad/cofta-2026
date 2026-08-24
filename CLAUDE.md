@@ -525,6 +525,22 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   UPDATE and DELETE and RLS was the only thing standing. `0045` revokes them:
   a direct GET went 200/`[]` → **401**, a direct POST → **401**, and both RPCs
   still return 204.
+- **The scoring club is marked by its COLOUR, at its end of the scoreline.**
+  `🟠 Anba Abraam 2–1 St Shenouda` for a home goal, `… St Shenouda 🔵` for an
+  away one. **Position carries the meaning and colour is the flavour, in that
+  order**: Kidane Mihret and Pope Kyrillos VI both play in white and meet in
+  Group A, so their circles are identical - and the notification is still
+  unambiguous, because the circle sits at the scoring END rather than merely
+  appearing somewhere in the line.
+- **Circles are matched on HUE, not RGB distance.** Nearest-colour arithmetic
+  turns Golders Green's #14532D and Rotherham's #1E2E63 BLACK - both really are
+  closest to the dark grey circle, while being obviously green and blue to
+  anyone looking at the shirt. **The one exception is dark blue, and the
+  alphabet forces it**: Unicode has exactly one blue circle, so Croydon's light
+  blue and Rotherham's navy would both be 🔵 - and those two meet twice this
+  year. Navy takes ⚫, not because navy is black but because "the dark one" is
+  the only distinction available. Green needs no such rule: there is only one
+  green, so dark green stays green.
 - **A notification names the CHURCH, not the town.** `teams.short_label`
   (`0046`) is the one-line name a club goes by where the usual full-name-over-
   city is impossible. It used to fall back to the city, which reads badly for
