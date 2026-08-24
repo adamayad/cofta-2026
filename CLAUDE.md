@@ -406,9 +406,22 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
   "Clubs" than any club that never entered. Their page is still reachable from
   their History cabinet, and reads **"Not entered this year"**. Before `0042`
   it read "Eliminated - group stage", which is neither true nor kind.
-- **The rehearsal data is gone**: no played matches, no events, no active
-  players, no managers. `reset_tournament()` remains for clearing scores
-  mid-weekend; it is not what cleared this.
+- **⚠ DRY-RUN DATA IS LIVE ON cofta.co.uk RIGHT NOW.** Measured against the
+  production `snapshot()` on 24 August: **7 matches at full time, 1 running in
+  the first half, 31 events, 98 active players across all 7 clubs, and 7
+  invented managers.** A spectator opening the site today sees a tournament in
+  progress three weeks early. This is deliberate — it is the dry-run — but it
+  **must be cleared before the site is given out**, and clearing it is TWO
+  actions, not one:
+  1. `reset_tournament()` from Organiser. Verified against the live function
+     body: it deletes events, slot overrides, tie shoot-outs and trophies,
+     resets every match to `scheduled` 0–0 with no clock, un-pins the three
+     knockout fixtures, and clears disqualifications.
+  2. **Squads and managers separately** — `reset_tournament()` does not touch
+     `players` or `teams.manager`, so the fake names survive it.
+     `update public.players set active=false where true;` and clear the
+     managers. Forgetting this is the likely failure mode, because step 1
+     makes the site *look* clean.
 - **KIDANE MIHRET ARE IN WHITE.** They were reported to have changed to dark
   royal blue on 24 August (`0047`) and the report was withdrawn as a false
   alarm the same afternoon (`0048`). Both migrations stand: 0047 had been
@@ -419,11 +432,11 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
   fix: the circle sits at the *scoring end* of the scoreline, so `⚪ Kidane
   Mihret 1–0 Pope Kyrillos VI` and `Kidane Mihret 1–0 Pope Kyrillos VI ⚪` are
   different sentences. Position carries the meaning; colour is the flavour.
-- **SQUADS AND MANAGERS ARE NOT IN YET** — the association has not submitted
-  them. Every club currently reads "No squad list loaded". This is the last
-  substantial thing outstanding, and it is a paste-in job: Organiser → Squads.
-  Nothing else waits on it; goals cannot be attributed to a player until it is
-  done, so it must land before kick-off.
+- **THE REAL SQUADS AND MANAGERS ARE STILL NOT IN** — the association has not
+  submitted them, and what is loaded today is the dry-run fakes above. This is
+  the last substantial thing outstanding, and it is a paste-in job: Organiser →
+  Squads. Nothing else waits on it; goals cannot be attributed to a player
+  until it is done, so it must land before kick-off.
 - **Supabase is on Pro** as of 24 August. Measured egress for the weekend is
   ~29.5GB gzipped (1,000 devices × 8h × a 5,504-byte poll), comfortably inside
   250GB. The older ~90GB estimate was uncompressed.
@@ -435,14 +448,42 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 
 ## September checklist
 
-1. ~~Supabase Pro upgrade~~ **done, 24 August.** Still to decide: the spend
-   cap. With it ON, exceeding quota RESTRICTS the project rather than billing
-   — which on the day means the site goes down instead of costing a few
-   pounds. Turn it off for the weekend. Leaked-password toggle also pending.
-2. ~~Draw day~~ **done, 24 August** (`0042`, `0043`). Remaining: paste real
-   squads and managers.
-3. Before the weekend: venue dry run on real phones, Amani's organiser
-   account (allowlisted, user not yet created), poster with QR.
+Verified against production on 24 August rather than remembered. **Only Adam
+can do items 1–4**: they need the Supabase dashboard, a password, or the
+association.
+
+1. **Clear the dry run** — both halves, see the warning under Current state.
+   The site is showing a tournament in progress today.
+2. **Real squads and managers**, once the association sends them. Blocked on
+   them, not on us.
+3. **Amani's organiser account.** `amani@cofta.example` is on the allowlist
+   with role `organiser`, and **no `auth.users` row exists for it** — the
+   allowlist grants the role when the user is created, so until someone
+   creates that user in the dashboard there is no second organiser. The other
+   three accounts (Adam + two pitch) exist and have signed in.
+4. **Spend cap decision, and the leaked-password toggle.** With the cap ON,
+   exceeding quota RESTRICTS the project rather than billing — on the day that
+   means the site goes down instead of costing a few pounds. Turn it off for
+   the weekend. Leaked-password protection is still disabled; the Supabase
+   advisor confirms it.
+5. **Venue dry run on real phones**, and it is the only way to close the one
+   genuine gap in the notification work: everything up to the send is verified,
+   but no notification has ever been observed arriving on a handset from a
+   *different* device. `VAPID_PRIVATE_KEY` **is** set — an unauthenticated POST
+   to the function returns `403 not an organiser`, and the missing-key branch
+   runs *before* the auth gate, so a missing secret would have returned 500.
+   That check needs no credentials and is the fastest way to re-confirm it.
+6. Poster with QR.
+7. **Kidane Mihret's real crest** — still the placeholder KM monogram — and
+   confirm the spelling of the name.
+8. **The 2026 rules**, if the association issues any. 2025's are implemented.
+
+**Do not deploy during the tournament weekend.** Cloudflare's edge cache keys
+on the path and ignores `?b=`, so the first device to reach a given edge after
+a push can be served the previous build. It self-corrects on the next request
+(`must-revalidate` + ETag, observed EXPIRED → REVALIDATED), and the stale build
+is internally consistent so nothing breaks — but it is one avoidable surprise,
+and there is no reason to take it while matches are being played.
 
 ## Add to home screen
 
