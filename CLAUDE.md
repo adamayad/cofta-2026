@@ -24,12 +24,14 @@ the bare domain).
   table + trigger grants roles on user creation. The last confirmed role is
   cached in `localStorage` (`cofta.role.v1`) so an offline boot still renders
   the organiser's controls — see **Offline role trust** below.
-- **PWA**: `sw.js` — network-first for code/HTML (deploys land on first
-  reload), cache-first for fonts/crests/icons. **Bump `VERSION` in sw.js
-  whenever any cached asset changes** (fonts, crests, PWA icons), otherwise
-  old devices keep stale copies forever. Currently `cofta-v69`. Cache-fill
-  fetches use `cache: 'reload'` (`fresh` in sw.js) — see **A VERSION bump was
-  not enough** below; without that the bump is theatre.
+- **PWA**: `sw.js`. **Every module and stylesheet is loaded under a versioned
+  URL** — `./app.js?b=cofta-vNN` — and those are cache-first, because a
+  versioned URL is immutable by construction. Only the navigation is
+  network-first, since it is the document that names the current build.
+  **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
+  sixteen references together, and `tools/check-build.sh`, which fails if they
+  ever disagree. Currently `cofta-v72`. See **A deploy did not reach phones for
+  four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
 
@@ -76,43 +78,66 @@ the bare domain).
   clubs are "St Mary & …" and canonical names would collide on "SM".
   `tests/naming_drill.html` walks every edition and fails if anything
   but a canonical name reaches a name line.
-- **A VERSION bump was not enough, and for months it was silently not enough.**
-  Cloudflare Pages serves everything `public, max-age=14400, must-revalidate`.
-  A plain `fetch()` inside a service worker **still reads the browser's HTTP
-  cache**, so the sequence was: bump VERSION → `activate` deletes the old cache
-  → the next request misses → the worker fetches → *the browser hands back its
-  four-hour-old copy of the very file the bump existed to replace* → that stale
-  copy is written into the new cache under the new VERSION. Everything looks
-  correct from outside. `curl` returns the new bytes, the CDN is right, the
-  cache key is the new one, and the phone draws the old image. This is what
-  "the crest is still not there" meant after two deploys that each verified
-  clean. Cache-fill fetches now go through `fresh()` (`cache: 'reload'`), which
-  bypasses the HTTP cache on the way out and refreshes it on the way back.
-  **Verify a replaced asset by its BYTE COUNT from inside the page**
-  (`(await (await fetch(url)).blob()).size`), never by `curl` and never by
-  whether the element is visible — both of those said it had shipped.
-- **`fresh()` does not touch navigations, on purpose.** `new Request(navReq,
-  {…})` throws TypeError in Chrome, and rebuilding one from its URL quietly
-  changes mode and redirect handling on the one code path that decides whether
-  anyone sees the app at all. That path also cannot be exercised locally — the
-  PowerShell dev server cannot register a worker ("unknown error occurred when
-  fetching the script"), so its first real execution would be a spectator's
-  phone on the day. **`index.html` may therefore sit up to four hours stale in
-  a browser's own cache, and that is accepted**: it is a small unchanging shell
-  whose whole job is to load the modules, and every one of those goes through
-  `fresh`, so the code is current even when the wrapper is not.
-- **`web/_headers` was tried for that gap and does not work on this project.**
-  Pages *consumed* the file — it stopped serving `/_headers` as a static asset
-  — and applied none of its rules. Proven rather than guessed: a custom
-  `X-Cofta-Headers-Probe` header on the `/app.js` rule never appeared across
-  seven checks over two and a half minutes, well past deploy time, and
-  `/app.js` stayed on `max-age=14400`. Two dead ends were burned getting
-  there, and both are the same shape — **a config that deploys clean, matches
-  nothing, and reads as working**. The first used `/*.js` and `/*.css`, which
-  Pages does not support (only `/path` and `/dir/*` splats); listing every
-  file by hand fixed the syntax and changed nothing. The file is deleted. If
-  it is ever tried again, put a custom header on the rule FIRST and confirm
-  that lands before believing any Cache-Control value.
+- **A DEPLOY DID NOT REACH PHONES FOR FOUR HOURS, AND THE SERVICE WORKER HAD
+  NOTHING TO DO WITH IT.** Reported as "I had to remove the home-screen app and
+  clear site data to see changes". Three plausible causes were ruled out by
+  measurement before anything was changed, and the real one was none of them.
+  - *Not Cloudflare.* Three timed pushes reached the URL in **16s, 21s and
+    ~50s**. Deploy latency is never what you are waiting for.
+  - *Not an undeployed worker.* The live `sw.js` was byte-identical to the repo.
+  - *Not really the two-reload quirk*, though it reproduced perfectly: after
+    one reload the page still ran old code while the new worker sat there
+    `activated` with the **new `app.js` already in its own cache**.
+
+  **The browser's HTTP cache sits IN FRONT of a service worker for subresource
+  loads.** Resource timing for one ordinary reload of production said it
+  outright:
+
+  | file | transferSize | workerStart |
+  |---|---|---|
+  | `/` | 3421 | > 0 — through the worker |
+  | `/app.js` | **0** | **0 — never reached it** |
+  | `/model.js`, `/api.js`, `/styles.css`, … | **0** | **0** |
+
+  Pages serves the modules `max-age=14400`, so for four hours the browser
+  answered every one of them itself and `sw.js` never executed. No cache
+  strategy could fix that, because no cache strategy was running. The
+  `fresh`/`cache:'reload'` work below is correct and was simply bypassed. Two
+  reloads sometimes cured it **by accident** — the worker's `cache:'reload'`
+  fetches refresh the browser's HTTP entry as a side effect, so the load after
+  that one saw new bytes. A PWA that is resumed rather than reloaded never gets
+  that far, which is exactly the reported symptom.
+- **THE FIX IS IN THE URL.** Every module and stylesheet carries
+  `?b=cofta-vNN`. A deploy asks for a URL the browser has never seen, so its
+  cache cannot answer and the response header we are not permitted to set stops
+  mattering. Verified end to end on production: a page running v71, one reload
+  after a v72 deploy, `window.__build === 'cofta-v72'` — and every module now
+  reports `viaSW: true`, the exact inverse of the table above.
+- **Versioned URLs are cache-first, and that is the point.** Their bytes cannot
+  change without the URL changing, so serving them from cache is not a
+  staleness risk; an old token is simply never requested again, because the
+  freshly revalidated `index.html` only ever names the current one. It also
+  keeps ~250KB per page load off the weekend's egress — network-first with
+  `cache:'reload'` would re-download the lot every single load now that the
+  worker actually sees these requests.
+- **`tools/bump-build.sh` or nothing.** Sixteen references across three files
+  must agree, and the failure when they do not is silent: a stale `model.js`
+  under a fresh `app.js` is a working page computing yesterday's standings, and
+  nothing errors. `tools/check-build.sh` fails on drift and is the thing to run
+  before any push that touches `web/`.
+- **A page already open when a deploy lands cannot be saved by any of this** —
+  its JavaScript is parsed and running. `watchForUpdates()` in `app.js` shows a
+  "New version available / Tap to refresh" bar on `updatefound` and
+  `controllerchange`, and calls `registration.update()` on `visibilitychange`
+  so a phone left open all afternoon still asks. **Deliberately not an
+  auto-reload**: someone mid-goal-entry must not have the page pulled from
+  under them, and the organiser's write queue lives in memory. Guarded on
+  `hadController`, so a first-time visitor is never greeted with it.
+- **`web/_headers` does nothing on this project.** Proven twice, once with a
+  custom probe header that never appeared on `/app.js` across seven checks over
+  two and a half minutes. The CRLF theory for why was checked and is **wrong** —
+  the stored blob has zero CR bytes. Do not reach for it again; version the URL
+  instead.
 - **New views ship with their Matchday styling in the same commit, verified
   by computed-style assertions.** Not by geometry alone and not by eye —
   assert `getComputedStyle` values: that a grid resolves to the columns it
