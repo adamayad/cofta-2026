@@ -958,3 +958,11 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .notifychoice button.on{background:var(--acc);color:var(--accfg);
   box-shadow:inset 0 0 0 1px var(--acc);font-weight:800}
 .notifychoice button:active{transform:translateY(1px)}
+
+/* The alert-kind picker sits under the club picker and must read as the
+   secondary choice: smaller type, and "on" is an outline rather than a filled
+   accent pill so the two rows are not competing for the same attention. */
+.notifychoice.alerts button{font-size:12px;padding:8px 12px;min-height:36px;
+  font-weight:600}
+.notifychoice.alerts button.on{background:var(--card);color:var(--acc);
+  box-shadow:inset 0 0 0 2px var(--acc);font-weight:800}

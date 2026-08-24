@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0045`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0046`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -525,6 +525,43 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   UPDATE and DELETE and RLS was the only thing standing. `0045` revokes them:
   a direct GET went 200/`[]` → **401**, a direct POST → **401**, and both RPCs
   still return 204.
+- **A notification names the CHURCH, not the town.** `teams.short_label`
+  (`0046`) is the one-line name a club goes by where the usual full-name-over-
+  city is impossible. It used to fall back to the city, which reads badly for
+  half of them: "Willesden" is not what anyone calls Kidane Mihret, and
+  "Hounslow 2–1 Croydon" names two places rather than two churches. Six labels
+  are organiser-supplied; **`ste` was not given one and is inferred as "St
+  George"** to match the pattern the other six set — a one-line UPDATE if that
+  is wrong. Display only: nothing resolves a team FROM this string, so unlike
+  an archive alias it cannot collide with anything.
+- **Seven alert kinds, chosen per device.** `push_subscriptions.kinds`, an
+  array: `goal`, `card`, `motm`, `start`, `half_time`, `second_half`,
+  `full_time`. **The default is goals and full time**, and everything else is
+  opt-in, because twelve matches of cards and kick-offs on one Saturday is a
+  phone nobody wants in their pocket. The Edge Function filters with `@>`, so a
+  device that chose goals never hears about a yellow card — **except a test
+  push, which ignores the filter on purpose**: someone pressing "send me a
+  test" wants to know the pipe works, whatever they subscribed to.
+- **`subscribe_push` drops unknown kinds rather than rejecting the call**, so a
+  device on an older build can still subscribe and a newer one asking for a
+  kind this database has not heard of is not turned away. Asking for nothing
+  usable falls back to the default rather than storing a row that can never
+  fire, and the client does the same — a subscription that can never fire is a
+  worse state than no subscription and looks exactly like a bug.
+- **The tag is per match AND per kind.** `match-<id>-goal` and
+  `match-<id>-card` are separate, so a booking does not overwrite the goal
+  notification a reader has not looked at yet, while a second goal still
+  replaces the first rather than stacking six from one game.
+- **Cards and man of the match carry the club, always.** They are logged with
+  their player already, so unlike a goal there is no follow-up to fill in — one
+  push, once. A bare name means nothing to someone who does not know which side
+  he plays for, which is most people reading it.
+- **The masthead icon is a bell, not a shield.** Same button, same
+  `data-view="admin"`, same panel behind it — but the shield spoke to the wrong
+  person. It said "admin" or "security" to a spectator, who had no idea there
+  was anything back there for them, and notifications are now the only reason
+  most readers will ever open it. `aria-label` is "Alerts and organiser" so a
+  screen reader still says both.
 - **What is verified, and what is not.** The RFC 8291 encryption round-trips
   byte-identical (encrypt, then decrypt with the device's private key —
   emoji and en-dash included), the auth gate refuses non-organisers, the RPCs

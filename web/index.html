@@ -13,19 +13,28 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
 <link rel="preload" href="./fonts/big-shoulders-display-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./fonts/saira-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="./fonts.css?b=cofta-v79">
-<link rel="stylesheet" href="./styles.css?b=cofta-v79">
-<link rel="stylesheet" href="./themes.css?b=cofta-v79">
+<link rel="stylesheet" href="./fonts.css?b=cofta-v80">
+<link rel="stylesheet" href="./styles.css?b=cofta-v80">
+<link rel="stylesheet" href="./themes.css?b=cofta-v80">
 </head>
 <body>
 <div class="app">
   <header class="hd">
-    <button id="nav-admin" class="gear" data-view="admin" aria-label="Organiser" title="Organiser">
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-        <path d="M12 2.6 4.8 5.4v5.9c0 4.3 3 8.3 7.2 9.5 4.2-1.2 7.2-5.2 7.2-9.5V5.4L12 2.6Z"
-          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-        <path d="M9 12.2l2.1 2.1L15 10.4" fill="none" stroke="currentColor"
-          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- A BELL, NOT A SHIELD. This button has always led to the same panel, but
+         the shield spoke to the wrong person: it said "admin" or "security" to
+         a spectator, who has no idea there is anything behind it for them.
+         Notifications now live in that panel and are the ONLY reason most
+         readers will ever open it, so the icon names the thing they want. It
+         still carries data-view="admin" and organisers still find sign-in
+         behind it — the label is now "Alerts and organiser" so a screen reader
+         says both, and the dot still marks a signed-in session. -->
+    <button id="nav-admin" class="gear" data-view="admin"
+      aria-label="Alerts and organiser" title="Alerts and organiser">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"
+        fill="none" stroke="currentColor" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8.4a6 6 0 1 0-12 0c0 5-2.1 6.4-2.1 6.4h16.2S18 13.4 18 8.4Z"/>
+        <path d="M13.7 18.6a2 2 0 0 1-3.4 0"/>
       </svg><i class="gdot" aria-hidden="true"></i></button>
     <!-- Diocese and auspices follow the competition being viewed: CONAFA is
          played in the Midlands, not London. render() drives both. -->
@@ -47,6 +56,6 @@
   </nav>
   <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
 </div>
-<script type="module" src="./app.js?b=cofta-v79"></script>
+<script type="module" src="./app.js?b=cofta-v80"></script>
 </body>
 </html>

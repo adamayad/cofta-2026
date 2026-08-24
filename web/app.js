@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v79';
-import * as api from './api.js?b=cofta-v79';
-import * as M from './model.js?b=cofta-v79';
-import { WriteQueue } from './queue.js?b=cofta-v79';
+import { CREST } from './crests.js?b=cofta-v80';
+import * as api from './api.js?b=cofta-v80';
+import * as M from './model.js?b=cofta-v80';
+import { WriteQueue } from './queue.js?b=cofta-v80';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2656,7 +2656,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notify],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notify],[data-alert],#signin,#signout');
   if (!t) return;
 
   // The install bar sits outside #body and is not a view, so it is handled
@@ -2671,6 +2671,24 @@ document.addEventListener('click', async (ev) => {
   // 'all'. Enabling and re-choosing are the same call, because subscribe_push
   // is idempotent on the endpoint - switching club must not need a round trip
   // through off-and-on-again.
+  // Toggling one alert kind on or off. Re-subscribes immediately so the choice
+  // reaches the server without a Save button - subscribe_push is idempotent on
+  // the endpoint, so this is an update, not a duplicate.
+  if (t.dataset.alert) {
+    const k = t.dataset.alert;
+    const on = new Set(pushKinds());
+    if (on.has(k)) on.delete(k); else on.add(k);
+    // Turning the last one off would leave a subscription that can never fire,
+    // which is a worse state than being unsubscribed and looks like a bug.
+    // The server falls back too; this keeps the UI honest about it.
+    const next = on.size ? [...on] : [...DEFAULT_KINDS];
+    try { localStorage.setItem('cofta.push.kinds', JSON.stringify(next)); } catch {}
+    render();
+    try { await enablePush(pushTeam() || null); }
+    catch (e) { alert(e.message || 'Could not save that.'); }
+    return;
+  }
+
   if (t.dataset.notify) {
     const v = t.dataset.notify;
     try {
@@ -2858,7 +2876,12 @@ document.addEventListener('click', async (ev) => {
     await api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS,
       t.dataset.clock === 'start' ? m.home : null,
       t.dataset.clock === 'start' ? m.away : null);
-    if (t.dataset.clock === 'full_time') notifyMatch(m.id, 'full_time');
+    // Every clock action is announceable; who hears it is the subscriber's
+    // choice, not ours. 'pause' and 'resume' deliberately are not - a clock
+    // stopping for an injury is not news to someone not at the ground.
+    if (['start','half_time','second_half','full_time'].includes(t.dataset.clock)) {
+      notifyMatch(m.id, t.dataset.clock);
+    }
   });
 
   // Goal for a side: log it immediately, then ask who scored. The score
@@ -2929,6 +2952,13 @@ document.addEventListener('click', async (ev) => {
         p_elapsed: Math.round(M.elapsedMs(m)),
         p_minute: M.minuteLabel(m) + '\u2032',
       });
+      // Cards and man of the match are logged WITH their player already, so
+      // unlike a goal there is no follow-up to fill in: one push, once, and
+      // only to whoever asked for that kind. The small delay lets the write
+      // land before the function goes looking for the row.
+      const kind = (pk.type === 'yellow' || pk.type === 'red') ? 'card'
+                 : pk.type === 'motm' ? 'motm' : null;
+      if (kind) setTimeout(() => notifyMatch(m.id, kind, { event_id: id }), 1200);
     }
     state.picker = null;
     render();
@@ -3394,7 +3424,7 @@ async function enablePush(teamId) {
     applicationServerKey: b64ToBytes(api.VAPID_PUBLIC_KEY),
   });
   const j = sub.toJSON();
-  await api.subscribePush(j.endpoint, j.keys, teamId ?? null);
+  await api.subscribePush(j.endpoint, j.keys, teamId ?? null, pushKinds());
   try { localStorage.setItem('cofta.push.team', teamId ?? ''); } catch {}
   await readPushState();
   render();
@@ -3453,8 +3483,10 @@ function notifySection() {
     const t = pushTeam();
     const who = t ? (team(t) ? `${team(t).name}, ${team(t).city}` : t) : 'every match';
     return `<div class="sect">Notifications</div>
-      <p class="note" style="padding-top:0">On for <b>${esc(who)}</b>. Goals and full time.</p>
+      <p class="note" style="padding-top:0">On for <b>${esc(who)}</b>.</p>
       <div class="notifychoice">${notifyChoices(t)}</div>
+      <p class="note" style="padding-top:2px">Tell me about</p>
+      <div class="notifychoice alerts">${alertChoices()}</div>
       <button class="act ghost" data-notify="off">Turn notifications off</button>
       ${state.admin ? `<button class="act ghost" data-notify="test"
            style="margin-top:8px">Send me a test notification</button>
@@ -3466,6 +3498,42 @@ function notifySection() {
       full time. Choose one club or the whole tournament — twelve group matches
       in a day is a lot of notifications if you only came for one of them.</p>
     <div class="notifychoice">${notifyChoices(null)}</div>`;
+}
+
+/**
+ * The seven things that can be announced.
+ *
+ * Order is by how much a reader would mind missing it, not by when it happens
+ * in a match: goals and the result first, the run-of-play markers after. The
+ * default is the first two, and everything else is opt-in — twelve matches of
+ * cards and kick-offs on one Saturday is a phone nobody wants in their pocket.
+ */
+const ALERT_KINDS = [
+  ['goal',        'Goals'],
+  ['full_time',   'Full time'],
+  ['half_time',   'Half time'],
+  ['start',       'Kick-off'],
+  ['second_half', 'Second half'],
+  ['card',        'Cards'],
+  ['motm',        'Man of the match'],
+];
+const DEFAULT_KINDS = ['goal', 'full_time'];
+
+/** What this device has chosen, remembered locally so the panel can show it
+ *  without a read path into the subscriber table (there deliberately is none). */
+function pushKinds() {
+  try {
+    const raw = localStorage.getItem('cofta.push.kinds');
+    const k = raw ? JSON.parse(raw) : null;
+    return Array.isArray(k) && k.length ? k : [...DEFAULT_KINDS];
+  } catch { return [...DEFAULT_KINDS]; }
+}
+
+function alertChoices() {
+  const on = new Set(pushKinds());
+  return ALERT_KINDS.map(([k, label]) =>
+    `<button class="${on.has(k) ? 'on' : ''}" data-alert="${k}"
+       aria-pressed="${on.has(k)}">${esc(label)}</button>`).join('');
 }
 
 /** One button per choice. Real buttons, and the current one is marked. */

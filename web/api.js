@@ -204,8 +204,9 @@ export const setSlot = (slot, teamId) =>
 export const VAPID_PUBLIC_KEY =
   'BLlBwzJMaTgBve3vDrZc5624vmM5dXKJPjrz5JuX4Xj3yK5KP7q7Aw8UpI1plXFIwuNTS5lnHYu2T6bqMsDSs-s';
 
-export const subscribePush = (endpoint, keys, teamId) =>
-  rpc('subscribe_push', { p_endpoint: endpoint, p_keys: keys, p_team: teamId ?? null });
+export const subscribePush = (endpoint, keys, teamId, kinds) =>
+  rpc('subscribe_push', { p_endpoint: endpoint, p_keys: keys,
+    p_team: teamId ?? null, p_kinds: kinds ?? null });
 
 export const unsubscribePush = (endpoint) =>
   rpc('unsubscribe_push', { p_endpoint: endpoint });

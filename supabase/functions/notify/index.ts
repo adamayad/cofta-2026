@@ -152,8 +152,10 @@ Deno.serve(async (req) => {
   const { data: isAdmin } = await asCaller.rpc('is_admin');
   if (!isAdmin) return new Response('not an organiser', { status: 403, headers: CORS });
 
+  const KINDS = ['goal', 'card', 'motm', 'start', 'half_time', 'second_half',
+                 'full_time', 'test'];
   const { match_id, kind, event_id, update } = await req.json().catch(() => ({}));
-  if (!match_id || !['goal', 'full_time', 'test'].includes(kind)) {
+  if (!match_id || !KINDS.includes(kind)) {
     return new Response('match_id and kind required', { status: 400, headers: CORS });
   }
 
@@ -164,9 +166,16 @@ Deno.serve(async (req) => {
     .eq('id', match_id).single();
   if (!m) return new Response('no such match', { status: 404, headers: CORS });
 
-  const { data: teams } = await admin.from('teams').select('id, name, city');
+  const { data: teams } = await admin.from('teams').select('id, name, city, short_label');
   const by = Object.fromEntries((teams ?? []).map((t) => [t.id, t]));
-  const nameOf = (id: string | null) => id ? (by[id]?.city ?? id) : 'TBC';
+  // THE CHURCH, NOT THE TOWN. A notification has room for a scoreline and
+  // little else, so the app's usual full-name-over-city is impossible here and
+  // this used to fall back to the city — which reads badly for half of them.
+  // "Willesden" is not what anyone calls Kidane Mihret, and "Hounslow 2–1
+  // Croydon" names two places rather than two churches. `short_label` is the
+  // name each club actually goes by in one line.
+  const nameOf = (id: string | null) =>
+    id ? (by[id]?.short_label ?? by[id]?.city ?? id) : 'TBC';
 
   // ── the notification itself ─────────────────────────────────────────
   //
@@ -196,6 +205,36 @@ Deno.serve(async (req) => {
     body = m.pens_decided
       ? `${line} · ${m.pens_home > m.pens_away ? home : away} win ${m.pens_home}–${m.pens_away} on pens`
       : line;
+  } else if (kind === 'start' || kind === 'half_time' || kind === 'second_half') {
+    // The run-of-play markers. The scoreline stays the headline for the two
+    // that have one; kick-off has nothing to report but the fixture itself.
+    title = { start: 'Kick-off', half_time: 'Half time',
+              second_half: 'Second half' }[kind]!;
+    body = kind === 'start' ? `${home} v ${away}` : line;
+  } else if (kind === 'card' || kind === 'motm') {
+    const { data: ev } = await admin.from('match_events')
+      .select('type, side, minute_label, player_id, voided')
+      .eq('id', event_id ?? '00000000-0000-0000-0000-000000000000').maybeSingle();
+
+    let who = '';
+    if (ev?.player_id) {
+      const { data: p } = await admin.from('players')
+        .select('name').eq('id', ev.player_id).maybeSingle();
+      who = p?.name ?? '';
+    }
+    const club = ev?.side === 'away' ? away : home;
+
+    if (kind === 'motm') {
+      title = '★ Man of the match';
+      body = [who, club].filter(Boolean).join(' · ') || line;
+    } else {
+      const red = ev?.type === 'red';
+      title = red ? '🟥 Red card' : '🟨 Yellow card';
+      // The club always appears. A bare name means nothing to someone who does
+      // not know which side he plays for, which is most people reading this.
+      body = [who || 'A player', club, ev?.minute_label ?? '']
+        .filter(Boolean).join(' · ');
+    }
   } else {
     // Which event: the one named, or the newest goal still standing. `voided`
     // matters — a goal logged and then taken back must never be the one we
@@ -257,9 +296,15 @@ Deno.serve(async (req) => {
   // has teams would have hit exactly this.
   const clubs = [m.home_team, m.away_team].filter(Boolean) as string[];
   const filter = ['team_id.is.null', ...clubs.map((c) => `team_id.eq.${c}`)].join(',');
-  const { data: subs } = await admin.from('push_subscriptions')
-    .select('endpoint, keys, team_id, fail_count')
+  let q = admin.from('push_subscriptions')
+    .select('endpoint, keys, team_id, fail_count, kinds')
     .or(filter);
+  // AND ONLY THOSE WHO ASKED FOR THIS KIND. `contains` maps to the array
+  // operator @>, so a device that chose goals and full time never hears about
+  // a yellow card. A test push ignores the filter on purpose: someone pressing
+  // "send me a test" wants to know the pipe works, whatever they subscribed to.
+  if (kind !== 'test') q = q.contains('kinds', [kind]);
+  const { data: subs } = await q;
 
   let sent = 0;
   const dead: string[] = [];      // gone for good — the push service said so
