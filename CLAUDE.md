@@ -434,6 +434,47 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 3. Before the weekend: venue dry run on real phones, Amani's organiser
    account (allowlisted, user not yet created), poster with QR.
 
+## Add to home screen
+
+Two platforms, two completely different features, and pretending otherwise is
+how this gets built badly. `installBar()` and friends in `app.js`.
+
+- **Android/Chrome** fires `beforeinstallprompt`. We `preventDefault()` its own
+  banner, keep the event, and spend it when the reader taps ours — one tap, one
+  real OS install dialog. **The listener is attached at module evaluation, not
+  in `boot()`**: the event fires early, and a listener attached late silently
+  never sees it, which looks exactly like the feature not existing.
+- **iOS Safari has no such API** and never will. Installing means a trip
+  through the share sheet, so the only honest offer is an instruction. That is
+  not the afterthought here — it is the majority path, and it is also the
+  **only** way iOS push can ever work, because Apple requires a home-screen app.
+- **The share icon is drawn as an SVG.** The unicode characters for it render
+  as a tofu box on plenty of devices, and an instruction whose icon is a blank
+  square is not an instruction.
+- **Every other iOS browser is suppressed entirely.** Chrome, Firefox and Edge
+  on iOS are WebKit in a different wrapper; Add to Home Screen either is absent
+  or produces something that does not behave like the app. Telling someone to
+  tap a control that is not there is worse than saying nothing.
+- **Never shown to someone already installed**, and never within seven days of
+  a dismissal (`cofta.install.dismissed`). Dismissal is always available and
+  always respected.
+- **Never on the first painted page.** It appears on the second, or as soon as
+  a match is opened.
+- **ENGAGEMENT IS COUNTED IN `render()`, NOT IN `navigate()`,** and that was a
+  real bug caught in testing. The bottom nav does *not* route through
+  `navigate()` — it sets `state.view` directly — so counting there missed the
+  most ordinary way anyone moves around the app and the offer never appeared
+  for them at all. Counting distinct pages actually painted (`lastPageKey`)
+  catches tabs, back buttons, deep links and `navigate()` alike, and the
+  five-second repaint does not inflate it because the key does not change.
+- **One bar at a time.** `canOfferInstall()` returns false while the new-build
+  bar is up: that one is a problem to fix, this one is an offer, and stacking
+  two fixed bars over the same thumb is worse than either.
+- `tests/install_drill.html` stubs the user agent **before `app.js` evaluates**
+  — `IOS` and `IOS_SAFARI` are module-level constants, so a later stub is too
+  late — and drives four cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
+  `dismissed`. 15/15, 4/4, 4/4, 4/4.
+
 ## Nothing in this app is time-bombed, and it must stay that way
 
 Matches run late. Audited on 24 August, and the result is clean: **`kickoff` is

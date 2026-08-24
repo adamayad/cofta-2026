@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v74';
-import * as api from './api.js?b=cofta-v74';
-import * as M from './model.js?b=cofta-v74';
-import { WriteQueue } from './queue.js?b=cofta-v74';
+import { CREST } from './crests.js?b=cofta-v75';
+import * as api from './api.js?b=cofta-v75';
+import * as M from './model.js?b=cofta-v75';
+import { WriteQueue } from './queue.js?b=cofta-v75';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -53,6 +53,8 @@ const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   trophies: {},        // confirmed winners, { trophy: [playerId, ...] }
   schedule: [],        // Vespers, Liturgy - timetable items that are not matches
+  views: 0,            // page changes this session, for the install offer
+  installEarned: false,// opening a match is engagement enough on its own
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, dayPinned: false, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
@@ -2516,6 +2518,8 @@ function mastheadBrand() {
   return { org: c?.full ?? d.name, auspices: d.auspices, logo: d.logo, alt: d.name };
 }
 
+let lastPageKey = null;   // the page render() last painted, for engagement counting
+
 /* ── render ──────────────────────────────────────────────── */
 function render() {
   const age = Date.now() - state.lastFetch;
@@ -2603,6 +2607,26 @@ function render() {
   $('body').innerHTML = body +
     (state.error ? `<div class="banner warn">Could not reach the server: ${esc(state.error)}.
        Retrying every few seconds \u2014 the last known scores are still shown.</div>` : '');
+
+  // ENGAGEMENT IS COUNTED HERE, not in navigate(), and that is the whole
+  // point: the bottom nav does NOT route through navigate() \u2014 it sets
+  // state.view directly \u2014 so counting there missed the most ordinary way
+  // anyone moves around this app, and the offer never appeared for them.
+  // Counting distinct pages actually painted catches every route: tabs, back
+  // buttons, deep links and navigate() alike. The five-second repaint does not
+  // inflate it, because the key does not change.
+  const pageKey = `${state.view}|${state.matchId ?? ''}|${state.histEd ?? ''}`
+                + `|${state.histComp ?? ''}|${state.archTeam ?? ''}|${state.sq.team ?? ''}`;
+  if (pageKey !== lastPageKey) {
+    lastPageKey = pageKey;
+    state.views++;
+    if (state.view === 'match') state.installEarned = true;
+  }
+
+  // The install offer lives OUTSIDE #body, appended to the document, so this
+  // repaint \u2014 which runs every five seconds \u2014 never rebuilds it underneath
+  // someone's finger. installBar() is a no-op once the bar exists.
+  installBar();
 }
 
 /** The clock ticks locally between polls, so the minute never looks frozen. */
@@ -2630,8 +2654,16 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notify],#signin,#signout');
   if (!t) return;
+
+  // The install bar sits outside #body and is not a view, so it is handled
+  // before anything that touches routing. "Not now" is always available and
+  // always respected — see DISMISS_DAYS.
+  if (t.dataset.install) {
+    if (t.dataset.install === 'go') await doInstall(); else dismissInstall();
+    return;
+  }
 
   // Back before view: a back button carries only data-back, but checking it
   // first keeps the two from ever racing if one later carries both.
@@ -3114,6 +3146,123 @@ document.addEventListener('change', (ev) => {
   if (!s) return;
   guard(() => api.setSlot(s.dataset.slot, s.value || null));
 });
+
+/* ── add to home screen ──────────────────────────────────── */
+/**
+ * THE TWO PLATFORMS ARE NOT THE SAME FEATURE and pretending otherwise is how
+ * this gets built badly.
+ *
+ * Android/Chrome hands us `beforeinstallprompt`. We stop its own banner,
+ * keep the event, and spend it when the reader taps ours — one real tap,
+ * a real OS install dialog.
+ *
+ * iOS Safari has NO such API and never will. Installing is a manual trip
+ * through the share sheet, so the only honest thing to offer is an
+ * instruction. That is not the lesser path here — it is the majority path,
+ * because most of this audience is on an iPhone, and it is also the ONLY way
+ * iOS push notifications can ever work: Apple requires a home-screen app.
+ *
+ * OTHER iOS BROWSERS ARE SUPPRESSED ENTIRELY. Chrome, Firefox and Edge on iOS
+ * are all WebKit in a different wrapper, and "Add to Home Screen" either is
+ * not there or produces something that does not behave like the app. Telling
+ * someone to tap a button that does not exist is worse than saying nothing.
+ */
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  // iPadOS 13+ reports itself as a Mac, and the touch points give it away.
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IOS_OTHER_BROWSER = /CriOS|FxiOS|EdgiOS|OPiOS|Mercury/i.test(navigator.userAgent);
+const IOS_SAFARI = IOS && !IOS_OTHER_BROWSER;
+
+/** Already installed? Then never ask. `standalone` is the iOS spelling. */
+const installed = () =>
+  window.matchMedia?.('(display-mode: standalone)')?.matches
+  || window.navigator.standalone === true;
+
+const DISMISS_KEY = 'cofta.install.dismissed';
+const DISMISS_DAYS = 7;
+
+function installDismissedRecently() {
+  try {
+    const at = Number(localStorage.getItem(DISMISS_KEY) || 0);
+    return at > 0 && (Date.now() - at) < DISMISS_DAYS * 864e5;
+  } catch { return false; }   // private mode: treat as not dismissed
+}
+
+/** `beforeinstallprompt` fires EARLY — before boot() has finished — so this
+ *  listener is attached at module evaluation, not inside boot. Missing it
+ *  means the Android path silently never works. */
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();          // suppress Chrome's own banner; ours replaces it
+  deferredInstall = e;
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstall = null;
+  $('installbar')?.remove();
+  try { localStorage.removeItem(DISMISS_KEY); } catch {}
+  render();
+});
+
+/** The iOS share glyph, drawn rather than typed. The unicode characters for
+ *  it render as a box on plenty of devices, and an instruction whose icon is
+ *  a tofu square is not an instruction. */
+const SHARE_GLYPH = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"
+  fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
+  stroke-linejoin="round" style="vertical-align:-2px">
+  <path d="M12 15V3"/><path d="M8.5 6.5 12 3l3.5 3.5"/>
+  <path d="M6 12.5v7A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5v-7"/></svg>`;
+
+/**
+ * Shown once someone has actually used the app a little — never on the first
+ * paint. A banner over a page a reader has not read yet is an interruption,
+ * not an offer.
+ */
+function canOfferInstall() {
+  if (installed()) return false;
+  if (installDismissedRecently()) return false;
+  if ($('newbuild')) return false;        // one bar at a time; that one is more urgent
+  if (state.views < 2 && !state.installEarned) return false;
+  return !!deferredInstall || IOS_SAFARI;
+}
+
+function installBar() {
+  if (!canOfferInstall() || $('installbar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'installbar';
+  bar.className = 'installbar';
+  bar.setAttribute('role', 'region');
+  bar.setAttribute('aria-label', 'Add COFTA to your home screen');
+
+  bar.innerHTML = deferredInstall
+    ? `<div class="ibtext"><b>Add COFTA to your home screen</b>
+         <span>Full screen, and it opens straight to the scores.</span></div>
+       <div class="ibacts">
+         <button class="ibgo" data-install="go">Add</button>
+         <button class="ibno" data-install="no" aria-label="Not now">Not now</button>
+       </div>`
+    : `<div class="ibtext"><b>Add COFTA to your home screen</b>
+         <span>Tap ${SHARE_GLYPH} in the toolbar, then <b>Add to Home Screen</b>.</span></div>
+       <div class="ibacts">
+         <button class="ibno" data-install="no" aria-label="Dismiss">Got it</button>
+       </div>`;
+  document.body.appendChild(bar);
+}
+
+async function doInstall() {
+  if (!deferredInstall) return;
+  const e = deferredInstall;
+  deferredInstall = null;                 // a prompt event is single-use
+  $('installbar')?.remove();
+  try {
+    e.prompt();
+    await e.userChoice;                   // resolved either way; appinstalled does the rest
+  } catch { /* the reader closed it, which is an answer */ }
+}
+
+function dismissInstall() {
+  try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {}
+  $('installbar')?.remove();
+}
 
 /* ── staying current ─────────────────────────────────────── */
 /**

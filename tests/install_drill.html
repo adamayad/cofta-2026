@@ -1,0 +1,156 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>COFTA install-prompt drill</title>
+<!-- Crest paths in the data are relative to web/, so this page must resolve
+     them the way the app does. NOTE: with this base set, the helper below must
+     be loaded as ../tests/until.js — ./until.js resolves into web/ and 404s. -->
+<base href="../web/">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="themes.css">
+<!--
+  Install-prompt drill.
+
+  The install offer is the one feature whose behaviour depends entirely on
+  WHICH BROWSER is asking, and the two platforms get completely different
+  treatment. That cannot be checked by reading the code, and it cannot be
+  checked in the dev browser either, which is neither an iPhone nor installed.
+  So this stubs the user agent BEFORE app.js evaluates — IOS and IOS_SAFARI are
+  module-level constants, so a stub applied afterwards would be too late — and
+  drives each case.
+
+  Serve the repo root and open /tests/install_drill.html; read
+  globalThis.__installSummary. Modes:
+    (none)       iOS Safari      -> instructional bar, no Add button
+    ?m=crios     Chrome on iOS   -> nothing, ever
+    ?m=standalone already installed -> nothing, ever
+    ?m=dismissed inside cooldown -> nothing, ever
+-->
+<script src="../tests/until.js"></script>
+<script>
+const MODE = new URLSearchParams(location.search).get('m') || 'ios';
+
+// ── the stubs, applied before app.js is fetched ──────────────────────
+const UA = {
+  ios:       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  crios:     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.108 Mobile/15E148 Safari/604.1',
+  standalone:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  dismissed: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+};
+Object.defineProperty(navigator, 'userAgent', { get: () => UA[MODE], configurable: true });
+
+localStorage.clear();
+if (MODE === 'dismissed') {
+  // Dismissed an hour ago: well inside the seven-day cooldown.
+  localStorage.setItem('cofta.install.dismissed', String(Date.now() - 3600e3));
+}
+if (MODE === 'standalone') {
+  const realMM = window.matchMedia.bind(window);
+  window.matchMedia = (q) => q.includes('display-mode: standalone')
+    ? { matches: true, addEventListener(){}, removeEventListener(){} }
+    : realMM(q);
+}
+
+const results = [];
+const check = (name, cond, detail) => results.push({ name, ok: !!cond, detail });
+
+window.addEventListener('load', async () => {
+  await untilOr(() => document.querySelector('.fx'), 'app boot (a fixture row)', 30000);
+
+  // Nothing on the first painted page, on any platform.
+  check('no offer on the first page', !document.getElementById('installbar'));
+
+  // Move once. That is the second painted page, which is the trigger.
+  document.getElementById('nav-tables').click();
+  await untilOr(() => document.querySelector('#body table'), 'tables view');
+  // `until`, NOT `untilOr`: in the suppression modes this wait is SUPPOSED to
+  // run out, because the bar must never appear. Recording it as a timeout
+  // would fail the drill for doing exactly what it is testing. Whether the bar
+  // is there is asserted explicitly below, which is where a failure belongs.
+  await until(() => document.getElementById('installbar'), { timeout: 4000 });
+
+  const bar = document.getElementById('installbar');
+
+  if (MODE === 'ios') {
+    check('iOS Safari is offered the instructional bar', !!bar);
+    check('it does NOT offer an Add button, because iOS has no such API',
+      !!bar && !bar.querySelector('[data-install="go"]'));
+    check('it names the Add to Home Screen step',
+      !!bar && /Add to Home Screen/i.test(bar.textContent), bar?.textContent.trim());
+    check('the share icon is DRAWN, not a text glyph that may render as tofu',
+      !!bar && !!bar.querySelector('svg'));
+    check('the dismiss control is a real button with a label',
+      bar?.querySelector('[data-install="no"]')?.tagName === 'BUTTON'
+      && !!bar?.querySelector('[data-install="no"]')?.getAttribute('aria-label'));
+
+    // computed style, with transitions off so nothing is measured mid-animation
+    const cs = getComputedStyle(bar);
+    check('the bar is pinned to the bottom above the safe area',
+      cs.position === 'fixed' && parseFloat(cs.bottom) >= 12,
+      { position: cs.position, bottom: cs.bottom });
+    check('it sits below the update bar in the stack',
+      Number(cs.zIndex) < 60, cs.zIndex);
+    check('it is a card, not the accent — this is an offer, not a problem',
+      cs.backgroundColor !== getComputedStyle(document.documentElement)
+        .getPropertyValue('--acc').trim(), cs.backgroundColor);
+    const tap = bar.querySelector('[data-install="no"]');
+    check('the dismiss target is big enough to hit',
+      parseFloat(getComputedStyle(tap).minHeight) >= 38,
+      getComputedStyle(tap).minHeight);
+    // Measured BEFORE this drill appends its own report element, which is a
+      // wide <pre> and would otherwise be blamed on the bar.
+    check('the bar does not overflow the page at this width',
+      document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth });
+
+    // dismissal is respected, and remembered
+    tap.click();
+    await untilOr(() => !document.getElementById('installbar'), 'bar dismissed', 4000);
+    check('dismissing removes it', !document.getElementById('installbar'));
+    check('dismissal is remembered for the cooldown',
+      !!localStorage.getItem('cofta.install.dismissed'));
+    document.getElementById('nav-fixtures').click();
+    await untilOr(() => document.querySelector('.fx'), 'back to fixtures');
+    check('it does not come straight back on the next page',
+      !document.getElementById('installbar'));
+  } else {
+    const why = { crios: 'Chrome on iOS cannot install this app',
+                  standalone: 'already installed',
+                  dismissed: 'dismissed inside the cooldown' }[MODE];
+    check(`suppressed entirely: ${why}`, !bar, bar?.textContent);
+    // and it stays suppressed however far you go
+    document.getElementById('nav-squads').click();
+    await untilOr(() => document.querySelector('[data-sqteam]'), 'squads view');
+    check('still suppressed after a third page', !document.getElementById('installbar'));
+  }
+
+  check('no wait timed out - every page rendered before it was read',
+    __untilTimeouts.length === 0, __untilTimeouts.slice(0, 8));
+
+  const summary = { mode: MODE, total: results.length,
+    failures: results.filter(r => !r.ok).length, results };
+  globalThis.__installSummary = summary;
+  const out = document.createElement('pre');
+  out.id = 'install-report';
+  out.textContent = results.map(r => (r.ok ? '  ok   ' : '  FAIL ') + r.name
+      + (r.ok ? '' : '\n         ' + JSON.stringify(r.detail))).join('\n')
+    + `\n\n[${MODE}] ${summary.total - summary.failures}/${summary.total} passed`;
+  document.body.appendChild(out);
+});
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="hd">
+    <p class="assoc"><span id="hd-assoc"></span></p>
+    <h1 id="hd-title">COFTA 2026</h1>
+    <p class="meta"><span id="hd-when"></span><span class="pip" id="pip"><i></i>Live</span></p>
+  </header>
+  <nav class="nav">
+    <button id="nav-fixtures" data-view="fixtures">Fixtures</button>
+    <button id="nav-live" data-view="live">Live</button>
+    <button id="nav-squads" data-view="squads">Squads</button>
+    <button id="nav-tables" data-view="tables">Tables</button>
+    <button id="nav-awards" data-view="awards">Stats</button>
+    <button id="nav-history" data-view="history">History</button>
+  </nav>
+  <main class="scroll" id="body"></main>
+</div>
+<script type="module" src="app.js"></script>
+</body></html>
