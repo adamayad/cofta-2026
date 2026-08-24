@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v76';
-import * as api from './api.js?b=cofta-v76';
-import * as M from './model.js?b=cofta-v76';
-import { WriteQueue } from './queue.js?b=cofta-v76';
+import { CREST } from './crests.js?b=cofta-v77';
+import * as api from './api.js?b=cofta-v77';
+import * as M from './model.js?b=cofta-v77';
+import { WriteQueue } from './queue.js?b=cofta-v77';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2675,6 +2675,22 @@ document.addEventListener('click', async (ev) => {
     const v = t.dataset.notify;
     try {
       if (v === 'off') await disablePush();
+      else if (v === 'test') {
+        // Prove the whole chain without waiting for a goal. The reply is
+        // shown verbatim because that is the fastest way to tell "nobody was
+        // subscribed" from "the send failed" from "the key is not set" —
+        // three very different problems that all look like a silent phone.
+        const msg = $('pushmsg');
+        if (msg) msg.textContent = 'Sending…';
+        const anyMatch = state.matches[0];
+        if (!anyMatch) { if (msg) msg.textContent = 'No fixtures to test against.'; return; }
+        try {
+          const r = await api.firePush(anyMatch.id, 'test');
+          if (msg) msg.textContent = r
+            ? `Sent to ${r.sent} of ${r.of}. ${r.failed ? `${r.failed} failed: ${(r.problems || []).join(' | ')}` : ''}`
+            : 'Sent.';
+        } catch (e) { if (msg) msg.textContent = e.message; }
+      }
       else await enablePush(v === 'all' ? null : v);
     } catch (e) { alert(e.message || 'Could not change notifications.'); }
     return;
@@ -3427,7 +3443,10 @@ function notifySection() {
     return `<div class="sect">Notifications</div>
       <p class="note" style="padding-top:0">On for <b>${esc(who)}</b>. Goals and full time.</p>
       <div class="notifychoice">${notifyChoices(t)}</div>
-      <button class="act ghost" data-notify="off">Turn notifications off</button>`;
+      <button class="act ghost" data-notify="off">Turn notifications off</button>
+      ${state.admin ? `<button class="act ghost" data-notify="test"
+           style="margin-top:8px">Send me a test notification</button>
+         <p class="okmsg" id="pushmsg"></p>` : ''}`;
   }
 
   return `<div class="sect">Notifications</div>

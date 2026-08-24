@@ -110,6 +110,15 @@ async function encrypt(payload: string, p256dh: string, auth: string) {
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('POST only', { status: 405 });
 
+  // FAIL LOUDLY AND EARLY IF THE KEY IS MISSING. Without this the first
+  // subscriber's importKey() throws, the catch below treats it as a dead
+  // endpoint, and a misconfiguration silently deletes the entire subscriber
+  // list on the first goal of the tournament.
+  if (!Deno.env.get('VAPID_PRIVATE_KEY')) {
+    return Response.json({ error: 'VAPID_PRIVATE_KEY is not set on this project',
+      sent: 0, of: 0 }, { status: 500 });
+  }
+
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
@@ -123,7 +132,7 @@ Deno.serve(async (req) => {
   if (!isAdmin) return new Response('not an organiser', { status: 403 });
 
   const { match_id, kind } = await req.json().catch(() => ({}));
-  if (!match_id || !['goal', 'full_time'].includes(kind)) {
+  if (!match_id || !['goal', 'full_time', 'test'].includes(kind)) {
     return new Response('match_id and kind required', { status: 400 });
   }
 
@@ -138,8 +147,10 @@ Deno.serve(async (req) => {
   const nameOf = (id: string | null) => id ? (by[id]?.city ?? id) : 'TBC';
 
   const score = `${nameOf(m.home_team)} ${m.home_score}–${m.away_score} ${nameOf(m.away_team)}`;
-  const title = kind === 'goal' ? '⚽ GOAL!' : 'Full time';
-  const body = kind === 'goal' ? score : `${score} · full time`;
+  const title = kind === 'goal' ? '⚽ GOAL!' : kind === 'test' ? 'COFTA test' : 'Full time';
+  const body = kind === 'goal' ? score
+             : kind === 'test' ? 'Notifications are working. This is a test.'
+             : `${score} · full time`;
   const payload = JSON.stringify({
     title, body, kind, tag: `match-${m.id}`,
     url: `/?match=${encodeURIComponent(m.id)}`,
@@ -147,10 +158,14 @@ Deno.serve(async (req) => {
 
   // Who wants it: everyone (team_id null), or anyone following either club.
   const { data: subs } = await admin.from('push_subscriptions')
-    .select('endpoint, keys, team_id')
+    .select('endpoint, keys, team_id, fail_count')
     .or(`team_id.is.null,team_id.eq.${m.home_team},team_id.eq.${m.away_team}`);
 
-  let sent = 0; const dead: string[] = [];
+  let sent = 0;
+  const dead: string[] = [];      // gone for good — the push service said so
+  const failed: string[] = [];    // failed THIS time; still perfectly valid
+  const problems: string[] = [];
+
   for (const s of subs ?? []) {
     try {
       const url = new URL(s.endpoint);
@@ -166,16 +181,44 @@ Deno.serve(async (req) => {
         },
         body: cipher,
       });
-      // 404/410 mean the subscription is gone for good. REMOVE IT rather than
-      // retrying forever: a dead endpoint retried every goal all weekend is a
-      // slow leak that ends with sends timing out for everyone else.
-      if (res.status === 404 || res.status === 410) dead.push(s.endpoint);
-      else if (res.ok) sent++;
-    } catch { dead.push(s.endpoint); }
+      // ONLY THE PUSH SERVICE GETS TO DECLARE A SUBSCRIPTION DEAD, and only
+      // with 404 or 410. Those mean the browser threw the subscription away
+      // and it will never work again, so keeping it is a slow leak that ends
+      // with every send timing out.
+      if (res.status === 404 || res.status === 410) { dead.push(s.endpoint); continue; }
+      if (res.ok) { sent++; continue; }
+      // Anything else — 429, 500, a bad request — is this attempt failing, not
+      // the subscription being invalid. Count it and leave it alone.
+      failed.push(s.endpoint);
+      problems.push(`${res.status} ${(await res.text().catch(() => '')).slice(0, 120)}`);
+    } catch (e) {
+      // AND A LOCAL THROW IS NEVER THE SUBSCRIBER'S FAULT. A missing or
+      // malformed VAPID key, a crypto failure, a DNS blip — every one of those
+      // used to land in `dead` and DELETE the row. One misconfiguration would
+      // have wiped the whole subscriber list on the first goal, silently.
+      failed.push(s.endpoint);
+      problems.push(String((e as Error)?.message ?? e).slice(0, 120));
+    }
   }
 
   if (dead.length) {
     await admin.from('push_subscriptions').delete().in('endpoint', dead);
   }
-  return Response.json({ sent, removed: dead.length, of: (subs ?? []).length });
+  if (sent) {
+    await admin.from('push_subscriptions')
+      .update({ last_sent_at: new Date().toISOString(), fail_count: 0 })
+      .not('endpoint', 'in', `(${[...dead, ...failed].map((e) => `"${e}"`).join(',') || '""'})`);
+  }
+  for (const e of failed) {
+    const row = (subs ?? []).find((s) => s.endpoint === e);
+    await admin.from('push_subscriptions')
+      .update({ fail_count: (row?.fail_count ?? 0) + 1 }).eq('endpoint', e);
+  }
+
+  return Response.json({
+    sent, removed: dead.length, failed: failed.length,
+    of: (subs ?? []).length,
+    // Surfaced so a dry run can see WHY nothing arrived without reading logs.
+    problems: problems.slice(0, 3),
+  });
 });
