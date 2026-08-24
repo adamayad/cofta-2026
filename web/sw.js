@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v80';
+const VERSION = 'cofta-v81';
 const SHELL = [
   './', './index.html', './diocese.webp',
   // Code and stylesheets carry the build token, because THE BROWSER'S OWN HTTP
@@ -17,9 +17,9 @@ const SHELL = [
   // be answered from it, because on a fresh deploy the URL is one the browser
   // has never seen. These must stay in step with index.html and app.js;
   // tools/check-build.sh fails if they drift.
-  './styles.css?b=cofta-v80', './fonts.css?b=cofta-v80', './themes.css?b=cofta-v80',
-  './app.js?b=cofta-v80', './api.js?b=cofta-v80', './model.js?b=cofta-v80',
-  './queue.js?b=cofta-v80', './crests.js?b=cofta-v80',
+  './styles.css?b=cofta-v81', './fonts.css?b=cofta-v81', './themes.css?b=cofta-v81',
+  './app.js?b=cofta-v81', './api.js?b=cofta-v81', './model.js?b=cofta-v81',
+  './queue.js?b=cofta-v81', './crests.js?b=cofta-v81',
   './manifest.webmanifest',
   // The home-screen icons. Cache-first like every other asset, so a phone
   // that already installed the app only refetches them when VERSION moves.
@@ -203,17 +203,22 @@ self.addEventListener('push', (event) => {
     badge: './icon-192.png',
     // Collapse repeats for the same match: a second goal replaces the first
     // rather than stacking six notifications from one game.
+    // Per match AND per kind, so a booking does not overwrite a goal nobody
+    // has read yet, while a second goal still replaces the first rather than
+    // stacking six from one game.
     tag: d.tag || 'cofta',
-    // A goal arrives the instant it is logged, before anyone has picked the
-    // scorer. When the scorer IS picked a second push follows with the same
-    // tag and renotify false: the notification already on the lock screen
-    // rewrites itself to name him, and the phone does NOT buzz twice for one
-    // goal. Buzzing twice would train people to ignore it.
-    renotify: d.renotify !== false,
-    silent: d.renotify === false,
+    // ONE PUSH PER GOAL, AND IT ALWAYS ALERTS.
+    //
+    // There used to be two — the score at once, then the scorer, the second
+    // carrying renotify:false to rewrite the first in silence. Chrome honours
+    // that; iOS does not. iOS insists every push shows something, so the
+    // "silent update" landed as a second banner and every goal buzzed twice.
+    // The client now waits for the scorer instead and sends once, so there is
+    // no quiet second push left to configure for.
+    renotify: true,
     data: { url: d.url || './' },
     // A goal is worth a buzz; anything else is not worth waking a pocket for.
-    vibrate: (d.kind === 'goal' && d.renotify !== false) ? [90, 50, 90] : undefined,
+    vibrate: d.kind === 'goal' ? [90, 50, 90] : undefined,
   }));
 });
 

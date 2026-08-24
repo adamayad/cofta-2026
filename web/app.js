@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v80';
-import * as api from './api.js?b=cofta-v80';
-import * as M from './model.js?b=cofta-v80';
-import { WriteQueue } from './queue.js?b=cofta-v80';
+import { CREST } from './crests.js?b=cofta-v81';
+import * as api from './api.js?b=cofta-v81';
+import * as M from './model.js?b=cofta-v81';
+import { WriteQueue } from './queue.js?b=cofta-v81';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2896,7 +2896,9 @@ document.addEventListener('click', async (ev) => {
     });
     state.picker = { type: 'goal', side: t.dataset.goal, eventId: id };
     render();
-    notifyMatch(m.id, 'goal', { event_id: id });
+    // Not announced yet - see scheduleGoalPush. Waiting lets the scorer be
+    // picked first, and lets a mis-tap be voided before anyone hears about it.
+    scheduleGoalPush(m.id, id);
     return;
   }
 
@@ -2918,6 +2920,10 @@ document.addEventListener('click', async (ev) => {
       // against the other side (which credits the same club, so the score
       // never moves), then ask which opposition player it was.
       const other = pk.side === 'home' ? 'away' : 'home';
+      // The original goal is being taken back, so its pending announcement
+      // goes with it — nobody should hear about a goal that no longer exists.
+      // The own goal that replaces it starts its own window.
+      cancelGoalPush(pk.eventId);
       queue.add(api.uuid(), 'void_event', { p_id: pk.eventId });
       const ogId = api.uuid();
       queue.add(ogId, 'log_event', {
@@ -2927,6 +2933,7 @@ document.addEventListener('click', async (ev) => {
         p_minute: M.minuteLabel(m) + '\u2032',
       });
       state.picker = { type: 'own_goal', side: other, eventId: ogId };
+      scheduleGoalPush(m.id, ogId);
       render(); return;
     }
 
@@ -2937,12 +2944,12 @@ document.addEventListener('click', async (ev) => {
       if (playerId) {
         queue.add(api.uuid(), 'attribute_event',
           { p_event: pk.eventId, p_player: playerId });
-        // And rewrite the notification already sitting on people's lock
-        // screens so it names him. Same tag, renotify false: it changes in
-        // place and does not buzz a second time for one goal. Queued behind
-        // the attribution deliberately - pushing first would name nobody.
-        if (pk.type === 'goal') setTimeout(() =>
-          notifyMatch(m.id, 'goal', { event_id: pk.eventId, update: true }), 1200);
+      }
+      // Either way the waiting is over: a name has been chosen, or the picker
+      // was skipped and there will not be one. Send the single announcement
+      // now rather than making everyone wait out the rest of the window.
+      if (pk.type === 'goal' || pk.type === 'own_goal') {
+        flushGoalPush(m.id, pk.eventId);
       }
     } else {
       const id = api.uuid();
@@ -3022,6 +3029,9 @@ document.addEventListener('click', async (ev) => {
   }
 
   if (t.dataset.void) {
+    // If this goal is still inside its announcement window, it is now never
+    // announced. A correction made within seconds should cost nobody a buzz.
+    cancelGoalPush(t.dataset.void);
     queue.add(api.uuid(), 'void_event', { p_id: t.dataset.void });
     render();
     return;
@@ -3353,6 +3363,56 @@ function dismissInstall() {
 function notifyMatch(matchId, kind, opts = {}) {
   if (!state.admin) return;
   api.firePush(matchId, kind, opts).catch(() => {});
+}
+
+/* ── one buzz per goal ───────────────────────────────────── */
+/**
+ * A GOAL IS ANNOUNCED ONCE, AFTER A SHORT WAIT.
+ *
+ * The first design sent two pushes — the score immediately, then the scorer
+ * once someone had picked him, carrying the same tag and `renotify: false` so
+ * it would rewrite the first in silence. Chrome honours that. **iOS does not**:
+ * it requires every push to show something, so the "silent update" arrived as
+ * a second banner and every goal buzzed twice. Two buzzes for one goal teaches
+ * people to ignore the first, which is the opposite of the point.
+ *
+ * So: one push, and the wait exists to let the scorer be picked first. In
+ * practice it rarely runs the full seven seconds, because picking the scorer
+ * fires it immediately — the timer is the fallback for when nobody does.
+ *
+ * It also buys something the instant version could not have: A MIS-TAPPED GOAL
+ * VOIDED INSIDE THE WINDOW IS NEVER ANNOUNCED AT ALL. Before, a wrong goal
+ * went out instantly and could not be recalled; the correction just left a
+ * false notification sitting on a few hundred lock screens.
+ *
+ * Seven seconds is late by no measure anyone will notice: the app's own polling
+ * is five seconds, and nobody times a goal alert against a stopwatch.
+ */
+const GOAL_PUSH_DELAY_MS = 7000;
+/** Goals waiting to be announced, by event id. In memory on purpose — if the
+ *  organiser closes the app inside the window, not announcing is the right
+ *  outcome, not a thing to resurrect later. */
+const pendingGoalPush = new Map();
+
+function scheduleGoalPush(matchId, eventId) {
+  cancelGoalPush(eventId);
+  pendingGoalPush.set(eventId, setTimeout(() => {
+    pendingGoalPush.delete(eventId);
+    notifyMatch(matchId, 'goal', { event_id: eventId });
+  }, GOAL_PUSH_DELAY_MS));
+}
+
+function cancelGoalPush(eventId) {
+  const t = pendingGoalPush.get(eventId);
+  if (t) { clearTimeout(t); pendingGoalPush.delete(eventId); }
+}
+
+/** The scorer is known (or explicitly skipped): stop waiting and send. The
+ *  small delay lets the queued write land before the function reads the row —
+ *  pushing first would announce a goal with nobody's name on it. */
+function flushGoalPush(matchId, eventId) {
+  cancelGoalPush(eventId);
+  setTimeout(() => notifyMatch(matchId, 'goal', { event_id: eventId }), 1200);
 }
 
 /* ── goal and full-time notifications ────────────────────── */

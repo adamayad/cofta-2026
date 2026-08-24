@@ -548,6 +548,21 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   usable falls back to the default rather than storing a row that can never
   fire, and the client does the same — a subscription that can never fire is a
   worse state than no subscription and looks exactly like a bug.
+- **ONE PUSH PER GOAL, SENT AFTER A SEVEN-SECOND WAIT.** The first design sent
+  two - the score at once, then the scorer, the second carrying `renotify:
+  false` to rewrite the first in silence. Chrome honours that; **iOS does
+  not**. iOS insists every push shows something, so the silent update landed as
+  a second banner and every goal buzzed twice, which teaches people to ignore
+  the first. The client now waits instead: `scheduleGoalPush` starts a timer,
+  picking the scorer flushes it immediately, and only a goal nobody attributes
+  runs the full seven seconds. In practice it is usually faster than the
+  timeout, because picking is what fires it.
+- **And a goal voided inside that window is never announced at all.** Before,
+  a mis-tap went out instantly and could not be recalled - the correction just
+  left a false notification on a few hundred lock screens. `cancelGoalPush` on
+  void and on the own-goal conversion means a mistake corrected within seconds
+  costs nobody a buzz. The timers are in memory on purpose: if the organiser
+  closes the app mid-window, not announcing is the right outcome.
 - **The tag is per match AND per kind.** `match-<id>-goal` and
   `match-<id>-card` are separate, so a booking does not overwrite the goal
   notification a reader has not looked at yet, while a second goal still
