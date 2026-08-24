@@ -1517,10 +1517,7 @@ const LIVE_COMP = 'cofta';
  *
  * Ladies COFTA has no file: it is COFTA's women's competition under the same
  * association and the same badge, so it reads cofta.webp rather than a
- * duplicate that could drift. COSTA has no badge at all, and none is invented
- * for it — the same rule the archive applies to a club with no crest. It
- * falls back to its name in its own identity colour, which `[data-comp]`
- * already gives every competition.
+ * duplicate that could drift. COSTA has no badge at all.
  */
 const COMP_LOGO = {
   cofta: './comps/cofta.webp',
@@ -1529,10 +1526,39 @@ const COMP_LOGO = {
   cosa: './comps/cosa.webp',
   ark: './comps/ark.webp',
 };
+
+/**
+ * And a generic trophy for one that has none — today only COSTA.
+ *
+ * THIS REVERSES THE EARLIER RULE, at the organiser's call. COSTA's card used
+ * to keep the original three-column grid so the absence read as deliberate
+ * rather than as a badged card with a hole in it. In a list it did not read
+ * that way: five cards with a mark and one without reads as the one that
+ * failed to load, which is the opposite of the honesty the rule was for.
+ *
+ * IT IS STILL NOT INVENTED BRANDING, and the distinction is the whole reason
+ * this is a drawn glyph rather than an image file. It is the SAME neutral
+ * trophy whoever it stands for, so it cannot be mistaken for a badge someone
+ * designed; it simply takes the competition's own identity colour, which
+ * `[data-comp]` already gives every competition, so the row reads as a set.
+ * The moment a real COSTA badge arrives it goes in COMP_LOGO above and this
+ * disappears on its own.
+ */
+const COMP_TROPHY = `<svg class="clogo generic" viewBox="0 0 24 24" aria-hidden="true"
+  focusable="false" fill="none" stroke="currentColor" stroke-width="1.6"
+  stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7.5 3.5h9V8a4.5 4.5 0 0 1-9 0V3.5Z"/>
+  <path d="M7.5 5.2H5.4a2.6 2.6 0 0 0 2.4 3.3"/>
+  <path d="M16.5 5.2h2.1a2.6 2.6 0 0 1-2.4 3.3"/>
+  <path d="M12 12.6v3"/>
+  <path d="M8.8 20.5h6.4l-.8-3h-4.8Z"/></svg>`;
+
 const compLogo = (id, size) => COMP_LOGO[id]
   ? `<img class="clogo" src="${COMP_LOGO[id]}" alt="" width="${size}" height="${size}"
        onerror="this.style.display='none'">`
-  : '';
+  // No size on the trophy: `.clogo` and `.chead.withlogo .clogo` already size
+  // the slot, and an inline SVG takes those the same way the <img> does.
+  : COMP_TROPHY;
 const COMP_SLUG = {
   'COFTA': 'cofta', 'CONAFA': 'conafa', 'COSTA': 'costa',
   'The Ark Cup': 'ark', 'COSA': 'cosa', 'Ladies COFTA': 'ladies-cofta',
@@ -1827,10 +1853,11 @@ function viewHistory() {
     // edition whose champion was never recorded is skipped rather than shown
     // as "Unknown".
     const holder = M.reigningChampion(eds);
-    // The badge sits with the name, not instead of it: COSTA has no badge and
-    // must not read as a card that failed to load, and every badge here has
-    // its own name set into the artwork too small to read at this size.
-    return `<button class="ccard${COMP_LOGO[c.id] ? ' badged' : ''}"
+    // The badge sits with the name, not instead of it — every badge here has
+    // its own name set into the artwork, too small to read at this size. Every
+    // card carries a mark now; COSTA's is the generic trophy (see COMP_TROPHY),
+    // because a single unbadged card in a list reads as one that failed.
+    return `<button class="ccard badged"
         data-histcomp="${c.id}" data-comp="${c.id}">
       ${compLogo(c.id, 34)}
       <span class="cch">
@@ -1946,7 +1973,7 @@ function viewHistComp() {
   // No <h2> here: the masthead carries the competition's name on this view,
   // and repeating it two lines below is just the same words twice.
   return `${backButton('view:history')}
-    <div class="chead bare${COMP_LOGO[state.histComp] ? ' withlogo' : ''}"
+    <div class="chead bare withlogo"
          data-comp="${esc(state.histComp)}">
       ${compLogo(state.histComp, 46)}
       <p>${eds.length} ${eds.length === 1 ? 'edition' : 'editions'} &middot;

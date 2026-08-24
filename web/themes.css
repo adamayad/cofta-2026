@@ -519,5 +519,9 @@
 [data-theme="broadcast"] .ccn,
 [data-theme="broadcast"] .chead h2      {color:var(--cl,var(--fg))}
 [data-theme="broadcast"] .ccard         {border-left-color:var(--cl,var(--acc))}
+/* The generic trophy is ink too, and at 1.6px strokes it is the thinnest ink
+   on the card — the deep identity values measure 1.9:1 against Broadcast's
+   card and would simply not be there. */
+[data-theme="broadcast"] .clogo.generic {color:var(--cl,var(--dim))}
 [data-theme="broadcast"] .chead         {border-bottom-color:var(--cl,var(--acc))}
 [data-theme="broadcast"] .mono          {box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}

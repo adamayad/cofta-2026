@@ -980,10 +980,26 @@ cards at 34px and the competition page at 46px.
 - **Ladies COFTA has no file of its own** — it is COFTA's women's competition
   under the same association and the same badge, so it points at
   `cofta.webp` rather than a duplicate that could drift.
-- **COSTA has no badge and none is invented**, the same rule the archive
-  applies to a club with no crest. Its card keeps the original three-column
-  grid rather than a badged four-column one with a hole in it, so the absence
-  reads as deliberate rather than as a card that failed to load.
+- **COSTA has no badge of its own and takes a GENERIC TROPHY** (`COMP_TROPHY`
+  in `app.js`, `.clogo.generic`). **This reverses the earlier rule**, on the
+  organiser's call, 24 August. That rule kept COSTA's card on the original
+  three-column grid so the absence would read as deliberate rather than as a
+  badged card with a hole in it. In a list it did not read that way: five cards
+  with a mark and one without reads as the one that failed to load, which is
+  the opposite of the honesty it was for. Every card is now `badged` and every
+  competition page `withlogo`.
+- **The trophy is still not invented branding, and that is why it is drawn.**
+  It is the *same* neutral glyph whoever it stands for, so it cannot be taken
+  for a badge somebody designed for COSTA — an image file could. It takes
+  `--ci`, the exact token the card's own competition name already uses, so its
+  contrast is settled by construction: those 6×5 combinations were measured
+  when the tokens were chosen, worst 6.67:1, and Broadcast swaps to `--cl`
+  beside `.ccn`. **No opacity on it.** Dimming it to "step back" from the real
+  badges took Matchday from 6.79:1 to 4.81:1 on a mark drawn in 1.6px strokes,
+  which is not a trade worth making; a line drawing beside five full-colour
+  badges is already the quieter thing on the row.
+- **A real COSTA badge just deletes this.** Drop the file in `web/comps/`, add
+  it to `COMP_LOGO`, bump `VERSION`; the trophy disappears on its own.
 
 ### Each competition is its own association, in its own diocese
 
