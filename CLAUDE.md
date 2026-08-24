@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v86`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v87`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0050`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0051`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -82,7 +82,9 @@ the bare domain).
   string — it survives only as the monogram's initials, because half these
   clubs are "St Mary & …" and canonical names would collide on "SM".
   `tests/naming_drill.html` walks every edition and fails if anything
-  but a canonical name reaches a name line.
+  but a canonical name reaches a name line. **8/8 since `0051`** — it had been
+  7/8 for weeks on the COFTA 2017 joint side, which is exactly how a standing
+  failure hides the next real one.
 - **A DEPLOY DID NOT REACH PHONES FOR FOUR HOURS, AND THE SERVICE WORKER HAD
   NOTHING TO DO WITH IT.** Reported as "I had to remove the home-screen app and
   clear site data to see changes". Three plausible causes were ruled out by
@@ -1253,7 +1255,8 @@ This is **competition-level**. An edition whose host differed carries its own
 - **A joint side is ONE club.** COFTA 2017's Rotherham & Birmingham entry gets
   its own registry row, exactly as Liverpool & Bolton already does — never
   split into its parishes, never merged into either. `0037` asserts the joint
-  row is present and that neither parish appears separately that year.
+  row is present and that neither parish appears separately that year, and
+  `0051` re-asserts it while giving the row its short name.
 - **Rotherham is spelt St Anthony here.** Adam's 2005–2021 roll writes
   "St Antony". Same club, one row; the roll's spelling is an alias.
 - **Chilaka, not Chilaki.** Adam's spelling is canonical and lives in
@@ -1461,11 +1464,32 @@ carried bare place names with a null city, because inventing a church name
 would have broken the archive's first rule; a person who knows is not
 inference.
 
-**Liverpool & Bolton is the one row with no single church name.** It is a
-joint side of two churches, so renaming it to either would be wrong and
-stacking both on the primary line runs to 45 characters and truncates on a
-fixture row. The team keeps its own name and `display.joint` records the two
-churches, which `archSubtitle()` renders on its cabinet.
+**TWO ROWS HAVE NO SINGLE CHURCH NAME, and both are stored the same way.** A
+joint side of two churches cannot be renamed to either, and stacking both on
+the primary line overruns it — 45 characters for Liverpool & Bolton, 52 for
+the other. So the row keeps a short name and `display.joint` records the two
+parishes, which `archSubtitle()` renders underneath as "Joint team — …".
+
+| row | name on screen | parishes in `display.joint` |
+|---|---|---|
+| Liverpool & Bolton | `Liverpool & Bolton` | St Mary & St Cyril, Liverpool · St Mary & St Philopater, Bolton |
+| Rotherham & Birmingham | `Rotherham & Birmingham` | St Anthony, Rotherham · St Mary & St Mark, Birmingham |
+
+**The second one only got this treatment on 24 August (`0051`), and the
+naming drill had been failing on it the whole time** — 7/8, with the detail
+naming the 52-character string. It is 8/8 now, for the first time. Worth
+knowing as a pattern: the drill was right, the failure was old, and it stayed
+old because a standing failure stops being read. **A drill that always fails
+one assertion is a drill nobody checks.** If one is failing for a known
+reason, fix it or the next real regression hides behind it.
+
+Nothing in `0051` was a judgement call: `short_name` on that row was already
+`Rotherham & Birmingham`, that string was already an alias, and the parishes
+are the old canonical split at its top-level `&`. **The id did not move** —
+ids are stable keys other rows point at, the same reasoning as `0035` renaming
+the Ireland club — and **the long form stays in `aliases`**, because team
+strings resolve by exact match against that array and a source printing the
+long form must still resolve.
 
 **Eight clubs off the circuit have confirmed colours**, stored in their
 `display` jsonb rather than computed:

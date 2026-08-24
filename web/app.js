@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v86';
-import * as api from './api.js?b=cofta-v86';
-import * as M from './model.js?b=cofta-v86';
-import { WriteQueue } from './queue.js?b=cofta-v86';
+import { CREST } from './crests.js?b=cofta-v87';
+import * as api from './api.js?b=cofta-v87';
+import * as M from './model.js?b=cofta-v87';
+import { WriteQueue } from './queue.js?b=cofta-v87';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
