@@ -3084,7 +3084,7 @@ document.addEventListener('change', (ev) => {
   // TEMPORARY DEPLOY PROBE - diagnosing the stale-PWA report, 2026-08-24.
   // Read window.__deployProbe in a running page to see EXACTLY which build of
   // app.js that page is executing. Removed once the diagnosis is finished.
-  window.__deployProbe = '20260824T074401Z';
+  window.__deployProbe = '20260824T074512Z';
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
