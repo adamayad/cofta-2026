@@ -285,8 +285,10 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
 - `km.webp` is Kidane Mihret. The id was `hove` until 0020 renamed it: Hove
   withdrew pre-draw and Kidane Mihret took the slot, and the alias was kept
   for convenience until History arrived and made "hove" genuinely ambiguous
-  with the real Hove club. Still the placeholder KM monogram — real artwork
-  pending, spelling to confirm.
+  with the real Hove club. **"Kidane Mihret" is the confirmed spelling**
+  (organiser, 24 August) — it is what `teams.name` already held, so nothing
+  changed, and it is now settled rather than provisional. Still the
+  placeholder KM monogram; real artwork pending.
 - **PWA icons** (`icon-192`, `icon-512`, `icon-maskable`, `apple-touch-icon`)
   are cut from the association's own artwork, `cofta-icon-source.png` (1080px
   master, kept in `web/` but never referenced and deliberately **not**
@@ -461,11 +463,11 @@ association.
    allowlist grants the role when the user is created, so until someone
    creates that user in the dashboard there is no second organiser. The other
    three accounts (Adam + two pitch) exist and have signed in.
-4. **Spend cap decision, and the leaked-password toggle.** With the cap ON,
-   exceeding quota RESTRICTS the project rather than billing — on the day that
-   means the site goes down instead of costing a few pounds. Turn it off for
-   the weekend. Leaked-password protection is still disabled; the Supabase
-   advisor confirms it.
+4. ~~Spend cap~~ **off, confirmed 24 August.** Going over quota now bills
+   rather than restricting the project, which is the right way round for a
+   weekend where the site going down is the only unrecoverable outcome.
+   **Leaked-password protection is still disabled** — the Supabase advisor
+   confirms it, and it is one toggle.
 5. **Venue dry run on real phones**, and it is the only way to close the one
    genuine gap in the notification work: everything up to the send is verified,
    but no notification has ever been observed arriving on a handset from a
@@ -474,8 +476,8 @@ association.
    runs *before* the auth gate, so a missing secret would have returned 500.
    That check needs no credentials and is the fastest way to re-confirm it.
 6. Poster with QR.
-7. **Kidane Mihret's real crest** — still the placeholder KM monogram — and
-   confirm the spelling of the name.
+7. **Kidane Mihret's real crest** — still the placeholder KM monogram. The
+   spelling is settled; only the artwork is outstanding.
 8. **The 2026 rules**, if the association issues any. 2025's are implemented.
 
 **Do not deploy during the tournament weekend.** Cloudflare's edge cache keys
@@ -1446,11 +1448,7 @@ to the `hove` → `km` rename in 0020.
 
 - **Q12 — Birmingham: one Coptic church or two?** See the identity guards
   above. Both rows stand until Adam rules.
-- **Q13 — is the Mina Muharib of COFTA 2014 the same man as CONAFA 2016's?**
-  He opened Brighton's 2014 semi-final, described as his fourth of that
-  tournament; Brighton's CONAFA 2016 top scorer carries the same name. Same
-  club, same name, two years apart — which is precisely the evidence this
-  archive has always refused to merge on. Neither merged nor split.
+- ~~Q13 — Mina Muharib~~ **resolved, 24 August. See the rulings below.**
 - **C18 — Nduoma Chilaka's five goals in 2014 are NOT recomputed.** The report
   attributes two of them explicitly (the headers against Croydon) and makes
   clear the final's free-kick was an OWN GOAL, not his. With no goal-by-goal
@@ -1472,6 +1470,26 @@ to the `hove` → `km` rename in 0020.
   Rizkallah pair stays held back as two players.
 - **"Myven" is Myven Gaied.** The published string is preserved as
   `player_name`; the canonical carries the surname.
+- **Q13 — Mina Muharib is ONE MAN**, 24 August 2026. Brighton's 2014
+  semi-final scorer and Brighton's 2016 top scorer are the same person.
+  **Two corrections came out of asking:**
+  - **It was never CONAFA 2016.** Both this file and the archive's own
+    question said so; the 2016 record is on `cofta-2016`. So the two
+    appearances are two years apart in the *same* competition for the same
+    club — a good deal less surprising than the question made it sound, and
+    a reminder to check an edition id before building an argument on it.
+  - **Nothing needed re-keying.** Both records already carried
+    `player_canonical = 'Mina Muharib'`, so every aggregate that groups on
+    the canonical — the roster, the cabinet — had been treating them as one
+    player the whole time, while the note beside them said "neither merged
+    nor split". The hedge was in the prose, never in the data. Resolving it
+    changed words, not rows.
+  - The 2014 appearance **exists only as prose.** `0040` put "Brighton opened
+    through Mina Muharib" in a semi-final note and created no event or
+    leaderboard row, so he is not on Brighton's 2014 roster and a merge could
+    not have found him anyway. Not corrected here: adding a goal event would
+    change 2014's goal counts, and that is a data decision, not an identity
+    one.
 
 ### One contradiction in the source, resolved by reading
 

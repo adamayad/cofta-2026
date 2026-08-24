@@ -6546,8 +6546,7 @@
           "team": "Brighton",
           "match_id": null,
           "goals": 1,
-          "flag": "identity_unconfirmed",
-          "note": "Opened the scoring in the semi-final against Croydon; the report calls it his fourth goal of the tournament and gives him a nickname. WHETHER THIS IS THE SAME PERSON as the Mina Muharib who was Brighton's top scorer at CONAFA 2016 IS NOT RESOLVED. Same club and same name, but the archive does not merge on that alone. Held as a flagged question for the organiser, neither merged nor split."
+          "note": "Opened the scoring in the semi-final against Croydon; the report calls it his fourth goal of the tournament and gives him a nickname. Same player as Brighton's 2016 top scorer - organiser ruling, 24 August 2026, closing Q13."
         },
         {
           "player_name": "Amir Ameen",
@@ -7222,13 +7221,13 @@
       {
         "id": "Q12",
         "question": "Birmingham: one Coptic church or two? The registry holds St Mary & Archangel Michael, Birmingham (from the CONAFA 2026 data, alias 'Birmingham'). The CONAFA 2015 report and the COFTA 2017 joint entrant both name Birmingham's club as St Mary & St Mark. Both rows now exist and NEITHER has been merged into the other. If Birmingham has two churches, this is correct as it stands. If one of the two names is wrong, say which - it cannot be inferred from the sources."
-      },
-      {
-        "id": "Q13",
-        "question": "Is the Mina Muharib who opened Brighton's 2014 semi-final (nicknamed in the report, described as his fourth goal of that tournament) the same person as the Mina Muharib who was Brighton's top scorer at CONAFA 2016? Same club, same name, two years apart. Held unmerged and unsplit pending a ruling - the archive does not merge players on name and club alone."
       }
     ],
     "resolved": [
+      {
+        "id": "Q13",
+        "answer": "ONE MAN. Organiser ruling, 24 August 2026: the Mina Muharib who opened Brighton's 2014 semi-final and the Mina Muharib who was Brighton's top scorer in 2016 are the same person. Note that the question as originally written said CONAFA 2016; the 2016 record is a COFTA one, so the two appearances are two years apart in the SAME competition for the same club, which is a good deal less surprising than the question made it sound. In practice this required no re-keying: both records already carried player_canonical 'Mina Muharib', so every aggregate that groups on the canonical was already treating them as one player. What changes is that the archive now says so instead of hedging."
+      },
       {
         "id": "C1",
         "answer": "SMPK and Pope Kyrillos, Hounslow are the same club. Merged as 'St Mary & Pope Kyrillos VI, Hounslow'. The CONAFA 2025 'St Demiana and Pope Kyrillos VI' entry is the WORTHING club, a separate entity that also carries Pope Kyrillos VI in its name. These two must never be merged."
