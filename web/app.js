@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v75';
-import * as api from './api.js?b=cofta-v75';
-import * as M from './model.js?b=cofta-v75';
-import { WriteQueue } from './queue.js?b=cofta-v75';
+import { CREST } from './crests.js?b=cofta-v76';
+import * as api from './api.js?b=cofta-v76';
+import * as M from './model.js?b=cofta-v76';
+import { WriteQueue } from './queue.js?b=cofta-v76';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -55,6 +55,7 @@ const state = {
   schedule: [],        // Vespers, Liturgy - timetable items that are not matches
   views: 0,            // page changes this session, for the install offer
   installEarned: false,// opening a match is engagement enough on its own
+  push: null,          // { supported, permission, subscribed, endpoint } - read from the browser
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, dayPinned: false, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
@@ -1373,9 +1374,10 @@ function viewAdmin() {
         : 'Pitch account: run matches, log events, enter shoot-outs.'}
         Open any match and the controls appear inline.</p>
       <button class="act ghost" id="signout">Sign out</button>
-      ${appearanceSection()}${squadSection()}${resetSection}`;
+      ${notifySection()}${appearanceSection()}${squadSection()}${resetSection}`;
   }
-  return `<div class="sect">Organiser sign in</div>
+  return `${notifySection()}
+    <div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
       and password you were given \u2014 one account per pitch.</p>
     <div class="form">
@@ -2665,6 +2667,19 @@ document.addEventListener('click', async (ev) => {
     return;
   }
 
+  // Notifications. 'off' unsubscribes; anything else is a club choice, or
+  // 'all'. Enabling and re-choosing are the same call, because subscribe_push
+  // is idempotent on the endpoint - switching club must not need a round trip
+  // through off-and-on-again.
+  if (t.dataset.notify) {
+    const v = t.dataset.notify;
+    try {
+      if (v === 'off') await disablePush();
+      else await enablePush(v === 'all' ? null : v);
+    } catch (e) { alert(e.message || 'Could not change notifications.'); }
+    return;
+  }
+
   // Back before view: a back button carries only data-back, but checking it
   // first keeps the two from ever racing if one later carries both.
   if (t.dataset.back) {
@@ -2819,10 +2834,12 @@ document.addEventListener('click', async (ev) => {
 
   const m = currentMatch();
 
-  if (t.dataset.clock && m) return guard(() =>
-    api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS,
+  if (t.dataset.clock && m) return guard(async () => {
+    await api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS,
       t.dataset.clock === 'start' ? m.home : null,
-      t.dataset.clock === 'start' ? m.away : null));
+      t.dataset.clock === 'start' ? m.away : null);
+    if (t.dataset.clock === 'full_time') notifyMatch(m.id, 'full_time');
+  });
 
   // Goal for a side: log it immediately, then ask who scored. The score
   // must move on the first tap — attribution is a bonus, never a gate.
@@ -2836,6 +2853,7 @@ document.addEventListener('click', async (ev) => {
     });
     state.picker = { type: 'goal', side: t.dataset.goal, eventId: id };
     render();
+    notifyMatch(m.id, 'goal');
     return;
   }
 
@@ -3264,6 +3282,173 @@ function dismissInstall() {
   $('installbar')?.remove();
 }
 
+/**
+ * Ask the server to fan a notification out. DELIBERATELY NOT AWAITED and
+ * deliberately silent on failure.
+ *
+ * The score moving is the job. A notification is a courtesy on top of it, and
+ * it must never be able to delay the tap that logged the goal, block the
+ * picker that follows, or put an error in front of someone standing on a
+ * touchline. If the push does not go out, the app is still right and every
+ * spectator polling still sees the goal within five seconds.
+ */
+function notifyMatch(matchId, kind) {
+  if (!state.admin) return;
+  api.firePush(matchId, kind).catch(() => {});
+}
+
+/* ── goal and full-time notifications ────────────────────── */
+/**
+ * WHY THIS IS GATED ON BEING INSTALLED. Apple does not deliver Web Push to a
+ * Safari tab — only to an app added to the home screen, on iOS 16.4 or later.
+ * Offering the toggle in a tab would produce a permission dialog that grants
+ * something which then never arrives, which is worse than not offering it.
+ * Android is more forgiving, but the same rule is applied to both so there is
+ * one story to tell a reader rather than two.
+ *
+ * Anyone who taps it before installing is told why, rather than being let
+ * through into a dead end.
+ */
+const pushSupported = () =>
+  'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+const b64ToBytes = (s) => {
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+};
+
+/** What this device is currently signed up for, read from the browser rather
+ *  than from our own storage — the browser is the authority, and a permission
+ *  revoked in Settings must show up here immediately. */
+/**
+ * NEVER `navigator.serviceWorker.ready` HERE. That promise does not resolve
+ * when no worker is registered — it waits, for ever — so this function hung
+ * and `state.push` stayed null, and the panel told a perfectly capable browser
+ * that it "cannot show match notifications". Caught locally, where the dev
+ * server cannot register a worker at all; it would also have hit any real
+ * device whose registration failed. `getRegistration()` settles immediately,
+ * with undefined when there is nothing.
+ */
+async function swRegistration() {
+  try {
+    return await navigator.serviceWorker.getRegistration()
+      ?? await navigator.serviceWorker.register('./sw.js');
+  } catch { return null; }
+}
+
+async function readPushState() {
+  if (!pushSupported()) { state.push = { supported: false }; return; }
+  let sub = null;
+  try {
+    const reg = await swRegistration();
+    sub = reg ? await reg.pushManager.getSubscription() : null;
+  } catch { /* no worker yet */ }
+  state.push = {
+    supported: true,
+    permission: Notification.permission,       // 'default' | 'granted' | 'denied'
+    subscribed: !!sub,
+    endpoint: sub?.endpoint ?? null,
+  };
+}
+
+async function enablePush(teamId) {
+  if (!pushSupported()) return;
+  // The permission request MUST come from a real tap. Calling it from a timer
+  // or after an await chain that loses the gesture is silently refused on iOS.
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') { await readPushState(); render(); return; }
+
+  const reg = await swRegistration();
+  if (!reg) throw new Error('Notifications need the service worker, which did not start.');
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,                     // required; we always show something
+    applicationServerKey: b64ToBytes(api.VAPID_PUBLIC_KEY),
+  });
+  const j = sub.toJSON();
+  await api.subscribePush(j.endpoint, j.keys, teamId ?? null);
+  try { localStorage.setItem('cofta.push.team', teamId ?? ''); } catch {}
+  await readPushState();
+  render();
+}
+
+async function disablePush() {
+  try {
+    const reg = await swRegistration();
+    const sub = reg ? await reg.pushManager.getSubscription() : null;
+    if (sub) {
+      // Tell the server FIRST. If unsubscribe() succeeded and the delete then
+      // failed, the row would live on as an endpoint nobody can ever reach,
+      // and every future send would waste a request failing against it.
+      await api.unsubscribePush(sub.endpoint).catch(() => {});
+      await sub.unsubscribe();
+    }
+  } catch { /* nothing to remove */ }
+  try { localStorage.removeItem('cofta.push.team'); } catch {}
+  await readPushState();
+  render();
+}
+
+/** Which club this device chose, or '' for everything. */
+const pushTeam = () => {
+  try { return localStorage.getItem('cofta.push.team') ?? ''; } catch { return ''; }
+};
+
+/**
+ * The notifications panel. Lives in the Organiser/Settings tab where anyone
+ * can reach it at any time, and is offered from the install bar once someone
+ * has actually installed.
+ */
+function notifySection() {
+  const p = state.push;
+  if (!p?.supported) {
+    return `<div class="sect">Notifications</div>
+      <p class="note" style="padding-top:0">This browser cannot show match notifications.</p>`;
+  }
+
+  if (!installed()) {
+    return `<div class="sect">Notifications</div>
+      <p class="note" style="padding-top:0">Get a buzz when a goal goes in.
+        <b>Add COFTA to your home screen first</b> — on iPhone, notifications only
+        reach an app that has been added, never a Safari tab. Open the app from
+        your home screen and this will be here waiting.</p>`;
+  }
+
+  if (p.permission === 'denied') {
+    return `<div class="sect">Notifications</div>
+      <p class="note" style="padding-top:0">Notifications are blocked for COFTA in your
+        device settings. Turn them back on there and this will work — the app
+        cannot ask again once it has been refused.</p>`;
+  }
+
+  if (p.subscribed) {
+    const t = pushTeam();
+    const who = t ? (team(t) ? `${team(t).name}, ${team(t).city}` : t) : 'every match';
+    return `<div class="sect">Notifications</div>
+      <p class="note" style="padding-top:0">On for <b>${esc(who)}</b>. Goals and full time.</p>
+      <div class="notifychoice">${notifyChoices(t)}</div>
+      <button class="act ghost" data-notify="off">Turn notifications off</button>`;
+  }
+
+  return `<div class="sect">Notifications</div>
+    <p class="note" style="padding-top:0">A buzz when a goal goes in, and again at
+      full time. Choose one club or the whole tournament — twelve group matches
+      in a day is a lot of notifications if you only came for one of them.</p>
+    <div class="notifychoice">${notifyChoices(null)}</div>`;
+}
+
+/** One button per choice. Real buttons, and the current one is marked. */
+function notifyChoices(current) {
+  const entered = Object.values(state.teams)
+    .filter(t => t.group_letter)
+    .sort((a, b) => a.city.localeCompare(b.city));
+  const btn = (val, label, on) =>
+    `<button class="${on ? 'on' : ''}" data-notify="${esc(val)}"
+       aria-pressed="${on}">${esc(label)}</button>`;
+  return btn('all', 'Every match', current === '' && state.push?.subscribed)
+    + entered.map(t => btn(t.id, t.city, current === t.id)).join('');
+}
+
 /* ── staying current ─────────────────────────────────────── */
 /**
  * Register the worker, and tell the reader when a new build is ready.
@@ -3350,7 +3535,19 @@ function watchForUpdates() {
   // phone running?" is otherwise unanswerable from the outside.
   window.__build = BUILD;
 
-  if ('serviceWorker' in navigator) watchForUpdates();
+  if ('serviceWorker' in navigator) {
+    watchForUpdates();
+    readPushState().then(render);
+    // A notification tap on an already-open app: the worker focuses this
+    // window and posts where to go, because opening a second copy of a
+    // polling app is the last thing a venue's wifi needs.
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data?.type !== 'cofta:open') return;
+      const m = /[?&]match=([^&]+)/.exec(e.data.url || '');
+      if (m) { state.view = 'match'; state.matchId = decodeURIComponent(m[1]); state.from = 'fixtures'; }
+      render();
+    });
+  }
 
   // Who are we? Ask the server, and if the network cannot answer, fall back
   // to the last answer it gave. Failing closed here looked safe and was not:

@@ -196,6 +196,33 @@ export const setTrophy = (trophy, playerIds) =>
 export const setSlot = (slot, teamId) =>
   rpc('set_slot', { p_slot: slot, p_team: teamId }, true);
 
+/* ── push notifications ────────────────────────────────── */
+/** The VAPID public key. PUBLIC BY DESIGN, exactly like the publishable key
+ *  above: it is handed to every phone that subscribes, and it identifies the
+ *  sender rather than authorising anything. Its private half signs each push
+ *  and lives ONLY in the Edge Function's secret store - never in this repo. */
+export const VAPID_PUBLIC_KEY =
+  'BLlBwzJMaTgBve3vDrZc5624vmM5dXKJPjrz5JuX4Xj3yK5KP7q7Aw8UpI1plXFIwuNTS5lnHYu2T6bqMsDSs-s';
+
+export const subscribePush = (endpoint, keys, teamId) =>
+  rpc('subscribe_push', { p_endpoint: endpoint, p_keys: keys, p_team: teamId ?? null });
+
+export const unsubscribePush = (endpoint) =>
+  rpc('unsubscribe_push', { p_endpoint: endpoint });
+
+/** Ask the Edge Function to fan a notification out. Called by an ORGANISER's
+ *  device straight after a goal or a full-time whistle lands, with their own
+ *  token: the function verifies the caller before it sends anything, so a
+ *  spectator cannot make everyone's phone buzz. */
+export async function firePush(matchId, kind) {
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/notify`, {
+    method: 'POST', headers: headers(true),
+    body: JSON.stringify({ match_id: matchId, kind }),
+  });
+  if (!r.ok) throw new Error(`notify failed (${r.status})`);
+  return r.json().catch(() => null);
+}
+
 // is_admin/my_role are deliberately not exported individually: checkRole() is
 // the only door, so no future caller can check the role without refreshing the
 // cache that an offline boot depends on.

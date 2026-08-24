@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v75';
+const VERSION = 'cofta-v76';
 const SHELL = [
   './', './index.html', './diocese.webp',
   // Code and stylesheets carry the build token, because THE BROWSER'S OWN HTTP
@@ -17,9 +17,9 @@ const SHELL = [
   // be answered from it, because on a fresh deploy the URL is one the browser
   // has never seen. These must stay in step with index.html and app.js;
   // tools/check-build.sh fails if they drift.
-  './styles.css?b=cofta-v75', './fonts.css?b=cofta-v75', './themes.css?b=cofta-v75',
-  './app.js?b=cofta-v75', './api.js?b=cofta-v75', './model.js?b=cofta-v75',
-  './queue.js?b=cofta-v75', './crests.js?b=cofta-v75',
+  './styles.css?b=cofta-v76', './fonts.css?b=cofta-v76', './themes.css?b=cofta-v76',
+  './app.js?b=cofta-v76', './api.js?b=cofta-v76', './model.js?b=cofta-v76',
+  './queue.js?b=cofta-v76', './crests.js?b=cofta-v76',
   './manifest.webmanifest',
   // The home-screen icons. Cache-first like every other asset, so a phone
   // that already installed the app only refetches them when VERSION moves.
@@ -174,4 +174,62 @@ self.addEventListener('fetch', (e) => {
         hit || (e.request.mode === 'navigate' ? caches.match('./index.html') : undefined))
     )
   );
+});
+
+/* ── push notifications ──────────────────────────────────── */
+/**
+ * A goal, or a full-time whistle. The Edge Function encrypts a small JSON
+ * payload to this device and Apple or Google wake this worker to show it.
+ *
+ * EVERY BRANCH HERE IS DEFENSIVE, because a throw inside a push handler is
+ * not a caught error — on iOS a worker that throws while handling a push can
+ * have its subscription dropped by the OS, and the reader silently stops
+ * getting notifications with nothing to see or fix. A malformed payload must
+ * degrade to a dull-but-correct notification, never to an exception.
+ *
+ * `event.waitUntil` is not optional either: without it the worker can be
+ * killed before showNotification resolves, and the notification never appears.
+ */
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (_) { d = {}; }
+
+  const title = d.title || 'COFTA 2026';
+  const body  = d.body  || 'Tap for the latest scores.';
+
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    // Collapse repeats for the same match: a second goal replaces the first
+    // rather than stacking six notifications from one game.
+    tag: d.tag || 'cofta',
+    renotify: true,
+    data: { url: d.url || './' },
+    // A goal is worth a buzz; anything else is not worth waking a pocket for.
+    vibrate: d.kind === 'goal' ? [90, 50, 90] : undefined,
+  }));
+});
+
+/**
+ * Tapping the notification opens the match it is about.
+ *
+ * If the app is ALREADY OPEN somewhere, focus that window and tell it where to
+ * go rather than opening a second copy — two live copies of the same app both
+ * polling is the last thing a venue's wifi needs.
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || './';
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of all) {
+      if (c.url.includes(self.registration.scope)) {
+        await c.focus();
+        c.postMessage({ type: 'cofta:open', url });
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });
