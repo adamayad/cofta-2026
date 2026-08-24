@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0043`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0045`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -474,6 +474,63 @@ how this gets built badly. `installBar()` and friends in `app.js`.
   — `IOS` and `IOS_SAFARI` are module-level constants, so a later stub is too
   late — and drives four cases: `?m=` unset (iOS Safari), `crios`, `standalone`,
   `dismissed`. 15/15, 4/4, 4/4, 4/4.
+
+## Goal and full-time notifications
+
+Opt-in Web Push. `0044` and `0045`, `supabase/functions/notify`, the `push`
+handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
+
+- **The VAPID public key lives in `api.js` and is public by design**, exactly
+  like the publishable key beside it. Its private half is only ever in the
+  Edge Function's secret store — which is why the keypair was generated at
+  Adam's end and the private half was never in chat or in this repo.
+- **GATED ON BEING INSTALLED, on both platforms.** Apple does not deliver Web
+  Push to a Safari tab, only to a home-screen app on iOS 16.4+. A toggle in a
+  tab would raise a permission dialog granting something that then never
+  arrives. Android would tolerate it; both get the same rule so there is one
+  story to tell, and anyone tapping early is told why.
+- **Per-club by default.** Twelve group matches in a Saturday is a lot of
+  buzzing for someone who came for one club. Changing club is the same call as
+  subscribing — `subscribe_push` is idempotent on the endpoint, so switching
+  never needs off-then-on-again.
+- **The Edge Function does not trust its caller.** The request carries only a
+  match id and `goal`/`full_time`; every word of the notification is read back
+  out of the database. It checks `is_admin()` with the caller's own token
+  first: verified against production, the publishable key alone gets **403 not
+  an organiser** and no auth is refused at the gateway.
+- **It is called by the organiser's device, not by a database trigger.** A
+  trigger needs a Database Webhook configured by hand, or a service-role key
+  in a migration — and the second puts a credential in the repo.
+  `notifyMatch()` is deliberately **not awaited and silent on failure**: the
+  score moving is the job, the notification is a courtesy, and it must never
+  delay the tap that logged the goal or put an error in front of someone on a
+  touchline.
+- **Dead endpoints are deleted, never retried.** 404 and 410 mean the
+  subscription is gone for good; retrying one every goal all weekend is a slow
+  leak that ends with sends timing out for everybody else.
+- **Every branch of the `push` handler is defensive.** A throw while handling a
+  push can have iOS drop the subscription outright, and the reader then
+  silently stops getting notifications with nothing to see or fix. A malformed
+  payload must degrade to a dull-but-correct notification.
+- **NEVER `navigator.serviceWorker.ready` in this code path.** That promise
+  does not resolve when no worker is registered — it waits for ever. It hung
+  `readPushState()`, left `state.push` null, and told a perfectly capable
+  browser it "cannot show match notifications"; `enablePush` had the same await
+  and would have hung *after* granting permission, leaving someone with
+  permission given and no subscription. `swRegistration()` uses
+  `getRegistration()`, which settles immediately.
+- **Two locks on the subscriber list, not one.** `0044` enabled RLS with no
+  policies, which returned an empty array rather than an error — but the
+  schema-wide blanket GRANTs were still there, so anon held SELECT, INSERT,
+  UPDATE and DELETE and RLS was the only thing standing. `0045` revokes them:
+  a direct GET went 200/`[]` → **401**, a direct POST → **401**, and both RPCs
+  still return 204.
+- **What is verified, and what is not.** The RFC 8291 encryption round-trips
+  byte-identical (encrypt, then decrypt with the device's private key —
+  emoji and en-dash included), the auth gate refuses non-organisers, the RPCs
+  accept good input and reject bad, and the key imports as a valid P-256 point.
+  **The actual send is not verified**: it needs `VAPID_PRIVATE_KEY` set in
+  Supabase and a real handset, neither of which exists here.
 
 ## Nothing in this app is time-bombed, and it must stay that way
 
