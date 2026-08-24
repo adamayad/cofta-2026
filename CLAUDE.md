@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v84`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v85`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0048`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0049`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -881,6 +881,38 @@ him goes to the conflict register rather than into the data.
   the **honours read** rather than `loadEdition` — one query for the whole
   archive, already cached for the cabinets, where the per-edition read fires
   six and five come back empty for a record this thin.
+- **BUT A THIN EDITION STILL SHOWS NONE OF ITS MATCHES, AND SOME HAVE PLENTY.**
+  `thinEdition()` renders champion, runner-up, final summary, entrants, awards
+  and notes, and never looks at `matches`. Measured 24 August:
+
+  | edition | match rows | event rows | on screen |
+  |---|---|---|---|
+  | cofta-2014 | 13 | 3 | **none** |
+  | cofta-2009 | 2 | 0 | **none** |
+  | cofta-2012 | 1 | 0 | **none** |
+
+  So `0038`–`0040`, which exist to give 2009/2010/2012/2014 full narrative
+  records, wrote a complete group stage, a final, Chilaka's two headers and the
+  final's own goal into the database — **and not one of them has ever appeared
+  on the site.** The prose in `notes` and `known_gaps` is doing all the work
+  those pages do.
+  This is not obviously a bug. `data_confidence` was deliberately left at
+  `minimal` because `partial` routes an edition to the FULL renderer, which
+  expects standings these years do not have — that decision is recorded above
+  and was right. What was never decided is whether `thinEdition()` should show
+  a match list of its own. **It is a design question, not a data one, and it is
+  open.** Anything that "fixes" a missing archive match by adding rows should
+  check this table first: rows are cheap and invisible.
+- **The six semi-finals in `0049` are exactly that case.** COFTA 2010, COFTA
+  2014 and CONAFA 2016 each had two semi-finals written down in
+  `tournament_archive.json` and zero in the database — `0040` put the detail in
+  a *note* rather than a row. They are imported now, so the database agrees with
+  its source and any later decision to render them has something to render.
+  **They are invisible today**, and the migration says so in its own header
+  rather than claiming a fix. Nothing was invented on the way in: no
+  orientation, no scoreline inferred from a winner, no shoot-out score, and
+  COFTA 2010's unnamed opponent stays unnamed with Croydon recorded as
+  *probable* in the gap note and nowhere in the data.
 - **Awards render `player_canonical`; `player_name` keeps the source string.**
   The column still holds the spelling its source printed, and match pages
   still render that. An award is a summary rather than a quotation, and a

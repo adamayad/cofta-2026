@@ -247,7 +247,7 @@ export async function firePush(matchId, kind, opts = {}) {
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v12';   // v12: 2026-08-24 backfill (CONAFA gap, 2007/08 champions, registry, 2009/10/12/14)
+const ARCHIVE_V = 'v13';   // v13: 0049 imported six missing semi-finals (2010, 2014, CONAFA 2016)
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small
