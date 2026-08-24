@@ -192,12 +192,13 @@ Deno.serve(async (req) => {
    * dark grey circle, while being obviously green and blue to anyone looking
    * at the shirt. Golders Green's #14532D is dark green and must read green.
    *
-   * THE ONE EXCEPTION IS DARK BLUE, and the alphabet forces it: there is
-   * exactly one blue circle. Croydon's light blue and Rotherham's navy would
-   * otherwise both be 🔵 — and those two meet TWICE this year. Navy therefore
-   * takes ⚫, not because navy is black, but because "the dark one" is the only
-   * distinction available. Green needs no such rule: 🟢 is the only green
-   * there is, so dark green simply stays green.
+   * NAVY STAYS BLUE. Unicode has exactly one blue circle, so Croydon's light
+   * blue and Rotherham's navy are both 🔵 even though they meet twice this
+   * year. That was briefly ⚫ for navy to tell them apart, and it was worse:
+   * Rotherham do not play in black, and the notification would have been
+   * lying about a club to solve a problem POSITION ALREADY SOLVES. The circle
+   * sits at the scoring end, so identical colours still read differently.
+   * Same reasoning as the two white kits below.
    */
   const dotFor = (hex: string | null) => {
     if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
@@ -216,10 +217,12 @@ Deno.serve(async (req) => {
     if (h < 0) h += 360;
     if (s < 0.15) return l > 0.6 ? '⚪' : '⚫';    // a colourless kit: white or black
     if (h < 15 || h >= 345) return '🔴';
-    if (h < 45)  return l < 0.35 ? '🟤' : '🟠';
+    // Boundary at 35, not 45: Anba Abraam's gold #C9A96A sits at hue 40 and
+    // must read yellow. A true orange (#F4900C, hue 33) still lands orange.
+    if (h < 35)  return l < 0.35 ? '🟤' : '🟠';
     if (h < 70)  return '🟡';
     if (h < 170) return '🟢';                     // dark green included
-    if (h < 260) return l < 0.35 ? '⚫' : '🔵';    // navy: see above
+    if (h < 260) return '🔵';                     // navy included - see above
     if (h < 320) return '🟣';
     return '🔴';
   };
@@ -227,7 +230,7 @@ Deno.serve(async (req) => {
 
   // THE SCORING SIDE IS MARKED BY POSITION, and its colour is what marks it:
   // the club's circle sits at that club's end of the scoreline.
-  //   🟠 Anba Abraam 2–1 St Shenouda   home scored
+  //   🟡 Anba Abraam 2–1 St Shenouda   home scored
   //   Anba Abraam 2–1 St Shenouda 🔵   away scored
   //
   // POSITION CARRIES THE MEANING AND COLOUR IS THE FLAVOUR, in that order and

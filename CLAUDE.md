@@ -535,12 +535,23 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
 - **Circles are matched on HUE, not RGB distance.** Nearest-colour arithmetic
   turns Golders Green's #14532D and Rotherham's #1E2E63 BLACK - both really are
   closest to the dark grey circle, while being obviously green and blue to
-  anyone looking at the shirt. **The one exception is dark blue, and the
-  alphabet forces it**: Unicode has exactly one blue circle, so Croydon's light
-  blue and Rotherham's navy would both be 🔵 - and those two meet twice this
-  year. Navy takes ⚫, not because navy is black but because "the dark one" is
-  the only distinction available. Green needs no such rule: there is only one
-  green, so dark green stays green.
+  anyone looking at the shirt. Hue matching keeps dark green green and navy
+  blue, and the whole current mapping is:
+  **🟢 Archangel Michael · ⚪ Kidane Mihret · ⚪ Pope Kyrillos VI ·
+  🔴 St George · 🟡 Anba Abraam · 🔵 St Shenouda · 🔵 St Anthony.**
+- **NAVY IS BLUE AND THE COLLISION IS TOLERATED.** Unicode has one blue circle,
+  so Croydon's light blue and Rotherham's navy are both 🔵 — and those two meet
+  twice this year. Navy was briefly ⚫ to separate them and that was worse:
+  Rotherham do not play in black, so the notification was **lying about a club
+  to solve a problem position already solves.** The circle sits at the *scoring
+  end* of the scoreline, so two identical circles still read differently. Same
+  reasoning as the two white kits, and the general rule: **position carries the
+  meaning, colour is the flavour** — never distort the colour to prop up the
+  position.
+- **The orange/yellow boundary is hue 35, not 45, and that is deliberate.**
+  Anba Abraam's #C9A96A is a gold that sits at hue 40 and must read yellow; a
+  true orange (#F4900C, hue 33) still lands orange. Moving that boundary is how
+  a club's circle silently changes, so check both ends before touching it.
 - **A notification names the CHURCH, not the town.** `teams.short_label`
   (`0046`) is the one-line name a club goes by where the usual full-name-over-
   city is impossible. It used to fall back to the city, which reads badly for
