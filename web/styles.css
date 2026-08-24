@@ -906,3 +906,21 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .newbuild:active{transform:translateY(1px)}
 @keyframes newbuild-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.newbuild{animation:none}}
+
+/* A timetable item that is not a match. Same 44px time gutter as .fx so the
+   times line up down the page, but no crest tile, no score column and no
+   hover — it is information, not a control. The left rule in gold rather than
+   a club colour marks it as belonging to the day rather than to a team. */
+.schrow{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:baseline;
+  padding:13px 0;border-bottom:1px solid var(--line)}
+.schrow .t{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.schrow .t b{display:block;font-family:var(--disp);font-weight:600;font-size:14px;
+  color:var(--fg2);letter-spacing:0}
+.schrow .n{display:flex;flex-direction:column;gap:3px;min-width:0;
+  padding-left:9px;position:relative}
+.schrow .n::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:3px;
+  border-radius:2px;background:var(--gold)}
+.schrow .n b{font-family:var(--disp);font-weight:600;font-size:15px;line-height:1.14}
+.schrow .n i{font-style:normal;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim);line-height:1}
+.schrow .n span{font-size:12px;color:var(--dim);font-style:italic}

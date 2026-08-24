@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v73';
-import * as api from './api.js?b=cofta-v73';
-import * as M from './model.js?b=cofta-v73';
-import { WriteQueue } from './queue.js?b=cofta-v73';
+import { CREST } from './crests.js?b=cofta-v74';
+import * as api from './api.js?b=cofta-v74';
+import * as M from './model.js?b=cofta-v74';
+import { WriteQueue } from './queue.js?b=cofta-v74';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -52,6 +52,7 @@ function applyTheme(v) {
 const state = {
   snap: null, teams: {}, matches: [], events: [], slots: {}, players: [], ties: [],
   trophies: {},        // confirmed winners, { trophy: [playerId, ...] }
+  schedule: [],        // Vespers, Liturgy - timetable items that are not matches
   picker: null,        // { type, side } while an organiser chooses a player
   view: 'fixtures', day: 1, dayPinned: false, matchId: null, from: 'fixtures',
   sq: { team: null, player: null },
@@ -154,6 +155,9 @@ function applySnap(snap) {
   state.players = snap.players || [];
   state.slots = snap.slots || {};
   state.ties = snap.ties || [];
+  // Non-match timetable items. Absent from a snapshot cached by an older
+  // build, so it degrades to an empty list rather than throwing.
+  state.schedule = snap.schedule || [];
   // A snapshot cached by a build that predates trophies simply has no key.
   state.trophies = M.confirmedTrophies(snap);
 
@@ -288,8 +292,25 @@ function fixtureRow(m) {
 const PHASE_LABEL = { group: 'Group matches', semi: 'Semi-finals', final: 'Final' };
 const phaseOf = (m) => m.stage === 'FINAL' ? 'final' : M.isKnockout(m) ? 'semi' : 'group';
 
+/**
+ * A timetable item that is not a match: Vespers, Liturgy. Rendered in the
+ * fixtures list at its own time, because that is where a player looks to find
+ * out where to be — but deliberately NOT a fixture row. No crests, no score,
+ * no tap target, no clock. It is a different kind of thing and it should not
+ * be possible to mistake one for a game that has not kicked off.
+ */
+function scheduleRow(s) {
+  return `<div class="schrow">
+    <span class="t"><b>${esc(s.at)}</b></span>
+    <span class="n"><b>${esc(s.title)}</b>
+      ${s.where ? `<i>${esc(s.where)}</i>` : ''}
+      ${s.detail ? `<span>${esc(s.detail)}</span>` : ''}</span>
+  </div>`;
+}
+
 function viewFixtures() {
   const all = resolvedMatches().filter(m => m.day === state.day);
+  const sched = (state.schedule || []).filter(s => s.day === state.day);
 
   // Sunday runs two semi-finals and then the final, and a flat list gave the
   // final no more weight than an 11:00 group game. Headings appear only where
@@ -297,13 +318,21 @@ function viewFixtures() {
   // matches stay one uninterrupted list.
   const mixed = new Set(all.map(phaseOf)).size > 1;
   let last = null;
-  const rows = all.map(m => {
+  let rows = all.map(m => {
     const p = phaseOf(m);
     const head = mixed && p !== last
       ? `<div class="sect ${p === 'final' ? 'crown' : ''}">${PHASE_LABEL[p]}</div>` : '';
     last = p;
-    return head + fixtureRow(m);
-  }).join('');
+    return { at: m.kickoff, html: head + fixtureRow(m) };
+  });
+
+  // Merged by time, not appended. Liturgy at 09:30 belongs above Sunday's
+  // 14:00 semi-final; Vespers at 17:30 belongs after Saturday's last game.
+  // A stable sort keeps the phase headings attached to the match they head.
+  rows = rows.concat(sched.map(s => ({ at: s.at, html: scheduleRow(s) })))
+    .map((r, i) => ({ ...r, i }))
+    .sort((a, b) => String(a.at).localeCompare(String(b.at)) || a.i - b.i)
+    .map(r => r.html).join('');
 
   return `<div class="daysel">
       <button data-day="1" class="${state.day === 1 ? 'on' : ''}">Sat 12 Sept</button>
@@ -829,6 +858,14 @@ function teamStatus(id) {
   const t = team(id);
   if (t?.disqualified) return 'Disqualified';
   const ms = resolvedMatches().filter(m => m.home === id || m.away === id);
+
+  // A CLUB THAT DID NOT ENTER IS NOT A CLUB THAT WENT OUT. St Mark are not in
+  // the 2026 tournament: no group, no fixtures. Every branch below is about
+  // how far a club got, so without this the function fell all the way through
+  // to "Eliminated · group stage" — which is both untrue and unkind about a
+  // club that simply is not playing. They keep their row, their crest and
+  // their whole History record; they are just not in this one.
+  if (!t?.group_letter && !ms.length) return 'Not entered this year';
   const opp = (m) => cityOf(m.home === id ? m.away : m.home);
 
   const live = ms.find(m => M.isLive(m) || m.status === 'half_time');
@@ -993,9 +1030,16 @@ function viewSquads() {
         : `<p class="empty">No squad list loaded for ${esc(t.city)} yet.</p>`}`;
   }
 
-  // all clubs
-  const cards = teamsArr.map(t => `<button class="fx" data-sqteam="${t.id}">
-      <span class="t"><b>${esc(t.group_letter ?? '')}</b>Group</span>
+  // All clubs IN THIS YEAR'S TOURNAMENT. `teams` is the standing register of
+  // every club the app knows, which is not the same list — St Mark are not
+  // entered in 2026, and a club that is not playing has no squad, no fixtures
+  // and no reason to sit in a list headed "Clubs" during the weekend. They are
+  // no more relevant here than any club that never entered at all.
+  //
+  // Their page is still reachable, and still correct: a History cabinet for a
+  // crosswalked club routes to it, and it says "Not entered this year".
+  const cards = teamsArr.filter(t => t.group_letter).map(t => `<button class="fx" data-sqteam="${t.id}">
+      <span class="t"><b>${esc(t.group_letter)}</b>Group</span>
       <span class="n"><span class="side" style="--c:${t.colour}">
         <span class="tile" style="--c:${t.colour}"><img src="${crest(t.id)}" alt=""></span>
         <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></span></span>

@@ -2,8 +2,10 @@
 
 Live scores, tables, squads, leaderboards and trophies for the Coptic
 Orthodox Football Tournament Association weekend, **12–13 September 2026**.
-Eight church clubs, two groups of four (each plays each other once), top two
-to semi-finals, final. Production: **https://cofta.co.uk** (www redirects to
+**Seven church clubs and uneven groups this year**: Group A is four clubs
+playing a single round-robin, Group B is three clubs playing each other twice.
+Both groups play six matches; the top two of each go to the semi-finals, then
+the final. St Mark, Kensington are not entered in 2026. Production: **https://cofta.co.uk** (www redirects to
 the bare domain).
 
 ## Architecture
@@ -30,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v72`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v74`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -47,15 +49,18 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0041`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0043`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
 - The Supabase connector in the claude.ai chat remains read-capable and can
   apply migrations. It is read-write by design — treat `execute_sql` against
   production with the same care as the dashboard.
-- `DRAFT_apply_real_draw.sql` is a fill-in template for draw day — not
-  runnable until the ⟨TODO⟩s are filled.
+- **There was never a `DRAFT_apply_real_draw.sql`.** This file promised one for
+  weeks; it existed in no commit and in no deleted path in history. The real
+  draw went in as `0042`, written fresh against the schema on the day. If a
+  future task wants a template, write one — do not go hunting for that file
+  under time pressure.
 
 ## Conventions and hard-won gotchas
 
@@ -386,33 +391,95 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 - `reset_tournament()` clears `trophy_awards` along with events, shoot-outs
   and overrides.
 
-## Current state (18 August 2026)
+## Current state (24 August 2026)
 
+- **THE REAL DRAW IS IN.** `0042` replaced the rehearsal fixture list with the
+  confirmed timetable: seven clubs, twelve group matches on Saturday, three
+  knockouts on Sunday. Group A (gg, ste, km, smpk) plays a single round-robin,
+  three games each. **Group B (bri, cro, rot) plays a DOUBLE round-robin, four
+  games each** — organiser-confirmed, not a transcription slip, and the reason
+  the two groups have different games-played while both play six matches.
+- **St Mark, Kensington are not entered in 2026.** `stm` keeps its row, crest,
+  colours and its whole History record; `group_letter` is null and it has no
+  fixtures. **They are not listed on the Squads tab at all** - a club that is not playing
+  has no squad and no fixtures, and is no more relevant to a list headed
+  "Clubs" than any club that never entered. Their page is still reachable from
+  their History cabinet, and reads **"Not entered this year"**. Before `0042`
+  it read "Eliminated - group stage", which is neither true nor kind.
+- **The rehearsal data is gone**: no played matches, no events, no active
+  players, no managers. `reset_tournament()` remains for clearing scores
+  mid-weekend; it is not what cleared this.
+- **SQUADS AND MANAGERS ARE NOT IN YET** — the association has not submitted
+  them. Every club currently reads "No squad list loaded". This is the last
+  substantial thing outstanding, and it is a paste-in job: Organiser → Squads.
+  Nothing else waits on it; goals cannot be attributed to a player until it is
+  done, so it must land before kick-off.
+- **Supabase is on Pro** as of 24 August. Measured egress for the weekend is
+  ~29.5GB gzipped (1,000 devices × 8h × a 5,504-byte poll), comfortably inside
+  250GB. The older ~90GB estimate was uncompressed.
 - Feature-complete and load-tested: 1,000 concurrent spectators, 0 failures,
-  p95 58ms on free tier. CDN layer deliberately not built (not needed).
-- **Rehearsals are running against the live project**, so match state moves
-  between sessions — goals, cards, shoot-outs and confirmed trophies appear
-  and vanish. Do not treat any snapshot of it written here as current; query
-  it. `reset_tournament()` from Organiser → Testing returns the baseline.
-  What is durable: all 15 fixtures exist, both groups plus three knockouts,
-  and the app opens on Sunday whenever `groupStageComplete()` is true.
-- Dummy squads (116 active players across all 8 clubs) and placeholder
-  managers (all 8 set) are **deliberately live** so rehearsals have something
-  to attribute goals to. Clear with
-  `update public.players set active=false where true;` before entering real
-  lists (paste-in screen: Organiser → Squads).
+  p95 58ms. CDN layer deliberately not built (not needed).
 - 3 admin accounts exist.
-- Waiting on association: final draw, timetable, squads, 2026 rules
-  (2025 rules implemented meanwhile).
+- Waiting on association: squads, managers, 2026 rules (2025 rules implemented
+  meanwhile).
 
 ## September checklist
 
-1. First week: Supabase **Pro upgrade (mandatory — weekend egress ~90GB vs
-   5GB free)**, spend cap decision, leaked-password toggle.
-2. Draw day: fill and apply `DRAFT_apply_real_draw.sql`; paste real squads
-   and managers; `reset_tournament()` from the app clears any test scores.
+1. ~~Supabase Pro upgrade~~ **done, 24 August.** Still to decide: the spend
+   cap. With it ON, exceeding quota RESTRICTS the project rather than billing
+   — which on the day means the site goes down instead of costing a few
+   pounds. Turn it off for the weekend. Leaked-password toggle also pending.
+2. ~~Draw day~~ **done, 24 August** (`0042`, `0043`). Remaining: paste real
+   squads and managers.
 3. Before the weekend: venue dry run on real phones, Amani's organiser
    account (allowlisted, user not yet created), poster with QR.
+
+## Nothing in this app is time-bombed, and it must stay that way
+
+Matches run late. Audited on 24 August, and the result is clean: **`kickoff` is
+used for display and for sorting, and is never compared against the real
+clock.** Every gate in the app is driven by state that an organiser sets:
+
+| gate | keyed on |
+|---|---|
+| a match is live | `status`, set by `set_clock` |
+| the match minute | `clock_anchor` + `clock_accum_ms` — when START was pressed |
+| group is over | every match with that stage is `full_time` or forfeited |
+| semi-final teams | `resolveSlots`, from the completed tables |
+| trophies can be confirmed | `finalComplete` — the FINAL is `full_time` or forfeited |
+| which day opens | `groupStageComplete`, not the date |
+
+The only date literal anywhere is the masthead's "12–13 September" label. A
+fixture that kicks off forty minutes late behaves identically to one on time;
+the scheduled time simply keeps showing as the printed timetable says.
+
+**Do not introduce a comparison against `Date.now()` to decide whether
+something may happen.** If a future feature needs "has this started", the
+answer is `hasStarted(m)`, never the clock.
+
+## Non-match events on the timetable
+
+`schedule_events` (`0043`) holds the things on the weekend timetable that are
+not fixtures — Vespers on the Saturday, Liturgy on the Sunday, both at St
+George Cathedral.
+
+- **They are NOT matches, deliberately.** A match row for Vespers would carry
+  two empty team slots, a 0-0, a kick-off time, a tappable match page, and
+  would be counted by every assertion that says "twelve group matches".
+- **They render in the fixtures list, merged by time**, so Liturgy at 09:30
+  sits above Sunday's semi-finals and Vespers at 17:30 after Saturday's last
+  game. `scheduleRow` is a `<div>`, not a button: no crest, no score, no clock,
+  nothing to tap. The 44px time gutter matches `.fx` so the times line up.
+- **They ride in `snapshot()`, and that is a considered exception** to the rule
+  that keeps the archive out of it. The rule is about size: the archive is
+  ~250KB polled every five seconds; this is two rows, ~1% of a 5,504-byte
+  poll. A separate cached read would have cost another loader, another failure
+  latch and another cache version for a saving of ~0.3GB on a 250GB plan.
+- **Why the database rather than a constant in `app.js`:** the organiser can
+  move Vespers with a one-line `UPDATE` from the dashboard and it reaches every
+  phone on the next poll. They cannot deploy; that asymmetry is the whole
+  argument.
+- `state.schedule` degrades to `[]` on a snapshot cached by an older build.
 
 ## Assists
 
