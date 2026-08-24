@@ -5,10 +5,13 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js';
-import * as api from './api.js';
-import * as M from './model.js';
-import { WriteQueue } from './queue.js';
+import { CREST } from './crests.js?b=cofta-v71';
+import * as api from './api.js?b=cofta-v71';
+import * as M from './model.js?b=cofta-v71';
+import { WriteQueue } from './queue.js?b=cofta-v71';
+
+/** This build, read off our own module URL so it can never disagree with it. */
+const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g,
@@ -3068,6 +3071,74 @@ document.addEventListener('change', (ev) => {
   guard(() => api.setSlot(s.dataset.slot, s.value || null));
 });
 
+/* ── staying current ─────────────────────────────────────── */
+/**
+ * Register the worker, and tell the reader when a new build is ready.
+ *
+ * THE URL VERSIONING IN index.html IS WHAT ACTUALLY FIXES STALENESS — see the
+ * long note in sw.js. This is the other half: the half for a page that is
+ * ALREADY OPEN when a deploy lands, which no amount of cache strategy can
+ * help, because its JavaScript is already parsed and running. Nothing short of
+ * a reload replaces running code, and a spectator has no reason to guess that
+ * one is needed. Silence there is what turned a twenty-second deploy into
+ * "delete the app and clear site data".
+ *
+ * So: watch for a worker that has installed behind us, and surface one small
+ * bar the reader can tap. Not an auto-reload — someone mid-way through
+ * entering a goal must not have the page pulled out from under them, and the
+ * organiser's write queue is in memory. Their tap, their timing.
+ *
+ * `controllerchange` fires when the new worker takes over; on a page that was
+ * already controlled, that means the code running right now is a version
+ * behind. `registration.waiting` covers the case where the new worker
+ * installed but is held, which is the state the two-reload quirk leaves.
+ */
+function updateBanner() {
+  if ($('newbuild')) return;
+  const bar = document.createElement('button');
+  bar.id = 'newbuild';
+  bar.className = 'newbuild';
+  bar.type = 'button';
+  bar.innerHTML = 'New version available <span>Tap to refresh</span>';
+  bar.addEventListener('click', () => location.reload());
+  document.body.appendChild(bar);
+}
+
+function watchForUpdates() {
+  // Whether this page was under a worker BEFORE we registered. On a first
+  // visit it is false, and `clients.claim()` then fires controllerchange for
+  // the ordinary arrival of the app — which is not an update and must not
+  // greet a new reader with "new version available".
+  const hadController = !!navigator.serviceWorker.controller;
+
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    // Already holding a new worker when we arrived.
+    if (reg.waiting && hadController) updateBanner();
+
+    reg.addEventListener('updatefound', () => {
+      const sw = reg.installing;
+      if (!sw) return;
+      sw.addEventListener('statechange', () => {
+        // `controller` is null on the very first visit, when installing a
+        // worker is not an update — it is the app arriving. Only an install
+        // that displaces an existing controller is news to the reader.
+        if (sw.state === 'installed' && hadController) updateBanner();
+      });
+    });
+
+    // A phone that sits on the page all afternoon never navigates, so nothing
+    // ever asks whether there is a new build. Ask on the way back from the
+    // lock screen or another app, which on a matchday is most of the time.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) updateBanner();
+  });
+}
+
 /* ── boot ────────────────────────────────────────────────── */
 (async function boot() {
   applyTheme(theme);
@@ -3081,14 +3152,12 @@ document.addEventListener('change', (ev) => {
     if (cached) { applySnap(cached); render(); }
   } catch { /* nothing cached */ }
 
-  // TEMPORARY DEPLOY PROBE - diagnosing the stale-PWA report, 2026-08-24.
-  // Read window.__deployProbe in a running page to see EXACTLY which build of
-  // app.js that page is executing. Removed once the diagnosis is finished.
-  window.__deployProbe = '20260824T074645Z';
+  // Which build this page is actually executing. Kept deliberately: it is how
+  // the stale-PWA report was diagnosed, it costs one string, and "what is that
+  // phone running?" is otherwise unanswerable from the outside.
+  window.__build = BUILD;
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
+  if ('serviceWorker' in navigator) watchForUpdates();
 
   // Who are we? Ask the server, and if the network cannot answer, fall back
   // to the last answer it gave. Failing closed here looked safe and was not:
