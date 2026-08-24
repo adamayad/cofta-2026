@@ -152,14 +152,15 @@ Deno.serve(async (req) => {
   const { data: isAdmin } = await asCaller.rpc('is_admin');
   if (!isAdmin) return new Response('not an organiser', { status: 403, headers: CORS });
 
-  const { match_id, kind } = await req.json().catch(() => ({}));
+  const { match_id, kind, event_id, update } = await req.json().catch(() => ({}));
   if (!match_id || !['goal', 'full_time', 'test'].includes(kind)) {
     return new Response('match_id and kind required', { status: 400, headers: CORS });
   }
 
   // EVERY WORD IS READ BACK FROM THE DATABASE, not taken from the request.
   const { data: m } = await admin.from('matches')
-    .select('id, stage, home_team, away_team, home_score, away_score, status')
+    .select('id, stage, home_team, away_team, home_score, away_score, status, '
+          + 'pens_home, pens_away, pens_decided')
     .eq('id', match_id).single();
   if (!m) return new Response('no such match', { status: 404, headers: CORS });
 
@@ -167,20 +168,98 @@ Deno.serve(async (req) => {
   const by = Object.fromEntries((teams ?? []).map((t) => [t.id, t]));
   const nameOf = (id: string | null) => id ? (by[id]?.city ?? id) : 'TBC';
 
-  const score = `${nameOf(m.home_team)} ${m.home_score}–${m.away_score} ${nameOf(m.away_team)}`;
-  const title = kind === 'goal' ? '⚽ GOAL!' : kind === 'test' ? 'COFTA test' : 'Full time';
-  const body = kind === 'goal' ? score
-             : kind === 'test' ? 'Notifications are working. This is a test.'
-             : `${score} · full time`;
+  // ── the notification itself ─────────────────────────────────────────
+  //
+  // THE SCORELINE IS THE HEADLINE, FotMob-style, because that is the one fact
+  // someone glancing at a lock screen wants. A notification reading "GOAL!"
+  // with the score buried underneath makes you open the app to learn it.
+  //
+  // AND THE BALL MARKS WHO SCORED. A notification has no bold, no colour and
+  // no styling, so the only way to show which side the goal belongs to is
+  // POSITION: the ball sits at that club's end of the scoreline.
+  //   ⚽ Brighton 2–1 Croydon     home scored
+  //   Brighton 2–1 Croydon ⚽     away scored
+  // Those are different at a glance in a way "GOAL! Brighton 2–1 Croydon" is
+  // not — and glancing is the entire interaction.
+  const home = nameOf(m.home_team), away = nameOf(m.away_team);
+  const line = `${home} ${m.home_score}–${m.away_score} ${away}`;
+
+  let title: string, body: string;
+
+  if (kind === 'test') {
+    title = 'COFTA test';
+    body = 'Notifications are working. This is a test.';
+  } else if (kind === 'full_time') {
+    title = 'Full time';
+    // A knockout settled on penalties is not a draw. A notification that says
+    // "1–1" and stops is actively misleading about who went through.
+    body = m.pens_decided
+      ? `${line} · ${m.pens_home > m.pens_away ? home : away} win ${m.pens_home}–${m.pens_away} on pens`
+      : line;
+  } else {
+    // Which event: the one named, or the newest goal still standing. `voided`
+    // matters — a goal logged and then taken back must never be the one we
+    // describe to several hundred phones.
+    let ev: { type: string; side: string; minute_label: string | null;
+              player_id: string | null; voided: boolean } | null = null;
+    if (event_id) {
+      const { data } = await admin.from('match_events')
+        .select('type, side, minute_label, player_id, voided')
+        .eq('id', event_id).maybeSingle();
+      ev = data;
+    }
+    if (!ev || ev.voided) {
+      const { data } = await admin.from('match_events')
+        .select('type, side, minute_label, player_id, voided')
+        .eq('match_id', m.id).eq('voided', false)
+        .in('type', ['goal', 'own_goal'])
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      ev = data;
+    }
+
+    title = (ev?.side ?? 'home') === 'home' ? `⚽ ${line}` : `${line} ⚽`;
+
+    let scorer = '';
+    if (ev?.player_id) {
+      const { data: p } = await admin.from('players')
+        .select('name').eq('id', ev.player_id).maybeSingle();
+      scorer = p?.name ?? '';
+    }
+    const minute = ev?.minute_label ?? '';
+
+    // Own goals name the club and not the man. The scoreline already says who
+    // it counted for; adding a name to it in a church tournament is a cruelty
+    // the app has no reason to commit.
+    body = ev?.type === 'own_goal'
+      ? ['Own goal', minute].filter(Boolean).join(' · ')
+      : [scorer, minute].filter(Boolean).join(' ') || 'Goal';
+  }
+
   const payload = JSON.stringify({
-    title, body, kind, tag: `match-${m.id}`,
+    title, body, kind,
+    // Same tag per match, so a second goal REPLACES the first rather than
+    // stacking six notifications from one game.
+    tag: kind === 'test' ? 'cofta-test' : `match-${m.id}`,
+    // `update` is the follow-up that fills in the scorer once someone has
+    // picked him. It rewrites the notification already on the lock screen and
+    // deliberately does NOT buzz again: two buzzes for one goal teaches people
+    // to ignore the first.
+    renotify: !update,
     url: `/?match=${encodeURIComponent(m.id)}`,
   });
 
   // Who wants it: everyone (team_id null), or anyone following either club.
+  //
+  // The clubs are built into the filter conditionally, because a knockout
+  // fixture has NULL teams until kick-off pins them, and `team_id.eq.null` is
+  // not valid PostgREST — it throws, and the whole send fails. In practice a
+  // goal implies a pinned match, but a test push aimed at the final before it
+  // has teams would have hit exactly this.
+  const clubs = [m.home_team, m.away_team].filter(Boolean) as string[];
+  const filter = ['team_id.is.null', ...clubs.map((c) => `team_id.eq.${c}`)].join(',');
   const { data: subs } = await admin.from('push_subscriptions')
     .select('endpoint, keys, team_id, fail_count')
-    .or(`team_id.is.null,team_id.eq.${m.home_team},team_id.eq.${m.away_team}`);
+    .or(filter);
 
   let sent = 0;
   const dead: string[] = [];      // gone for good — the push service said so

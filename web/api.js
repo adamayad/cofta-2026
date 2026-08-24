@@ -214,10 +214,10 @@ export const unsubscribePush = (endpoint) =>
  *  device straight after a goal or a full-time whistle lands, with their own
  *  token: the function verifies the caller before it sends anything, so a
  *  spectator cannot make everyone's phone buzz. */
-export async function firePush(matchId, kind) {
+export async function firePush(matchId, kind, opts = {}) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/notify`, {
     method: 'POST', headers: headers(true),
-    body: JSON.stringify({ match_id: matchId, kind }),
+    body: JSON.stringify({ match_id: matchId, kind, ...opts }),
   });
   if (!r.ok) throw new Error(`notify failed (${r.status})`);
   return r.json().catch(() => null);

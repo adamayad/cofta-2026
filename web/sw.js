@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v77';
+const VERSION = 'cofta-v79';
 const SHELL = [
   './', './index.html', './diocese.webp',
   // Code and stylesheets carry the build token, because THE BROWSER'S OWN HTTP
@@ -17,9 +17,9 @@ const SHELL = [
   // be answered from it, because on a fresh deploy the URL is one the browser
   // has never seen. These must stay in step with index.html and app.js;
   // tools/check-build.sh fails if they drift.
-  './styles.css?b=cofta-v77', './fonts.css?b=cofta-v77', './themes.css?b=cofta-v77',
-  './app.js?b=cofta-v77', './api.js?b=cofta-v77', './model.js?b=cofta-v77',
-  './queue.js?b=cofta-v77', './crests.js?b=cofta-v77',
+  './styles.css?b=cofta-v79', './fonts.css?b=cofta-v79', './themes.css?b=cofta-v79',
+  './app.js?b=cofta-v79', './api.js?b=cofta-v79', './model.js?b=cofta-v79',
+  './queue.js?b=cofta-v79', './crests.js?b=cofta-v79',
   './manifest.webmanifest',
   // The home-screen icons. Cache-first like every other asset, so a phone
   // that already installed the app only refetches them when VERSION moves.
@@ -204,10 +204,16 @@ self.addEventListener('push', (event) => {
     // Collapse repeats for the same match: a second goal replaces the first
     // rather than stacking six notifications from one game.
     tag: d.tag || 'cofta',
-    renotify: true,
+    // A goal arrives the instant it is logged, before anyone has picked the
+    // scorer. When the scorer IS picked a second push follows with the same
+    // tag and renotify false: the notification already on the lock screen
+    // rewrites itself to name him, and the phone does NOT buzz twice for one
+    // goal. Buzzing twice would train people to ignore it.
+    renotify: d.renotify !== false,
+    silent: d.renotify === false,
     data: { url: d.url || './' },
     // A goal is worth a buzz; anything else is not worth waking a pocket for.
-    vibrate: d.kind === 'goal' ? [90, 50, 90] : undefined,
+    vibrate: (d.kind === 'goal' && d.renotify !== false) ? [90, 50, 90] : undefined,
   }));
 });
 

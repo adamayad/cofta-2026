@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v77';
-import * as api from './api.js?b=cofta-v77';
-import * as M from './model.js?b=cofta-v77';
-import { WriteQueue } from './queue.js?b=cofta-v77';
+import { CREST } from './crests.js?b=cofta-v79';
+import * as api from './api.js?b=cofta-v79';
+import * as M from './model.js?b=cofta-v79';
+import { WriteQueue } from './queue.js?b=cofta-v79';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2687,7 +2687,11 @@ document.addEventListener('click', async (ev) => {
         try {
           const r = await api.firePush(anyMatch.id, 'test');
           if (msg) msg.textContent = r
-            ? `Sent to ${r.sent} of ${r.of}. ${r.failed ? `${r.failed} failed: ${(r.problems || []).join(' | ')}` : ''}`
+            ? `Sent to ${r.sent} of ${r.of}.`
+              + (r.failed ? ` ${r.failed} failed: ${(r.problems || []).join(' | ')}` : '')
+              // The exact text that went out, so the wording can be checked
+              // from here rather than by staring at a lock screen.
+              + (r.title ? ` — "${r.title}" / "${r.body}"` : '')
             : 'Sent.';
         } catch (e) { if (msg) msg.textContent = e.message; }
       }
@@ -2869,7 +2873,7 @@ document.addEventListener('click', async (ev) => {
     });
     state.picker = { type: 'goal', side: t.dataset.goal, eventId: id };
     render();
-    notifyMatch(m.id, 'goal');
+    notifyMatch(m.id, 'goal', { event_id: id });
     return;
   }
 
@@ -2907,8 +2911,16 @@ document.addEventListener('click', async (ev) => {
 
     if (pk.eventId) {
       // the goal is already logged; attach the scorer to it
-      if (playerId) queue.add(api.uuid(), 'attribute_event',
-        { p_event: pk.eventId, p_player: playerId });
+      if (playerId) {
+        queue.add(api.uuid(), 'attribute_event',
+          { p_event: pk.eventId, p_player: playerId });
+        // And rewrite the notification already sitting on people's lock
+        // screens so it names him. Same tag, renotify false: it changes in
+        // place and does not buzz a second time for one goal. Queued behind
+        // the attribution deliberately - pushing first would name nobody.
+        if (pk.type === 'goal') setTimeout(() =>
+          notifyMatch(m.id, 'goal', { event_id: pk.eventId, update: true }), 1200);
+      }
     } else {
       const id = api.uuid();
       queue.add(id, 'log_event', {
@@ -3308,9 +3320,9 @@ function dismissInstall() {
  * touchline. If the push does not go out, the app is still right and every
  * spectator polling still sees the goal within five seconds.
  */
-function notifyMatch(matchId, kind) {
+function notifyMatch(matchId, kind, opts = {}) {
   if (!state.admin) return;
-  api.firePush(matchId, kind).catch(() => {});
+  api.firePush(matchId, kind, opts).catch(() => {});
 }
 
 /* ── goal and full-time notifications ────────────────────── */
