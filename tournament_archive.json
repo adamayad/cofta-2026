@@ -2,8 +2,8 @@
   "archive_meta": {
     "title": "Coptic Football Tournament Archive",
     "compiled": "2026-08-19",
-    "last_extended": "2026-08-21",
-    "editions": 37,
+    "last_extended": "2026-08-24",
+    "editions": 35,
     "sources": [
       "Coptic_Football_Tournament_Archive_2024-2026.pdf (5 rich editions)",
       "Adam notes (8 thin editions)",
@@ -14,7 +14,10 @@
       "https://ukmidcopts.org/news/conafa-2016/ (CONAFA 2016)",
       "https://manchestercopts.org/ministries/sports/ (CONAFA 2017 champion)",
       "http://copticyouthuk.blogspot.com/2012/10/cofta-coptic-orthodox-football-tries.html (COFTA 2012 detail)",
-      "COFTA 2014 published report (awards)"
+      "COFTA 2014 official report, organiser-supplied full text (groups, both semi-finals, the final own goal, awards)",
+      "COFTA 2012 report, organiser-supplied full text (entrants, the 11-1 result, the final)",
+      "COFTA 2010 official report, organiser-supplied full text (dates, venue, groups, semi-finals, Ladies COFTA 2010 date)",
+      "https://ukmidcopts.org/news/conafa-2015/ full article text (all eleven CONAFA 2015 entrants)"
     ],
     "canonical_authority": "Adam's word is canonical throughout. Published sources fill in detail and are cited. Where a published source contradicts Adam, Adam wins and the discrepancy is logged in the conflict register rather than discarded.",
     "no_tournament_years": [
@@ -32,18 +35,16 @@
       },
       {
         "competition": "CONAFA",
-        "years": [2020, 2021, 2022],
-        "confidence": "believed",
-        "reason": "Adam's words, 2026-08-21: 'I believe there was no CONAFA 2020-22.' Recorded as a belief and deliberately NOT promoted to a confirmed non-event - 'we checked and it did not happen' and 'we are fairly sure it did not happen' are different facts, and the COFTA entries above are the first kind. No edition rows exist either way, so nothing is displayed differently; the distinction is here so a later source can settle it rather than be assumed to have already agreed."
+        "years": [2018, 2019, 2020, 2021, 2022],
+        "confidence": "confirmed",
+        "reason": "CONAFA did not run in 2018-2022 inclusive - a five-year gap between the 2017 edition and its resumption in 2023. Organiser-confirmed. No edition rows exist for these years; this is the record of their absence, and they must never be presented as years whose records are merely missing.",
+        "supersedes": "The earlier entry recorded 2020-2022 only, and as 'believed' rather than confirmed. It is now confirmed, and extends two years earlier. See conflict register C16 for the 2018/2019 edition rows this removed."
       }
     ],
     "records_being_sought": [
-      "COFTA 2007 champion - unknown.",
-      "COFTA 2008 champion - unknown.",
       "COFTA 2015 player of the tournament: Amir Ameen's club.",
       "CONAFA 2016 final scoreline.",
       "CONAFA 2017 runner-up and all detail beyond the champion.",
-      "CONAFA 2020, 2021 and 2022 - believed not held, per Adam, but not confirmed. See no_tournament_years.",
       "COSTA 2022 per-fixture timetable text (screenshot held by Adam, not yet transcribed into the archive)."
     ],
     "principle": "Faithful transcription only. Absent fields are null, never zero, never inferred. Thin records stay thin.",
@@ -81,6 +82,10 @@
       "COSTA": "St Mary & St Shenouda, Croydon",
       "COSA": "St Mary & Pope Kyrillos VI, Hounslow",
       "The Ark Cup": "Archangel Michael, Golders Green"
+    },
+    "competition_notes": {
+      "note": "Competition-level facts that are not per-edition and not derivable from the edition rows. Reader-facing.",
+      "CONAFA": "CONAFA did not run in 2018-2022 inclusive (5-year gap); resumed 2023."
     }
   },
   "team_registry": {
@@ -270,6 +275,16 @@
         "merge_confidence": "confirmed"
       },
       {
+        "canonical": "St Anthony, Rotherham & St Mary & St Mark, Birmingham (joint team)",
+        "short": "Rotherham & Birmingham",
+        "aliases": [
+          "St Anthony, Rotherham & St Mary & St Mark, Birmingham",
+          "Rotherham & Birmingham"
+        ],
+        "merge_confidence": "confirmed",
+        "note": "COFTA 2017 joint entry. One combined entrant, recorded as a single club exactly as Liverpool & Bolton is - never split into its two parishes, and never merged into either of them."
+      },
+      {
         "canonical": "Liverpool & Bolton (joint team)",
         "short": "Liverpool & Bolton",
         "aliases": [
@@ -295,12 +310,37 @@
         "merge_confidence": "confirmed"
       },
       {
-        "canonical": "Ireland",
+        "canonical": "St Mary & St Mina, Ireland",
         "short": "Ireland",
         "aliases": [
-          "Ireland"
+          "Ireland",
+          "Republic of Ireland",
+          "St Mary & St Mina, Ireland"
         ],
-        "merge_confidence": "confirmed"
+        "merge_confidence": "confirmed",
+        "identification_note": "The CONAFA 2015 and 2016 reports print 'Republic of Ireland'. Per Adam this is a parish church - St Mary & St Mina, Ireland - and not a national representative side. The earlier placeholder canonical of 'Ireland' is superseded. DIFFERENT CLUB from St Mary & St Mina, Manchester: see merge_guards G4."
+      },
+      {
+        "canonical": "St Mary & St Mark, Birmingham",
+        "short": "St Mary & St Mark",
+        "aliases": [
+          "St Mary & St Mark, Birmingham",
+          "St Mary and St Mark, Birmingham",
+          "St Mary & St Mark"
+        ],
+        "merge_confidence": "confirmed",
+        "identification_note": "Named in the CONAFA 2015 report and in the COFTA 2017 joint entrant. DIFFERENT CLUB from St Mark, Kensington: see merge_guards G5. Open question Q12: the registry also holds St Mary & Archangel Michael, Birmingham, from the CONAFA 2026 data. Whether Birmingham has two Coptic churches or one of the two names is wrong is NOT resolved here; both rows stand until Adam rules."
+      },
+      {
+        "canonical": "Eritrean Orthodox",
+        "short": "Eritrean",
+        "aliases": [
+          "Eritrean Orthodox",
+          "the Eritrean Orthodox team",
+          "Eritrean"
+        ],
+        "merge_confidence": "confirmed",
+        "identification_note": "A community representative side, not a parish church. No city and no live crosswalk is forced onto it - the same treatment every other non-parish entrant gets."
       },
       {
         "canonical": "St Paul",
@@ -351,6 +391,26 @@
           "St Demiana & Pope Kyrillos VI, Worthing"
         ],
         "rule": "The COSTA 2022 timetable prints 'Brighton A' and 'Brighton B'. 'Brighton A' is Brighton; 'Brighton B' is in fact WORTHING, per Adam. This identification is recorded on the COSTA 2022 edition only and must NOT become a global alias - a genuine Brighton B may yet appear.",
+        "action": "flag_do_not_merge"
+      },
+      {
+        "id": "G4",
+        "title": "The two St Mina clubs",
+        "clubs": [
+          "St Mary & St Mina, Manchester",
+          "St Mary & St Mina, Ireland"
+        ],
+        "rule": "Two distinct clubs carrying IDENTICAL church names, differing only by city - the same shape as G1's Nottingham/East London pair. Manchester won CONAFA 2016 and 2017; Ireland were CONAFA 2015 debutants and could not attend in 2016. No fuzzy, prefix or token match may ever collapse them, in either direction.",
+        "action": "flag_do_not_merge"
+      },
+      {
+        "id": "G5",
+        "title": "The two St Mark clubs",
+        "clubs": [
+          "St Mark, Kensington",
+          "St Mary & St Mark, Birmingham"
+        ],
+        "rule": "A third name collision alongside G1. St Mark, Kensington won CONAFA 2014 and COFTA 2009; St Mary & St Mark, Birmingham appear in CONAFA 2015 and in COFTA 2017's joint entrant with Rotherham. A prefix or token match on 'St Mark' would merge them. Never.",
         "action": "flag_do_not_merge"
       }
     ],
@@ -6125,17 +6185,16 @@
       "format": null,
       "team_count": null,
       "match_count": null,
-      "champion": null,
+      "champion": "Golders Green",
       "runner_up": null,
       "final_summary": null,
       "final": null,
-      "teams": [],
+      "teams": ["Golders Green"],
+      "teams_note": "Only the champion is known. This is not the entrant list.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
-      "edition_note": "The tournament was held; who won it is not recorded.",
       "known_gaps": [
-        "Champion unknown - records being sought.",
         "No runner-up, final or scoreline.",
         "No dates, entrant list, standings or match data.",
         "No goalscorers, awards or player data."
@@ -6156,17 +6215,16 @@
       "format": null,
       "team_count": null,
       "match_count": null,
-      "champion": null,
+      "champion": "Stevenage",
       "runner_up": null,
       "final_summary": null,
       "final": null,
-      "teams": [],
+      "teams": ["Stevenage"],
+      "teams_note": "Only the champion is known. This is not the entrant list.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
-      "edition_note": "The tournament was held; who won it is not recorded.",
       "known_gaps": [
-        "Champion unknown - records being sought.",
         "No runner-up, final or scoreline.",
         "No dates, entrant list, standings or match data.",
         "No goalscorers, awards or player data."
@@ -6183,23 +6241,39 @@
       "venue": "Shephalbury Park, Stevenage",
       "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
-      "source": "Adam's COFTA champions roll, organiser-confirmed",
+      "source": "Adam's COFTA champions roll and 2009 semi-final and final detail, organiser-confirmed",
       "format": null,
       "team_count": null,
       "match_count": null,
       "champion": "St Mark",
-      "runner_up": null,
-      "final_summary": null,
-      "final": null,
-      "teams": ["St Mark"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "runner_up": "Croydon",
+      "final_summary": "St Mark beat Croydon 1-0 in the final",
+      "final": {
+        "home": null,
+        "away": null,
+        "score": "1-0",
+        "decided_by": null,
+        "winner": "St Mark",
+        "loser": "Croydon"
+      },
+      "semi_finals": [
+        {
+          "winner": "St Mark",
+          "loser": "Stevenage",
+          "score": "1-0",
+          "decided_by": null
+        }
+      ],
+      "teams": ["St Mark", "Croydon", "Stevenage"],
+      "teams_note": "The finalists and the beaten semi-finalist. This is not the full entrant list.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
       "known_gaps": [
-        "No runner-up, final or scoreline.",
+        "Home/away orientation not recorded for the final or the semi-final.",
+        "The other semi-final is not recorded, so the fourth semi-finalist is unknown.",
         "No dates.",
-        "No entrant list, group stage, standings or match data.",
+        "No full entrant list, group stage, standings or other match data.",
         "No goalscorers, awards or player data."
       ]
     },
@@ -6209,14 +6283,14 @@
       "year": 2010,
       "display_name": "COFTA 2010",
       "category": "men",
-      "date_start": "2010-09-10",
+      "date_start": "2010-09-11",
       "date_end": "2010-09-12",
-      "venue": "Shephalbury Park, Stevenage",
-      "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
+      "date_note": "The official report gives 11-12 September. The archive previously held 10-12 September; that earlier range is superseded and the discrepancy is logged as C17.",
+      "venue": "Coptic Orthodox Church Centre, Shephalbury Park",
       "data_confidence": "minimal",
-      "source": "Adam's COFTA champions roll, organiser-confirmed",
-      "format": null,
-      "team_count": null,
+      "source": "COFTA 2010 official report (organiser-supplied full text); Adam's COFTA champions roll, organiser-confirmed",
+      "format": "Two groups, semi-finals, final",
+      "team_count": 6,
       "match_count": null,
       "champion": "Brighton",
       "runner_up": "Rotherham",
@@ -6229,15 +6303,49 @@
         "winner": "Brighton",
         "loser": "Rotherham"
       },
-      "teams": ["Brighton", "Rotherham"],
-      "teams_note": "Only the finalists are known. This is not the entrant list.",
+      "semi_finals": [
+        {
+          "winner": "Brighton",
+          "loser": "St Mark",
+          "score": null,
+          "decided_by": "penalties",
+          "note": "Level after normal time; Brighton went through on penalties. Neither the normal-time score nor the shoot-out score is recorded."
+        },
+        {
+          "winner": "Rotherham",
+          "loser": null,
+          "score": null,
+          "decided_by": null,
+          "note": "Rotherham came back from a goal down to win. The report does not name their opponent. Probable but unconfirmed: Croydon - recorded as a note, never as data."
+        }
+      ],
+      "group_stage": {
+        "Group A": {
+          "qualified": ["Brighton", "Croydon"],
+          "note": "Brighton topped the group; Croydon qualified second. Full table not recorded."
+        },
+        "Group B": {
+          "qualified": ["Rotherham", "St Mark"],
+          "note": "Both qualified. Order not recorded."
+        },
+        "non_qualifiers": [
+          {
+            "club": "Stevenage",
+            "note": "Four points from four games; did not qualify."
+          }
+        ]
+      },
+      "teams": ["Brighton", "Croydon", "Golders Green", "Rotherham", "St Mark", "Stevenage"],
+      "teams_note": "All six entrants are named.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
+      "edition_note": "Rotherham's first COFTA, and they reached the final at the first attempt. Brighton won the first of three consecutive titles.",
+      "narrative": "Stored verbatim from the COFTA 2010 official report: Rotherham were debutants; St Mark used a substitute recorded only as 'Mark Bishoy'; the report is anonymous and written in a light-hearted style.",
       "known_gaps": [
         "Final home/away orientation not recorded; only the winner, loser and score.",
-        "No entrant list beyond the two finalists.",
-        "No group stage, standings or match data.",
+        "Semi-final scores not recorded, and Rotherham's semi-final opponent is not named.",
+        "Group tables not recorded beyond who qualified, and Stevenage's four points.",
         "No goalscorers, awards or player data."
       ]
     },
@@ -6291,9 +6399,9 @@
       "venue": "Shephalbury Park, Stevenage",
       "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
-      "source": "Adam's COFTA champions roll, organiser-confirmed; further detail from http://copticyouthuk.blogspot.com/2012/10/cofta-coptic-orthodox-football-tries.html",
+      "source": "COFTA 2012 report (organiser-supplied full text); Adam's COFTA champions roll, organiser-confirmed; http://copticyouthuk.blogspot.com/2012/10/cofta-coptic-orthodox-football-tries.html",
       "format": null,
-      "team_count": null,
+      "team_count": 5,
       "match_count": null,
       "champion": "Brighton",
       "runner_up": "Croydon",
@@ -6306,20 +6414,47 @@
         "shootout": { "home": null, "away": null },
         "extra_time": true,
         "winner": "Brighton",
-        "loser": "Croydon"
+        "loser": "Croydon",
+        "note": "Croydon led first; Brighton equalised from a penalty. The tie went to extra time and then to penalties. No score at any stage is recorded. The report names Croydon's scorer only by a nickname, which is not a usable name and is not stored."
       },
-      "teams": ["Brighton", "Croydon", "St Mark", "Nottingham"],
-      "teams_note": "Finalists plus the two clubs named in the blog report. This is not the entrant list.",
-      "matches": [],
+      "teams": ["Brighton", "Croydon", "St Mark", "Nottingham", "Stevenage"],
+      "teams_note": "All five entrants are named.",
+      "absentees": [
+        {
+          "club": "Rotherham",
+          "reason": "Did not enter, having been finalists in both 2010 and 2011. Confirmed absent by the report rather than merely unlisted."
+        }
+      ],
+      "matches": [
+        {
+          "id": "COFTA12-GROUP-BRI-STE",
+          "stage": "group",
+          "home": null,
+          "away": null,
+          "winner": "Brighton",
+          "loser": "Stevenage",
+          "score": "11-1",
+          "record_note": "The report calls this the greatest defeat in COFTA history. Recorded as the archive's largest known margin, ten goals.",
+          "orientation_note": "Home and away are not recorded; only that Brighton beat Stevenage 11-1."
+        }
+      ],
       "goalscorers": [],
       "awards": {},
-      "edition_note": "St Mark withdrew after day one. Nottingham reached the semi-finals without winning a game. Both details from the Coptic Youth UK blog report, October 2012.",
+      "edition_note": "Brighton's third COFTA in a row, the first time any club had won three consecutively. Nottingham returned after several years away and reached the semi-finals without winning a game. St Mark withdrew after day one. Stevenage went out at the group stage.",
+      "notable": [
+        "Brighton became the first club to win COFTA three years running, 2010 to 2012.",
+        "Brighton 11-1 Stevenage is the largest margin the archive holds."
+      ],
+      "corroborations": [
+        "The organiser-supplied report independently confirms both details the archive already held from the Coptic Youth UK blog: that St Mark withdrew after day one, and that Nottingham reached the semi-finals without winning a game. Two sources, same facts."
+      ],
       "known_gaps": [
-        "Regulation and extra-time scores not stated; only that the final went to penalties.",
+        "Regulation and extra-time scores not stated for the final; only that it went to penalties.",
         "Shootout score not recorded.",
+        "Stevenage's two draws with Nottingham are described but no scores are given.",
         "No dates.",
-        "No full entrant list, group stage, standings or match data.",
-        "No goalscorers, awards or player data."
+        "No group tables, standings or other match data.",
+        "No goalscorer or award data. The final's opening scorer is given only as a nickname and is deliberately not stored as a player."
       ]
     },
     {
@@ -6333,9 +6468,9 @@
       "venue": "Shephalbury Park, Stevenage",
       "venue_note": "Recorded as the venue for COFTA through this era. Not separately confirmed for this edition.",
       "data_confidence": "minimal",
-      "source": "Adam's COFTA champions roll, organiser-confirmed; awards also published in the COFTA 2014 report",
-      "format": null,
-      "team_count": null,
+      "source": "COFTA 2014 official report (organiser-supplied full text); Adam's COFTA champions roll, organiser-confirmed",
+      "format": "Two groups of three, semi-finals, final",
+      "team_count": 6,
       "match_count": null,
       "champion": "Nottingham",
       "runner_up": "Brighton",
@@ -6346,12 +6481,93 @@
         "score": "2-1",
         "decided_by": null,
         "winner": "Nottingham",
-        "loser": "Brighton"
+        "loser": "Brighton",
+        "note": "One of Nottingham's two goals was a free-kick that went in off the goalkeeper's heel and was AWARDED AS AN OWN GOAL. It is not one of Nduoma Chilaka's. Nottingham's other scorer and Brighton's scorer are not named."
       },
-      "teams": ["Nottingham", "Brighton"],
-      "teams_note": "Only the finalists are known. This is not the entrant list.",
-      "matches": [],
-      "goalscorers": [],
+      "groups": {
+        "Group A": ["Golders Green", "Stevenage", "Brighton"],
+        "Group B": ["Croydon", "Nottingham", "Rotherham"],
+        "qualified": {
+          "Group A": ["Brighton", "Golders Green"],
+          "Group B": ["Croydon", "Nottingham"]
+        }
+      },
+      "semi_finals": [
+        {
+          "winner": "Brighton",
+          "loser": "Croydon",
+          "score": null,
+          "decided_by": null,
+          "note": "A repeat of the 2012 final. Brighton opened through Mina Muharib, his fourth goal of the tournament, and scored a second on the break. The report does not give a scoreline that can be read with confidence, so no score is stored."
+        },
+        {
+          "winner": "Nottingham",
+          "loser": "Golders Green",
+          "score": "2-2",
+          "decided_by": "penalties",
+          "shootout": { "home": null, "away": null },
+          "note": "Golders Green led 2-0; Nottingham levelled to force penalties and won the shoot-out. The shoot-out score is not recorded."
+        }
+      ],
+      "teams": ["Golders Green", "Stevenage", "Nottingham", "Brighton", "Rotherham", "Croydon"],
+      "teams_note": "All six entrants are named.",
+      "matches": [
+        { "id": "COFTA14-A-01", "stage": "group", "group": "Group A", "home": "Golders Green", "away": "Brighton", "score": "0-0" },
+        { "id": "COFTA14-A-02", "stage": "group", "group": "Group A", "home": "Golders Green", "away": "Stevenage", "score": "1-0",
+          "dispute_note": "Stevenage disputed that the goal crossed the line. The result stands as recorded." },
+        { "id": "COFTA14-A-03", "stage": "group", "group": "Group A", "home": "Brighton", "away": "Stevenage", "score": "1-0",
+          "dispute_note": "A penalty, which Stevenage disputed as no handball. The result stands as recorded." },
+        { "id": "COFTA14-A-04", "stage": "group", "group": "Group A", "home": "Brighton", "away": "Golders Green", "score": "1-0" },
+        { "id": "COFTA14-A-05", "stage": "group", "group": "Group A", "home": "Golders Green", "away": "Stevenage", "score": "2-0" },
+        { "id": "COFTA14-A-06", "stage": "group", "group": "Group A", "home": "Brighton", "away": "Stevenage", "score": null,
+          "note": "The final Group A game, a dead rubber. The report does not give the result." },
+        { "id": "COFTA14-B-01", "stage": "group", "group": "Group B", "home": "Nottingham", "away": "Croydon", "score": "2-2",
+          "note": "Nottingham came back from 2-0 down. Both of their goals were headers by Nduoma Chilaka." },
+        { "id": "COFTA14-B-02", "stage": "group", "group": "Group B", "home": "Croydon", "away": "Nottingham", "score": null,
+          "note": "Croydon won. No score recorded." },
+        { "id": "COFTA14-B-03", "stage": "group", "group": "Group B", "home": "Nottingham", "away": "Rotherham", "score": null,
+          "note": "Nottingham won. No score recorded." },
+        { "id": "COFTA14-B-04", "stage": "group", "group": "Group B", "home": "Croydon", "away": "Rotherham", "score": "1-1",
+          "note": "The decisive Group B match. Rotherham led first, scorer not named; Anthony equalised for Croydon very late, minute not recorded." }
+      ],
+      "matches_note": "Group A is recorded in full bar one dead rubber. Group B is recorded only as far as the report describes it, and its home/away orientations are the report's order of mention, not a stated fixture list.",
+      "goalscorers": [
+        {
+          "player_name": "Nduoma Chilaki",
+          "player_canonical": "Nduoma Chilaka",
+          "team": "Nottingham",
+          "match_id": "COFTA14-B-01",
+          "goals": 2,
+          "note": "Two headers in the 2-2 with Croydon."
+        },
+        {
+          "player_name": "Mina Muharib",
+          "player_canonical": "Mina Muharib",
+          "team": "Brighton",
+          "match_id": null,
+          "goals": 1,
+          "flag": "identity_unconfirmed",
+          "note": "Opened the scoring in the semi-final against Croydon; the report calls it his fourth goal of the tournament and gives him a nickname. WHETHER THIS IS THE SAME PERSON as the Mina Muharib who was Brighton's top scorer at CONAFA 2016 IS NOT RESOLVED. Same club and same name, but the archive does not merge on that alone. Held as a flagged question for the organiser, neither merged nor split."
+        },
+        {
+          "player_name": "Amir Ameen",
+          "player_canonical": "Amir Ameen",
+          "team": "Rotherham",
+          "match_id": null,
+          "goals": 3,
+          "flag": "match_not_identified",
+          "note": "A hat-trick in a Rotherham win. The report names neither the opponent nor the score, so no fixture has been invented to hang it on."
+        }
+      ],
+      "own_goals": [
+        {
+          "conceded_by": "Brighton",
+          "credited_to": "Nottingham",
+          "match_id": "COFTA14-FINAL",
+          "player_name": null,
+          "note": "A free-kick that went in off the goalkeeper's heel in the final and was awarded as an own goal. Explicitly NOT one of Nduoma Chilaka's goals."
+        }
+      ],
       "awards": {
         "top_scorer": {
           "player_name": "Nduoma Chilaki",
@@ -6360,7 +6576,8 @@
           "value": 5,
           "is_published_summary": false,
           "source_spelling": "Chilaki",
-          "note": "Adam's spelling 'Chilaka' is canonical. The published 2014 report prints 'Chilaki'; that spelling is preserved as a registry variant and as the source string."
+          "note": "Adam's spelling 'Chilaka' is canonical. The published 2014 report prints 'Chilaki'; that spelling is preserved as a registry variant and as the source string.",
+          "tally_note": "The figure of 5 is organiser-confirmed and stands. The report attributes only two of them explicitly - the pair of headers against Croydon - and separately makes clear that the final's free-kick was an OWN GOAL and not his. The archive cannot determine from the surviving detail whether the 5 ever included that own goal, so it is neither recomputed nor adjusted. See conflict register C18."
         },
         "player_of_the_tournament": {
           "player_name": "Ashley Brown",
@@ -6377,12 +6594,19 @@
           "is_published_summary": false
         }
       },
+      "edition_note": "The tenth annual COFTA. Nottingham won it, coming through a shoot-out in the semi-final and beating Brighton 2-1 in the final.",
+      "narrative": "Stored from the COFTA 2014 official report: David Morgan of Brighton and Mark Khalil, Nottingham's captain and golden glove, were both singled out. Golders Green were coached by Hani Mohib. Nottingham's captain Mikael pledged more training for the year ahead.",
+      "corroborations": [
+        "The report calls this the tenth annual tournament, independently corroborating the existing count. A second source for the same fact; no new conflict entry is warranted.",
+        "The report states there was no tournament in 2013, corroborating the confirmed gap year."
+      ],
       "known_gaps": [
-        "Final home/away orientation not recorded.",
-        "No dates.",
-        "No entrant list beyond the two finalists.",
-        "No group stage, standings or match data.",
-        "No goalscorers beyond the three award winners."
+        "Final home/away orientation not recorded, and neither of the two named goals in it has a scorer.",
+        "The semi-final against Croydon has no usable scoreline.",
+        "The semi-final shoot-out score is not recorded.",
+        "One Group A dead rubber has no result, and Group B's scores are largely absent.",
+        "Amir Ameen's hat-trick cannot be attached to a fixture.",
+        "No dates."
       ]
     },
     {
@@ -6411,8 +6635,8 @@
         "winner": "Brighton",
         "loser": "Rotherham"
       },
-      "teams": ["Brighton", "Rotherham"],
-      "teams_note": "Only the finalists are known. This is not the entrant list.",
+      "teams": ["Croydon", "St Mark", "Brighton", "Rotherham", "Golders Green"],
+      "teams_note": "All five entrants are named.",
       "matches": [],
       "goalscorers": [],
       "awards": {
@@ -6461,8 +6685,8 @@
       "runner_up": null,
       "final_summary": null,
       "final": null,
-      "teams": ["Brighton"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "teams": ["Brighton", "Stevenage", "St Mark", "Rotherham", "Golders Green", "Croydon"],
+      "teams_note": "All six entrants are named.",
       "matches": [],
       "goalscorers": [],
       "awards": {
@@ -6500,8 +6724,8 @@
       "runner_up": null,
       "final_summary": null,
       "final": null,
-      "teams": ["Brighton"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "teams": ["Stevenage", "St Anthony, Rotherham & St Mary & St Mark, Birmingham (joint team)", "Brighton", "Golders Green", "St Mark", "Croydon"],
+      "teams_note": "All six entrants are named. Rotherham and Birmingham entered as one joint side and are recorded as a single entrant, not as two clubs.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
@@ -6569,8 +6793,8 @@
         "winner": "Brighton",
         "loser": "Worthing"
       },
-      "teams": ["Brighton", "Worthing"],
-      "teams_note": "Only the finalists are known. This is not the entrant list.",
+      "teams": ["Brighton", "St Mark", "Stevenage", "Croydon", "Worthing", "Golders Green"],
+      "teams_note": "All six entrants are named.",
       "matches": [],
       "goalscorers": [],
       "awards": {},
@@ -6619,11 +6843,12 @@
       "year": 2010,
       "display_name": "Ladies COFTA 2010",
       "category": "women",
-      "date_start": null,
-      "date_end": null,
-      "venue": null,
+      "date_start": "2010-10-02",
+      "date_end": "2010-10-02",
+      "venue": "Coptic Orthodox Church Centre, Stevenage",
+      "venue_note": "A different venue from the men's tournament three weeks earlier, which was at the Coptic Orthodox Church Centre, Shephalbury Park. The two are recorded separately and must not be merged.",
       "data_confidence": "minimal",
-      "source": "Adam, organiser-confirmed",
+      "source": "COFTA 2010 official report (which announces the date and venue); Adam, organiser-confirmed",
       "format": null,
       "team_count": null,
       "match_count": null,
@@ -6746,10 +6971,10 @@
       "venue": null,
       "host_club": "St Mary & St George, Nottingham",
       "data_confidence": "minimal",
-      "source": "https://ukmidcopts.org/news/conafa-2015/ ; organiser-confirmed",
+      "source": "https://ukmidcopts.org/news/conafa-2015/ (full article text) ; organiser-confirmed",
       "format": null,
       "team_count": 11,
-      "team_count_basis": "stated by the source as a record entry",
+      "team_count_basis": "stated by the source as a record entry, and the eleven are now all named",
       "match_count": null,
       "champion": "Brighton",
       "runner_up": "Golders Green",
@@ -6762,17 +6987,34 @@
         "winner": "Brighton",
         "loser": "Golders Green"
       },
-      "teams": ["Brighton", "Golders Green", "Nottingham", "Ireland"],
-      "teams_note": "Finalists, hosts and the named debutants only. Eleven teams competed; the rest are not recorded.",
+      "teams": [
+        "Nottingham",
+        "St Mark",
+        "Manchester",
+        "St Mary & St Mark, Birmingham",
+        "Golders Green",
+        "Croydon",
+        "Rotherham",
+        "Stevenage",
+        "Brighton",
+        "St Mary & St Mina, Ireland",
+        "Eritrean Orthodox"
+      ],
+      "teams_note": "All eleven entrants are named.",
+      "qualifiers": {
+        "Group A": ["Nottingham", "Golders Green"],
+        "Group B": ["Brighton", "Manchester"],
+        "note": "Who progressed from each group. The group tables themselves, and the semi-final pairings and scores, are not recorded."
+      },
       "matches": [],
       "goalscorers": [],
       "awards": {},
-      "edition_note": "Hosted by Nottingham. A record eleven teams, including debutants from the Republic of Ireland. Brighton entered CONAFA for the first time in 2015, after a four-year unbeaten run ended in September 2014.",
+      "edition_note": "Hosted by Nottingham. A record eleven teams. Brighton, St Mary & St Mina of Ireland and the Eritrean Orthodox side all entered for the first time. St Mark arrived as defending champions, having won the first CONAFA in 2014.",
       "known_gaps": [
         "Final home/away orientation not recorded.",
         "No dates or venue.",
-        "Seven of the eleven entrants are not named.",
-        "No group stage, standings or match data.",
+        "Semi-final pairings and scores not recorded. Nottingham progressed from their group as hosts but did not reach the final; how they went out is not stated.",
+        "Group tables and match results not recorded.",
         "No goalscorers, awards or player data."
       ]
     },
@@ -6814,10 +7056,16 @@
       },
       "teams": ["Manchester", "Brighton", "Golders Green", "Rotherham", "East London"],
       "teams_note": "Only the clubs named in the report: the four semi-finalists and the debutants. Eleven teams competed; the remaining six are not recorded and have not been invented.",
+      "absentees": [
+        {
+          "club": "St Mary & St Mina, Ireland",
+          "reason": "Unable to attend. Entrants in 2015, absent in 2016 - recorded so the gap in their record is a known absence rather than a missing name among the six unnamed entrants."
+        }
+      ],
       "matches": [],
       "goalscorers": [],
       "awards": {},
-      "edition_note": "The third CONAFA, hosted by Nottingham. Eleven teams. The Republic of Ireland were unable to attend. St Mary & St George, East London were debutants. The report notes three different winners in as many years, corroborating the 2014, 2015 and 2016 champions.",
+      "edition_note": "The third CONAFA, hosted by Nottingham. Eleven teams. St Mary & St Mina of Ireland, debutants the year before, were unable to attend. St Mary & St George, East London were debutants. The report notes three different winners in as many years, corroborating the 2014, 2015 and 2016 champions.",
       "known_gaps": [
         "Final scoreline NOT stated by the source - only that the deciding goal came late.",
         "Semi-final scores not stated, only that each was won by a single goal.",
@@ -6851,66 +7099,6 @@
       "goalscorers": [],
       "awards": {},
       "edition_note": "The Manchester church's own site states they won both the 2016 and 2017 tournaments, and first took part in 2015 - corroborating the CONAFA 2016 report.",
-      "known_gaps": [
-        "No runner-up, final or scoreline.",
-        "No dates or venue.",
-        "No entrant list, group stage, standings or match data.",
-        "No goalscorers, awards or player data."
-      ]
-    },
-    {
-      "id": "conafa-2018",
-      "competition": "CONAFA",
-      "year": 2018,
-      "display_name": "CONAFA 2018",
-      "category": "men",
-      "date_start": null,
-      "date_end": null,
-      "venue": null,
-      "data_confidence": "minimal",
-      "source": "Adam, organiser-confirmed",
-      "format": null,
-      "team_count": null,
-      "match_count": null,
-      "champion": "Brighton",
-      "runner_up": null,
-      "final_summary": null,
-      "final": null,
-      "teams": ["Brighton"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
-      "matches": [],
-      "goalscorers": [],
-      "awards": {},
-      "known_gaps": [
-        "No runner-up, final or scoreline.",
-        "No dates or venue.",
-        "No entrant list, group stage, standings or match data.",
-        "No goalscorers, awards or player data."
-      ]
-    },
-    {
-      "id": "conafa-2019",
-      "competition": "CONAFA",
-      "year": 2019,
-      "display_name": "CONAFA 2019",
-      "category": "men",
-      "date_start": null,
-      "date_end": null,
-      "venue": null,
-      "data_confidence": "minimal",
-      "source": "Adam, organiser-confirmed",
-      "format": null,
-      "team_count": null,
-      "match_count": null,
-      "champion": "Brighton",
-      "runner_up": null,
-      "final_summary": null,
-      "final": null,
-      "teams": ["Brighton"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
-      "matches": [],
-      "goalscorers": [],
-      "awards": {},
       "known_gaps": [
         "No runner-up, final or scoreline.",
         "No dates or venue.",
@@ -7030,6 +7218,14 @@
       {
         "id": "Q11",
         "question": "Two player merges were held back: Karim Rizkalla (Newcastle) / Karim Rizkallah (Stevenage), and Kiro Khir / Kyrelos Khir (both St Mark). Merge either?"
+      },
+      {
+        "id": "Q12",
+        "question": "Birmingham: one Coptic church or two? The registry holds St Mary & Archangel Michael, Birmingham (from the CONAFA 2026 data, alias 'Birmingham'). The CONAFA 2015 report and the COFTA 2017 joint entrant both name Birmingham's club as St Mary & St Mark. Both rows now exist and NEITHER has been merged into the other. If Birmingham has two churches, this is correct as it stands. If one of the two names is wrong, say which - it cannot be inferred from the sources."
+      },
+      {
+        "id": "Q13",
+        "question": "Is the Mina Muharib who opened Brighton's 2014 semi-final (nicknamed in the report, described as his fourth goal of that tournament) the same person as the Mina Muharib who was Brighton's top scorer at CONAFA 2016? Same club, same name, two years apart. Held unmerged and unsplit pending a ruling - the archive does not merge players on name and club alone."
       }
     ],
     "resolved": [
@@ -7067,7 +7263,27 @@
       },
       {
         "id": "C15",
-        "answer": "CONAFA 2018 and 2019, 2026-08-21. Adam first wrote that Brighton won 2018 and 2019 in a sentence about COSTA, then corrected it within the minute to CONAFA. The correction is the record: two CONAFA editions are added, champion Brighton, minimal confidence, nothing else known. COSTA gains nothing from this - it did not exist in 2018. Adam separately believes there was no CONAFA in 2020, 2021 or 2022; that is held as a belief in no_tournament_years, not as a confirmed absence."
+        "answer": "CONAFA 2018 and 2019, 2026-08-21. Adam first wrote that Brighton won 2018 and 2019 in a sentence about COSTA, then corrected it within the minute to CONAFA. The correction is the record: two CONAFA editions are added, champion Brighton, minimal confidence, nothing else known. COSTA gains nothing from this - it did not exist in 2018. Adam separately believes there was no CONAFA in 2020, 2021 or 2022; that is held as a belief in no_tournament_years, not as a confirmed absence. SUPERSEDED 2026-08-24 by C16: CONAFA did not run in 2018-2022 at all, and both edition rows this entry created have been removed."
+      },
+      {
+        "id": "C16",
+        "answer": "CONAFA 2018 AND 2019 REMOVED, 2026-08-24. This reverses a decision taken three days earlier and is the only place in the archive where Adam has contradicted Adam, so it is recorded in full. On 2026-08-21 Adam wrote 'Brighton won 2018 and 2019' in a sentence about COSTA, then corrected it within the minute to CONAFA; migration 0032 duly created conafa-2018 and conafa-2019 with Brighton as champion and nothing else known. On 2026-08-24 he confirmed that CONAFA did not run at all between 2017 and 2023 - a five-year gap. The later statement wins, and three things support it over the earlier one. It is specific rather than a one-line self-correction: it names the gap, its length, and the resumption year. It is consistent with the surrounding rows, 2017 (Manchester) running straight into 2023. And the earlier claim is fully explained as a misattribution, because COFTA 2018 and COFTA 2019 BOTH already record Brighton as champion - 'Brighton won 2018 and 2019' was already true, of the wrong competition. Brighton's CONAFA titles go from seven to five. No other row is touched."
+      },
+      {
+        "id": "C17",
+        "answer": "COFTA 2010 DATES, 2026-08-24. The archive held 10-12 September 2010; the official report gives 11-12 September. The report is a contemporaneous document and is taken as correct, so the row now reads 11-12 September. Non-blocking, and logged rather than silently overwritten because the earlier range was itself organiser-supplied. If the three-day range was right, this is the entry that says where the two-day one came from."
+      },
+      {
+        "id": "C18",
+        "answer": "NDUOMA CHILAKA'S 2014 TALLY vs THE OWN-GOAL CORRECTION, 2026-08-24. The archive records 5 goals, organiser-confirmed, and 0028 made that figure the record rather than a published-summary figure. The 2014 report describes the final's free-kick as going in off the goalkeeper's heel and being AWARDED AS AN OWN GOAL - explicitly not his. It also attributes only two of his goals in so many words, the pair of headers in the 2-2 with Croydon. There is no goal-by-goal record for 2014, so the archive CANNOT determine whether the 5 ever included that own goal. The 5 therefore stands untouched and is NOT recomputed; the own goal is stored separately, credited to Nottingham and conceded by Brighton, with no player. What this entry exists to prevent is someone later reading the own goal as a sixth Chilaka goal, or quietly reducing the 5 to 4 to make the arithmetic close. Neither is supported."
+      },
+      {
+        "id": "C19",
+        "answer": "THE 2006-2010 SOUTHERN-CHAMPIONS CLAIM RECONCILES - CORROBORATION, NOT CONFLICT, 2026-08-24. The COFTA 2010 report states that each southern church had won COFTA once in the previous five years. Adam confirms St Mark counts as southern. Reading 2006 to 2010 against the confirmed roll: Croydon 2006, Golders Green 2007, Stevenage 2008, St Mark 2009, Brighton 2010 - five different southern clubs, one title each, no repeats. It reconciles exactly. This is deliberately NOT logged as a conflict: it is an independent contemporaneous source agreeing with the organiser's roll, and it is the second thing to corroborate the newly filled 2007 and 2008 champions."
+      },
+      {
+        "id": "C20",
+        "answer": "'HELD THE TROPHY 4 YEARS' IN THE 2014 REPORT, 2026-08-24. The report frames Brighton as having held the trophy for four years, which reads as 2010-2013. The confirmed roll has Brighton winning 2010, 2011 and 2012 - three titles - and no tournament at all in 2013. Both are true of a fashion: they held it for four calendar years precisely BECAUSE 2013 was not played, so nobody took it off them. Minor, non-blocking, and the roll is not altered. Logged so the discrepancy is not rediscovered as a missing 2013 title."
       },
       {
         "id": "Q4",

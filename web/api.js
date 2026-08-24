@@ -219,7 +219,7 @@ export const setSlot = (slot, teamId) =>
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v11';   // v11: CONAFA 2018-19, COSTA founded 2022
+const ARCHIVE_V = 'v12';   // v12: 2026-08-24 backfill (CONAFA gap, 2007/08 champions, registry, 2009/10/12/14)
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small

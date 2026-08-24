@@ -7,7 +7,7 @@
  * last-known copy for offline boot. Bump VERSION on any deploy that should
  * push a fresh shell.
  */
-const VERSION = 'cofta-v72';
+const VERSION = 'cofta-v73';
 const SHELL = [
   './', './index.html', './diocese.webp',
   // Code and stylesheets carry the build token, because THE BROWSER'S OWN HTTP
@@ -17,9 +17,9 @@ const SHELL = [
   // be answered from it, because on a fresh deploy the URL is one the browser
   // has never seen. These must stay in step with index.html and app.js;
   // tools/check-build.sh fails if they drift.
-  './styles.css?b=cofta-v72', './fonts.css?b=cofta-v72', './themes.css?b=cofta-v72',
-  './app.js?b=cofta-v72', './api.js?b=cofta-v72', './model.js?b=cofta-v72',
-  './queue.js?b=cofta-v72', './crests.js?b=cofta-v72',
+  './styles.css?b=cofta-v73', './fonts.css?b=cofta-v73', './themes.css?b=cofta-v73',
+  './app.js?b=cofta-v73', './api.js?b=cofta-v73', './model.js?b=cofta-v73',
+  './queue.js?b=cofta-v73', './crests.js?b=cofta-v73',
   './manifest.webmanifest',
   // The home-screen icons. Cache-first like every other asset, so a phone
   // that already installed the app only refetches them when VERSION moves.

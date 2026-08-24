@@ -47,7 +47,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0032`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0041`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -440,27 +440,39 @@ pass and must never gate the score moving.
 
 ## History: the archive of previous tournaments
 
-**Thirty-seven finished tournaments, 2005–2026.** `0021` imported thirteen
-from 2022–2026, `0026` backfilled twenty-one reaching back to the first COFTA
-in 2005, `0029` added COSTA 2023 and `0032` CONAFA 2018–2019. Five editions
-survive in full; the other thirty-two are sometimes no more than a year and a
-champion. **Thin records stay thin** — no synthesised fixtures, no zero-filled
-stats, and `null` never rendered as `0`.
+**Thirty-five finished tournaments, 2005–2026.** `0021` imported thirteen from
+2022–2026, `0026` backfilled twenty-one reaching back to the first COFTA in
+2005, `0029` added COSTA 2023, and `0033`–`0041` reworked nine areas at once:
+the CONAFA gap, the last two unknown COFTA champions, three registry clubs,
+five entrant lists and full narrative records for COFTA 2009, 2010, 2012 and
+2014. Five editions survive in full; the rest range from a year and a champion
+to a group table with named scorers. **Thin records stay thin** — no
+synthesised fixtures, no zero-filled stats, and `null` never rendered as `0`.
 
 `tournament_archive.json` is the source of truth and is edited first; the
 migration follows it. Adam's word is canonical, published sources fill in
 around it and are cited on the row, and a published source that contradicts
 him goes to the conflict register rather than into the data.
 
-- **Two COFTA years have no tournament at all: 2013 and 2020.** There is no
-  edition row for either. Their absence is recorded in
-  `archive_meta.no_tournament_years`, because "we checked and it did not
-  happen" is a different fact from "we have no record".
-- **Two COFTA years have no champion: 2007 and 2008.** The tournaments were
-  played; who won them is not recorded. The edition row exists with a null
-  champion and the row renders **"Champion not recorded"** (`.nowin`) where
-  the crest would go. An empty cell there read as a rendering fault and
-  invited someone to fix it by guessing.
+- **Two COFTA years have no tournament at all: 2013 and 2020**, and **CONAFA
+  did not run for five years, 2018 to 2022.** There is no edition row for any
+  of them. Their absence is recorded in `archive_meta.no_tournament_years`,
+  because "we checked and it did not happen" is a different fact from "we have
+  no record" — and neither may ever render as a record being sought.
+- **THE COFTA CHAMPIONS ROLL IS COMPLETE, 2005–2026.** `0034` filled the last
+  two: 2007 Golders Green, 2008 Stevenage. Both were their club's first COFTA
+  championship in the archive. The `.nowin` "Champion not recorded" rendering
+  is now unreachable and is deliberately kept — a future backfill can add an
+  edition whose winner is unknown, and an empty cell there reads as a
+  rendering fault and invites someone to fix it by guessing.
+- **`0033` reversed `0032`, and it is the only organiser-vs-organiser
+  contradiction in the archive.** On 21 August Adam said Brighton won CONAFA
+  2018 and 2019; on 24 August he confirmed CONAFA did not run at all between
+  2017 and 2023. The later, more specific statement wins — and the earlier one
+  is fully explained, because **`cofta`-2018 and `cofta`-2019 both already
+  record Brighton as champion.** "Brighton won 2018 and 2019" was true of the
+  wrong competition. Brighton's CONAFA titles went from seven to five. C16
+  holds the reasoning; do not re-litigate it without a new source.
 - **The competition page states origins only where they are known.** An
   edition carrying `notes.inaugural` makes its competition say so — COFTA
   2005, CONAFA 2014, COSTA 2022, Ark Cup 2026. A competition whose founding
@@ -778,6 +790,28 @@ This is **competition-level**. An edition whose host differed carries its own
   `notes.source_labels`, and deliberately is NOT a global alias — a genuine
   Brighton B may yet appear. `0026` asserts no team anywhere carries
   `Brighton B` in `aliases`.
+- **TWO MORE NAME COLLISIONS, both added on 2026-08-24 and both the same shape
+  as the St George trio.** G4: **St Mary & St Mina, Manchester** and **St Mary
+  & St Mina, Ireland** carry identical church names and differ only by city —
+  Manchester won CONAFA 2016 and 2017, Ireland were 2015 debutants who could
+  not attend in 2016. G5: **St Mark, Kensington** and **St Mary & St Mark,
+  Birmingham** — a prefix or token match on "St Mark" collapses them. `0035`
+  asserts all four survive as separate rows.
+- **"Republic of Ireland" is a parish church.** Both CONAFA reports print it,
+  and `0026` guessed at `St Mina, Ireland`. Adam confirms St Mary & St Mina,
+  Ireland. `0035` renames it and keeps the report's string as an alias — **and
+  keeps the row's id**, because ids are stable keys other rows point at and
+  the uuidv5 scheme names a row at creation, it does not re-derive on rename.
+- **BIRMINGHAM IS AN OPEN QUESTION, Q12, and both rows stand.** The registry
+  holds St Mary & Archangel Michael, Birmingham (from CONAFA 2026) *and* St
+  Mary & St Mark, Birmingham (from the CONAFA 2015 report and COFTA 2017's
+  joint entrant). Whether the city has two Coptic churches or one of the names
+  is wrong cannot be inferred, so neither was merged into the other. `0035`
+  asserts the count is exactly 2, so a later tidy-up fails loudly.
+- **A joint side is ONE club.** COFTA 2017's Rotherham & Birmingham entry gets
+  its own registry row, exactly as Liverpool & Bolton already does — never
+  split into its parishes, never merged into either. `0037` asserts the joint
+  row is present and that neither parish appears separately that year.
 - **Rotherham is spelt St Anthony here.** Adam's 2005–2021 roll writes
   "St Antony". Same club, one row; the roll's spelling is an alias.
 - **Chilaka, not Chilaki.** Adam's spelling is canonical and lives in
@@ -1031,6 +1065,23 @@ to the `hove` → `km` rename in 0020.
 - `player_name` is the string exactly as published; `player_canonical` is the
   merged identity, and every aggregate groups on the canonical. Twelve merges
   plus two of Adam's rulings; two pairs deliberately held back.
+
+### Held open, deliberately
+
+- **Q12 — Birmingham: one Coptic church or two?** See the identity guards
+  above. Both rows stand until Adam rules.
+- **Q13 — is the Mina Muharib of COFTA 2014 the same man as CONAFA 2016's?**
+  He opened Brighton's 2014 semi-final, described as his fourth of that
+  tournament; Brighton's CONAFA 2016 top scorer carries the same name. Same
+  club, same name, two years apart — which is precisely the evidence this
+  archive has always refused to merge on. Neither merged nor split.
+- **C18 — Nduoma Chilaka's five goals in 2014 are NOT recomputed.** The report
+  attributes two of them explicitly (the headers against Croydon) and makes
+  clear the final's free-kick was an OWN GOAL, not his. With no goal-by-goal
+  record for 2014 the archive cannot tell whether the 5 ever included it, so
+  the organiser-confirmed figure stands untouched and the own goal is stored
+  separately with no player. The entry exists to stop both failure modes: a
+  sixth Chilaka goal, or a quiet reduction to 4 to make the arithmetic close.
 
 ### Adam's rulings, recorded
 
