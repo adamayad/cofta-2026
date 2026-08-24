@@ -247,7 +247,7 @@ export async function firePush(matchId, kind, opts = {}) {
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v13';   // v13: 0049 imported six missing semi-finals (2010, 2014, CONAFA 2016)
+const ARCHIVE_V = 'v14';   // v14: 0050 added winner_team_id/loser_team_id to archive_matches
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small

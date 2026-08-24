@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v85`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v86`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0049`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0050`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -881,38 +881,70 @@ him goes to the conflict register rather than into the data.
   the **honours read** rather than `loadEdition` — one query for the whole
   archive, already cached for the cabinets, where the per-edition read fires
   six and five come back empty for a record this thin.
-- **BUT A THIN EDITION STILL SHOWS NONE OF ITS MATCHES, AND SOME HAVE PLENTY.**
-  `thinEdition()` renders champion, runner-up, final summary, entrants, awards
-  and notes, and never looks at `matches`. Measured 24 August:
+- **A thin edition shows the matches it has**, and until 24 August it did not.
+  `thinEdition()` renders champion, runner-up, entrants, awards and notes;
+  `viewHistEdition`'s minimal branch never called `loadEdition`, so every match
+  row in a thin edition was invisible. cofta-2014 had **thirteen matches and
+  three events on screen nowhere** — a complete group stage, both semi-finals,
+  the final, Chilaka's two headers and the final's own goal — which is the
+  entire point of `0038`–`0040`. cofta-2009 had two, cofta-2012 one.
+  **A page is not thin because it has no matches; it is thin because it has no
+  standings, and those are different absences.** `data_confidence` stays
+  `minimal`: `partial` would route these to the FULL renderer, which expects
+  standings they do not have. That decision was right and is unchanged — what
+  was wrong was reading it as "show nothing but the podium".
+  The matches render through **`archFixtures`, the same function the full
+  editions use**, so there is one match renderer and it cannot drift. The read
+  is deliberately not part of the render gate: `loadEdition` latches its own
+  failure, the podium and awards paint immediately, and the matches drop in
+  when it settles.
+- **`0049` imported six semi-finals that existed only in the JSON.** COFTA
+  2010, COFTA 2014 and CONAFA 2016 each had two written down in
+  `tournament_archive.json` and none in the database — `0040` put the detail in
+  a *note* rather than a row. Nothing was invented on the way in: no
+  orientation, no scoreline inferred from a winner, no shoot-out score, no goal
+  events (C18 — an event row would move 2014's tallies).
 
-  | edition | match rows | event rows | on screen |
-  |---|---|---|---|
-  | cofta-2014 | 13 | 3 | **none** |
-  | cofta-2009 | 2 | 0 | **none** |
-  | cofta-2012 | 1 | 0 | **none** |
+### A result that is not a fixture
 
-  So `0038`–`0040`, which exist to give 2009/2010/2012/2014 full narrative
-  records, wrote a complete group stage, a final, Chilaka's two headers and the
-  final's own goal into the database — **and not one of them has ever appeared
-  on the site.** The prose in `notes` and `known_gaps` is doing all the work
-  those pages do.
-  This is not obviously a bug. `data_confidence` was deliberately left at
-  `minimal` because `partial` routes an edition to the FULL renderer, which
-  expects standings these years do not have — that decision is recorded above
-  and was right. What was never decided is whether `thinEdition()` should show
-  a match list of its own. **It is a design question, not a data one, and it is
-  open.** Anything that "fixes" a missing archive match by adding rows should
-  check this table first: rows are cheap and invisible.
-- **The six semi-finals in `0049` are exactly that case.** COFTA 2010, COFTA
-  2014 and CONAFA 2016 each had two semi-finals written down in
-  `tournament_archive.json` and zero in the database — `0040` put the detail in
-  a *note* rather than a row. They are imported now, so the database agrees with
-  its source and any later decision to render them has something to render.
-  **They are invisible today**, and the migration says so in its own header
-  rather than claiming a fix. Nothing was invented on the way in: no
-  orientation, no scoreline inferred from a winner, no shoot-out score, and
-  COFTA 2010's unnamed opponent stays unnamed with Croydon recorded as
-  *probable* in the gap note and nowhere in the data.
+Ten archive matches record who beat whom and never which way round the fixture
+was printed. `winner_team_id` / `loser_team_id` (`0050`) and `archResultRow`.
+
+- **They cannot use the fixture row.** `.afxm`'s left-hand column *means* home;
+  rendering an orientation-less result through it asserts something no source
+  said. `archResultRow` stacks the two clubs with the word **beat** between
+  them, so the word carries the meaning and position carries none — the exact
+  inverse of the row above, and the reason they cannot share one. Stacking
+  rather than opposing also removes the pull to read the upper club as home.
+- **`notes.winner` is a `short_name`, and short names are not display strings.**
+  A renderer given that string can only print an alias-only spelling — what the
+  naming drill exists to catch — or nothing, and it cannot link to the club.
+  So the resolved ids follow the archive's existing pattern exactly:
+  `notes.winner` is the string a source printed, like `player_name`;
+  `winner_team_id` is the resolved identity, like `player_canonical`.
+- **Populated only where `home_team_id` is null.** Where a fixture exists the
+  winner is derivable from the score, and storing it twice invites drift.
+  Resolution is by `short_name` **scoped to the edition's own entrants**, never
+  registry-wide — "St Mark" and "Manchester" are exactly the strings that
+  collide, and the migration fails loudly if any string does not resolve.
+- **A winner with no named opponent says "won" and stops.** COFTA 2010's second
+  semi-final names Rotherham and never their opponent; `loser_team_id` is
+  separately nullable for it, Croydon stays *probable* in the gap note, and the
+  verb changes rather than inventing someone to have beaten.
+- **A margin is shown as a margin.** Both CONAFA 2016 semis are reported as
+  "won by one goal" and render as `by one goal`. **Never 1–0.** The detail line
+  is `.aresd`, deliberately not sized like `.afxs`: several of these rows have
+  no score at all, and a scoreboard-sized blank reads as broken.
+- `.abeat` and `.aresd` take `--dim` and `--fg2`, tokens whose contrast is
+  already established in all five themes, so this needed no new colour.
+- **`notes.note` and `notes.dispute_note` now render on the normal fixture row
+  too.** They were being dropped, and nobody noticed because the only editions
+  carrying them were thin ones showing no matches at all.
+- **NEVER PUT A BACKTICK IN A COMMENT INSIDE A TEMPLATE LITERAL.** An HTML
+  comment documenting those two fields was written inside the returned string
+  with the field names in backticks. They closed the literal, `app.js` failed to
+  parse, and the page was an infinite "Loading…". Caught by executing the drill,
+  which is exactly why every `app.js` change is run and not merely read.
 - **Awards render `player_canonical`; `player_name` keeps the source string.**
   The column still holds the spelling its source printed, and match pages
   still render that. An award is a summary rather than a quotation, and a

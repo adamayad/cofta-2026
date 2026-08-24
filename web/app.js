@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v85';
-import * as api from './api.js?b=cofta-v85';
-import * as M from './model.js?b=cofta-v85';
-import { WriteQueue } from './queue.js?b=cofta-v85';
+import { CREST } from './crests.js?b=cofta-v86';
+import * as api from './api.js?b=cofta-v86';
+import * as M from './model.js?b=cofta-v86';
+import { WriteQueue } from './queue.js?b=cofta-v86';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2068,7 +2068,76 @@ function archFixtures(d) {
   }).join('');
 }
 
+/**
+ * A RESULT THAT IS NOT A FIXTURE.
+ *
+ * Ten matches in the archive record who won and who lost and never which way
+ * round they were printed. Rendering those through the fixture row above would
+ * assert an orientation the source never gave — a fixture row's left-hand side
+ * IS the home side, that is what the layout means — so they get their own
+ * shape, and it is deliberately sentence-like rather than scoreboard-like:
+ *
+ *     St Mark, Kensington
+ *          beat
+ *     St Mary & St Shenouda, Croydon        1–0
+ *
+ * The word carries the meaning and position carries none, which is the exact
+ * inverse of the row above and the reason they cannot share one.
+ *
+ * A SCORE IS PRINTED ONLY IF THERE IS ONE. Several of these have a winner and
+ * no scoreline at all, and CONAFA 2016's two are reported as "won by one goal"
+ * — a margin, which is shown as a margin and must never become 1–0.
+ *
+ * `winner_team_id` is used, never `notes.winner`: that string is a `short_name`
+ * and short names are not display strings (see the naming rule). The id is what
+ * lets these link to the club like every other mention in History.
+ */
+function archResultRow(m) {
+  const score = m.notes?.score;
+  const margin = m.notes?.margin;
+  const pens = m.decided_by === 'penalties';
+  // "beat" needs someone to have been beaten. COFTA 2010's second semi-final
+  // names Rotherham and never their opponent, so it says what is known and
+  // stops; the gap note underneath explains the rest.
+  const verb = m.loser_team_id ? 'beat' : 'won';
+  const detail = [
+    score ? esc(score) : '',
+    margin && !score ? `by ${esc(margin)}` : '',
+    pens ? 'on penalties' : '',
+  ].filter(Boolean).join(' · ');
+
+  return `<div class="afxr res">
+    <div class="ares">
+      <div class="awin">${archTeamLink(m.winner_team_id, { crest: 22 })}</div>
+      <span class="abeat">${verb}</span>
+      ${m.loser_team_id
+        ? `<div class="alose">${archTeamLink(m.loser_team_id, { crest: 22 })}</div>` : ''}
+    </div>
+    ${detail ? `<p class="aresd">${detail}</p>` : ''}
+    ${m.gap_note ? `<p class="afxn">${esc(m.gap_note)}</p>` : ''}
+    ${m.notes?.note ? `<p class="afxn">${esc(m.notes.note)}</p>` : ''}
+    ${m.notes?.record_note ? `<p class="afxn">${esc(m.notes.record_note)}</p>` : ''}
+  </div>`;
+}
+
+/**
+ * NEVER PUT A BACKTICK IN A COMMENT INSIDE A TEMPLATE LITERAL. An HTML comment
+ * documenting the two note fields below was written inside the returned string
+ * with the field names in backticks; they closed the literal, app.js failed to
+ * parse, and the page was an infinite "Loading…". Caught in the drill, which is
+ * why every app.js change is executed rather than read.
+ *
+ * The fields themselves: `notes.note` and `notes.dispute_note` were being
+ * dropped on the floor. Nobody noticed while the only editions carrying them
+ * were thin ones that rendered no matches at all — COFTA 2014's "Nottingham
+ * came back from 2-0 down, both goals headers by Nduoma Chilaka" and
+ * Stevenage's two disputed goals have never been on screen. They are about the
+ * match, so they belong on the match.
+ */
 function archFixtureRow(m, d) {
+  // No orientation, but a known result: a different thing, rendered differently.
+  if (!m.home_team_id && !m.away_team_id && m.winner_team_id) return archResultRow(m);
+
   const evs = d.events.filter(e => e.match_id === m.id);
   const goals = evs.filter(e => ['goal', 'penalty_goal', 'own_goal'].includes(e.event_type));
   const pens = m.decided_by === 'penalties';
@@ -2090,6 +2159,8 @@ function archFixtureRow(m, d) {
     ${archGoalCols(goals, m)}
     ${marker}
     ${m.gap_note ? `<p class="afxn">${esc(m.gap_note)}</p>` : ''}
+    ${m.notes?.note ? `<p class="afxn">${esc(m.notes.note)}</p>` : ''}
+    ${m.notes?.dispute_note ? `<p class="afxn">${esc(m.notes.dispute_note)}</p>` : ''}
     ${state.admin && evs.some(e => e.flag) ? `<p class="flagline">flagged:
        ${esc([...new Set(evs.filter(e => e.flag).map(e => e.flag))].join(', '))}</p>` : ''}
   </div>`;
@@ -2221,8 +2292,27 @@ function viewHistEdition() {
     // back empty for a record this thin. The page renders immediately from
     // the index and the awards drop in when the read settles, so there is no
     // spinner over content that is already on screen.
+    // AND A THIN EDITION SHOWS THE MATCHES IT HAS, which it did not until now.
+    // This branch never called loadEdition, so cofta-2014's thirteen matches,
+    // cofta-2009's two and cofta-2012's one sat in the database and appeared
+    // nowhere — the whole point of the migrations that put them there. The
+    // page is not "thin" because it has no matches; it is thin because it has
+    // no standings, and those are two different absences.
+    //
+    // Rendered by `archFixtures`, the same function the full editions use, so
+    // there is one match renderer and it cannot drift. Most of these rows are
+    // results without an orientation and take `archResultRow` inside it.
+    //
+    // The read is NOT part of the render gate. `loadEdition` latches its own
+    // failure, the page renders immediately from the index, and the matches
+    // drop in when the read settles — so a slow or failed extra query costs
+    // this section and never the champion, entrants and awards above it.
     loadHonours();
-    return `${back}${head}${thinEdition(e)}${thinAwards(e)}`
+    loadEdition(e.id);
+    const thin = state.archiveEd[e.id];
+    return `${back}${head}${thinEdition(e)}`
+         + (thin?.matches?.length ? archFixtures(thin) : '')
+         + thinAwards(e)
          + archNotes(e, { skip: ['teams_note'] });
   }
 

@@ -697,6 +697,28 @@ textarea{width:100%;font-family:var(--body);font-size:14px;color:var(--fg);backg
 .afxn{margin-top:7px;font-size:12px;color:var(--dim);line-height:1.5}
 .flagline{margin-top:6px;font-size:11px;color:var(--acc);letter-spacing:.03em}
 
+/* A RESULT WITHOUT AN ORIENTATION. Ten archive matches record who beat whom
+   and never which way the fixture was printed, so they must NOT reuse `.afxm`
+   above: that layout's left-hand column means "home", and using it would
+   assert something the source never said.
+
+   So this stacks instead of opposing. The clubs sit one above the other with
+   the word between them, which reads as a sentence rather than a scoreboard —
+   the word carries the meaning and the position carries none, the exact
+   inverse of the row above. Stacking also removes the temptation to read the
+   upper club as the home side, which a left/right pair invites even with a
+   verb in the middle. */
+.ares{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.ares .awin,.ares .alose{min-width:0;max-width:100%}
+.abeat{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);padding-left:30px}
+/* The score is a detail line, not a scoreboard number: several of these have
+   no score at all, and two are recorded only as "by one goal". Sizing it like
+   `.afxs` would make the absent ones look broken. */
+.aresd{margin-top:7px;font-family:var(--disp);font-weight:700;font-size:13px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--fg2);
+  font-variant-numeric:tabular-nums}
+
 /* archive leaderboards and awards */
 .alb{display:grid;gap:1px}
 /* Flex, not grid: a club row carries a crest between the value and the name
