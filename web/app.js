@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v89';
-import * as api from './api.js?b=cofta-v89';
-import * as M from './model.js?b=cofta-v89';
-import { WriteQueue } from './queue.js?b=cofta-v89';
+import { CREST } from './crests.js?b=cofta-v90';
+import * as api from './api.js?b=cofta-v90';
+import * as M from './model.js?b=cofta-v90';
+import { WriteQueue } from './queue.js?b=cofta-v90';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -62,6 +62,7 @@ const state = {
   award: null,         // which leaderboard is open, while view === 'award'
   hist: [],            // pages to come back to, newest last
   admin: false, role: null, roleVerified: false, squadTeam: null, editor: null,
+  assistFor: null,   // a goal whose assist is being picked; applies on tap, no Save
   lastFetch: 0, error: null, busy: false, pens: null,
   tiePens: {},
   trophyPick: null,    // the organiser's working set, before confirming
@@ -436,7 +437,15 @@ function viewMatch() {
         <span class="mk tnum ${x.t === 'goal' ? 'goal' : ''}">${x.t === 'motm' ? '' : esc(x.min || '')}</span>
         <span class="tx">${eventText(x, m)}${x.pending ? ' <em>sending\u2026</em>' : ''}</span>
         ${state.admin && !x.pending
-          ? `<span class="rowacts"><button class="undo" data-edit="${x.id}">Edit</button>
+          ? `<span class="rowacts">${
+             // An assist needs a goal AND a named scorer: the database rejects
+             // a self-assist and has nobody to hang one on when the goal is
+             // recorded without a name. Own goals never take one — there is
+             // nobody to credit. Where the button cannot appear, Edit still
+             // reaches the same field.
+             x.t === 'goal' && x.p
+               ? `<button class="undo" data-assist="${x.id}">${x.a ? 'Assist' : '+ Assist'}</button>` : ''}
+             <button class="undo" data-edit="${x.id}">Edit</button>
              <button class="undo" data-void="${x.id}">Undo</button></span>`
           : '<span></span>'}
       </li>`).join('')
@@ -471,6 +480,7 @@ function viewMatch() {
     ${scheduled && !evts.length ? ''
       : `<div class="sect">Match report</div>
     ${state.editor ? editorPanel(m) : ''}
+    ${state.assistFor ? assistPanel(m) : ''}
     <ol class="tl">${timeline}</ol>`}`;
 }
 
@@ -543,6 +553,52 @@ function eventText(x, m) {
  * squad is the event's own side — which for an own goal is the side whose
  * player put it in, exactly who should be listed.
  */
+/**
+ * The assist picker, reached from a goal that is already on the report.
+ *
+ * NO SAVE BUTTON, on purpose, and it is the same shape as logging a goal:
+ * tap a name and it is applied. That flow has never had a confirm step — the
+ * goal is logged the moment the button is pressed and the scorer attaches on
+ * tap — and an assist is the same kind of act. A confirm step on a one-tap
+ * choice is a second tap that can only ever agree with the first.
+ *
+ * The Edit panel keeps its Save and should: it carries a free-text minute
+ * field, and there is no sane way to apply a half-typed minute per keystroke.
+ * That is the difference between the two, not a stylistic inconsistency.
+ *
+ * EVERY TAP HERE SENDS THE SCORER AND MINUTE BACK UNCHANGED, because
+ * edit_event is a FULL REPLACE. Sending only the assist would blank both, and
+ * the failure would be invisible from this screen — the row would simply lose
+ * its scorer. `tests/assist_drill.html` guards exactly this.
+ */
+function assistPanel(m) {
+  const ev = state.events.find(x => x.id === state.assistFor);
+  if (!ev || ev.t !== 'goal' || !ev.p) { state.assistFor = null; return ''; }
+  const teamId = ev.s === 'home' ? m.home : m.away;
+  // Nobody assists their own goal — the database refuses it outright.
+  const squad = squadOf(teamId).filter(p => p.id !== ev.p);
+  const scorer = playerName(ev.p);
+
+  const search = squad.length > 6
+    ? `<input id="pkq" type="search" placeholder="Search players" autocomplete="off"
+        autocapitalize="none" spellcheck="false" style="margin-bottom:9px">` : '';
+
+  const names = squad.length
+    ? squad.map(p => `<button class="pk ${ev.a === p.id ? 'on' : ''}" data-assistpick="${p.id}">
+        ${p.no != null ? `<span class="no tnum">${p.no}</span>` : '<span class="no"></span>'}
+        <span>${esc(p.name)}</span></button>`).join('')
+    : `<p class="note" style="padding:6px 0">No squad list for
+       ${esc(cityOf(teamId))} yet.</p>`;
+
+  return `<div class="picker">
+      <div class="pkhd"><span>Who assisted ${esc(scorer)}?</span>
+        <button data-assistcancel="1">Cancel</button></div>
+      ${search}
+      <div class="pklist">${names}</div>
+      ${ev.a ? `<button class="act ghost" data-assistpick="none">Remove assist</button>` : ''}
+    </div>`;
+}
+
 function editorPanel(m) {
   const ev = state.events.find(x => x.id === state.editor.id);
   if (!ev) { state.editor = null; return ''; }
@@ -2777,7 +2833,7 @@ async function guard(fn) {
 }
 
 document.addEventListener('click', async (ev) => {
-  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notifybar],[data-notify],[data-alert],#signin,#signout');
+  const t = ev.target.closest('[data-view],[data-back],[data-day],[data-match],[data-clock],[data-goal],[data-card],[data-pick],[data-pick-side],[data-pick-cancel],[data-edit],[data-assist],[data-assistpick],[data-assistcancel],[data-edpick],[data-edassist],[data-edsave],[data-edcancel],[data-void],[data-ff],[data-pen],[data-pen-confirm],[data-tiepen],[data-tieconfirm],[data-reset],[data-setmgr],[data-theme-set],[data-team],[data-player],[data-sqteam],[data-sqplayer],[data-squad],[data-delplayer],[data-addsquad],[data-dq],[data-award],[data-trophy-add],[data-trophy-remove],[data-trophy-team],[data-trophy-confirm],[data-histcat],[data-histcomp],[data-histed],[data-archteam],[data-clubtab],[data-cabcat],[data-archretry],[data-live],[data-install],[data-notifybar],[data-notify],[data-alert],#signin,#signout');
   if (!t) return;
 
   // The install bar sits outside #body and is not a view, so it is handled
@@ -3119,6 +3175,29 @@ document.addEventListener('click', async (ev) => {
     // clearing it \u2014 edit_event is a full replace on the server.
     state.editor = { id: ev.id, player: ev.p ?? null, assist: ev.a ?? null,
                      minute: String(ev.min || '').replace(/[\u2032']/g, '') };
+    render(); return;
+  }
+
+  if (t.dataset.assist) {
+    state.editor = null;                 // one panel at a time
+    state.assistFor = t.dataset.assist;
+    render(); return;
+  }
+
+  if (t.dataset.assistcancel) { state.assistFor = null; render(); return; }
+
+  if (t.dataset.assistpick) {
+    const ev = state.events.find(x => x.id === state.assistFor);
+    if (!ev) { state.assistFor = null; render(); return; }
+    const assist = t.dataset.assistpick === 'none' ? null : t.dataset.assistpick;
+    // Applied on the tap. No confirm step: the choice IS the confirmation,
+    // exactly as picking a scorer already works.
+    ev.a = assist;                       // optimistic; the row updates at once
+    // FULL REPLACE. The scorer and minute go back unchanged or edit_event
+    // wipes them, and nothing on this screen would show that it had.
+    queue.add(api.uuid(), 'edit_event',
+      { p_event: ev.id, p_player: ev.p, p_minute: ev.min, p_assist: assist });
+    state.assistFor = null;
     render(); return;
   }
 

@@ -133,6 +133,57 @@ window.addEventListener('load', async () => {
       check('a minute-only edit sends the assist back, not null',
         p2 && p2.p_assist === pickedId, p2);
     }
+
+    // ── the one-tap path: "+ Assist" on the row, no Save ───────────────
+    //
+    // The whole risk here is the same full-replace trap the panel above
+    // guards: a tap that sends only the assist would blank the scorer and the
+    // minute, and NOTHING ON THE SCREEN WOULD SHOW IT. So the assertions are
+    // about the payload, not about what the row looks like afterwards.
+    const goalLi = document.querySelector('.tl li .mk.goal')?.closest('li');
+    const assistBtn = goalLi?.querySelector('[data-assist]');
+    check('a recorded goal offers an assist button on its own row', !!assistBtn,
+      goalLi?.querySelector('.rowacts')?.textContent.replace(/\s+/g, ' ').trim());
+
+    if (assistBtn) {
+      assistBtn.click(); await wait(350);
+      const panel = document.querySelector('.picker');
+      check('it opens a picker and NOT the editor',
+        !!panel && !document.querySelector('[data-edsave]'),
+        panel?.querySelector('.pkhd span')?.textContent);
+      check('the picker has no confirm button of any kind',
+        !!panel && !panel.querySelector('[data-edsave],[data-assistsave]'));
+      check('the header names the scorer it is asking about',
+        /assisted/i.test(panel?.querySelector('.pkhd span')?.textContent || ''),
+        panel?.querySelector('.pkhd span')?.textContent);
+
+      const opts = [...document.querySelectorAll('[data-assistpick]')];
+      const scorerId = sent[sent.length - 1]?.p_player;
+      check('the scorer cannot assist their own goal',
+        !opts.some(b => b.dataset.assistpick === scorerId), scorerId);
+
+      const target = opts.find(b => b.dataset.assistpick !== 'none'
+        && b.dataset.assistpick !== pickedId);
+      if (target) {
+        const newId = target.dataset.assistpick;
+        const n = sent.length;
+        target.click(); await wait(600);
+        check('ONE TAP SENDS IT - no second confirming tap', sent.length === n + 1,
+          { before: n, after: sent.length });
+        const p3 = sent[sent.length - 1];
+        check('the tap applied the assist chosen', p3 && p3.p_assist === newId, p3);
+        check('AND SENT THE SCORER BACK - full replace, or it is wiped',
+          p3 && p3.p_player === scorerId, p3);
+        check('and the minute, still with its prime',
+          p3 && /′$/.test(p3.p_minute || ''), p3?.p_minute);
+        check('the picker closed itself', !document.querySelector('[data-assistpick]'));
+        check('the row shows the new assist without a reload',
+          /assist/i.test(document.querySelector('.tl li .asst')?.textContent || ''),
+          document.querySelector('.tl li .asst')?.textContent.trim());
+      } else {
+        check('a second squad member was available to pick', false, opts.length);
+      }
+    }
   }
 
   const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results, sent };

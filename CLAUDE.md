@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v89`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v90`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -832,6 +832,35 @@ George Cathedral.
 `match_events.assist_player` (0019). An assist hangs off the goal it created
 rather than living in a table of its own, because attribution is a second
 pass and must never gate the score moving.
+
+**LOGGING A GOAL NEVER ASKS ABOUT AN ASSIST.** Tap Goal, the goal is logged and
+the score moves; the scorer picker opens and attaches a name on tap; that is
+the whole flow, and it has no assist step and no confirm button. An assist is
+added afterwards or not at all. Organiser ruling 25 August, and it was already
+how the code worked — worth stating so nobody "improves" the fast path by
+adding a second question to it.
+
+- **`+ Assist` on the goal's own row, and NO SAVE BUTTON** (`assistPanel`,
+  `state.assistFor`). Tapping a name applies it. A confirm step on a one-tap
+  choice is a second tap that can only ever agree with the first, and this
+  matches how picking a scorer already behaves.
+  **The Edit panel keeps its Save and should**: it carries a free-text minute
+  field, and there is no sane way to apply a half-typed minute per keystroke.
+  That is the difference between the two, not an inconsistency to tidy away.
+- **Every tap in that picker sends the scorer and minute back unchanged**,
+  because `edit_event` is a full replace. Sending only the assist would blank
+  both, and the row would quietly lose its scorer with nothing on screen to
+  say so.
+- **The button only appears on a goal with a named scorer.** An assist needs
+  somebody to have assisted somebody: the database rejects a self-assist and
+  has nobody to hang one on when the goal was recorded without a name. Own
+  goals never take one. Where the button cannot appear, Edit still reaches the
+  same field.
+- **The row's actions have a hit area larger than their ink.** `.tl .undo` is a
+  10px label about 15px tall; that was borderline with Edit and Undo and is not
+  acceptable with a third button beside them, one of which voids a goal. A
+  `::after` box grows each to ~37px without moving a pixel, and stays inside
+  the row's 12px gap so neighbouring targets cannot overlap.
 
 - **`edit_event` is a FULL REPLACE.** The client therefore sends the assist it
   is currently showing on *every* edit, or correcting a minute would silently
@@ -1728,9 +1757,12 @@ repo root and open it, plus `?mode=nosession`; read `__drillSummary`.
 a spectator seeing zero flags is easy to measure, so that drill stubs only
 the role check, leaves every other request going to the real database, and
 asserts an organiser does see them. Read `__flagSummary`.
-`tests/assist_drill.html` drives the goal editor as an organiser and captures
-the edit_event payload instead of sending it, which is the only way to prove
-the full-replace rule holds. Read `__assistSummary`.
+`tests/assist_drill.html` drives **both** assist paths as an organiser — the
+Edit panel and the one-tap `+ Assist` button — and captures the edit_event
+payload instead of sending it, which is the only way to prove the full-replace
+rule holds. **The assertions are about the payload, not about what the row
+looks like afterwards**, because a tap that sent only the assist would blank
+the scorer and the screen would look fine. 22/22. Read `__assistSummary`.
 
 What every drill here has had to learn, and all of it applies to any drill that navigates:
 
