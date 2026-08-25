@@ -52,3 +52,54 @@ emblem on screen — dark pixels in a 24×24 render go from 86 to 158, against
 **The original here is the uncropped seal and must stay that way.** The crop
 is a rendering decision for one small slot, not a correction to the artwork;
 anything that needs the full seal at a legible size takes it from this file.
+
+## km-seal is also cropped, for the same reason as diocese-midlands
+
+The Kidane Mihret crest as supplied is a full seal: a Coptic cross on a cream
+disc inside a blue ring reading *Debremedhánit · Kidane Mehret · Eritrean
+Orthodox Tewahedo Church · London*. A club crest is drawn at 22–62px, where
+that ring is texture rather than words.
+
+`web/crests/km.webp` is the cross alone. The geometry, so it can be redone:
+
+| | |
+|---|---|
+| source | the supplied 3210×3736 JPEG (12 MP) |
+| centre | **(1570, 1809)** — the centre of the CROSS |
+| radius | **925**, circular mask |
+| output | 224×224 webp, quality 0.92, 21 KB |
+
+The cross sits **13px above the seal's own centre** (1568, 1822), which is why
+a seal-centred crop looks bottom-heavy — the first attempt clipped the lower
+point. The radius is bounded on both sides: the cross tips reach 886, and the
+nearest lettering is "LONDON", set on its own inner arc at 971 from the cross
+centre. 925 sits between them.
+
+Rendered at 4× with a hard clip and then downscaled. Both GDI+ and canvas
+clipping are hard-edged; the downscale is what gives the alpha edge its
+anti-aliasing.
+
+**The gold rim is added, not cropped.** The club colour is `#FFFFFF` and the
+cropped disc is cream, so without an edge the crest dissolves into its own half
+of the match header. It is the seal's own gold — `#FAD016`, averaged over 947
+pixels of the ring it replaces — drawn 24px wide at 4×. Same rule as
+`smpk.webp`: separation is fixed in the asset, never in CSS.
+
+Measured against white it reads across 52% of the frame at 44, 24 and 22px
+alike; the KM monogram it replaced managed 20.1%.
+
+**`km-seal.webp` here is the uncropped seal at 1024px**, where the lettering is
+still readable, and must stay that way.
+
+## There IS one piece of image tooling after all
+
+`System.Drawing` via PowerShell decodes JPEG and PNG and encodes PNG, which is
+enough to crop, resample and inspect candidates without a browser — and PNG
+output can be read back and looked at directly, which is how the crop above was
+chosen. **It cannot decode or encode WebP**; `Image::FromFile` on a `.webp`
+throws a misleading "Out of memory". WebP encoding still needs the browser and
+`scratchpad/upload.ps1`.
+
+**The sink takes its destination from the URL path and writes the raw body** —
+`POST http://localhost:8100/web/crests/km.webp` with the blob itself. There is
+no JSON envelope and no base64.

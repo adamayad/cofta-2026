@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v87`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v88`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -289,8 +289,38 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
   for convenience until History arrived and made "hove" genuinely ambiguous
   with the real Hove club. **"Kidane Mihret" is the confirmed spelling**
   (organiser, 24 August) — it is what `teams.name` already held, so nothing
-  changed, and it is now settled rather than provisional. Still the
-  placeholder KM monogram; real artwork pending.
+  changed, and it is now settled rather than provisional.
+- **The real Kidane Mihret crest landed 25 August**, replacing the KM
+  monogram, and like the Midlands diocese seal **it is served cropped**. The
+  artwork as supplied is a full seal: a Coptic cross on a cream disc inside a
+  blue ring of lettering reading *Debremedhánit · Kidane Mehret · Eritrean
+  Orthodox Tewahedo Church · London*. At the 22–62px a club crest is drawn at,
+  that ring is texture — the served file is the cross alone.
+  Geometry, so it can be redone: source centre of the **cross** is (1570, 1809),
+  which is 13px above the seal's own centre (1568, 1822) and is why a
+  seal-centred crop looked bottom-heavy. Circular mask at **r = 925** —
+  the cross tips reach 886, and the nearest lettering is "LONDON" on its own
+  inner arc at 971 from that centre, so 925 sits between them. Rendered at 4×
+  with a hard clip and downscaled, because GDI+ and canvas clipping are both
+  hard-edged and the downscale is what gives the alpha edge its
+  anti-aliasing.
+- **The gold rim on that crest is added, not cropped, and it has to be.**
+  Kidane Mihret's club colour is `#FFFFFF` and the cropped disc is cream, so
+  without an edge the crest dissolves into its own half of the match header.
+  The rim is the seal's own gold, sampled from the ring it replaces
+  (`#FAD016`, averaged over 947 pixels). Same rule as `smpk.webp`: separation
+  is fixed in the asset, never in CSS.
+  Measured against white it reads across **52% of the frame at 44px, 24px and
+  22px alike**, against 20.1% for the monogram it replaced.
+- **`source-art/km-seal.webp` keeps the uncropped seal** at 1024px, where the
+  lettering is still readable. The crop is a rendering decision for a small
+  slot, not a correction to the artwork.
+- **THE SEAL SPELLS IT "KIDANE MEHRET", THE APP SPELLS IT "KIDANE MIHRET",
+  and the app is not being changed.** Adam confirmed the `i` spelling on
+  24 August, a day before the crest arrived; the organiser's word is canonical
+  and a published source that contradicts it is recorded rather than applied.
+  It is worth putting to him once, since the source here is the club's own
+  crest, but nothing should be renamed without him saying so.
 - **PWA icons** (`icon-192`, `icon-512`, `icon-maskable`, `apple-touch-icon`)
   are cut from the association's own artwork, `cofta-icon-source.png` (1080px
   master, kept in `web/` but never referenced and deliberately **not**
@@ -478,8 +508,11 @@ association.
    runs *before* the auth gate, so a missing secret would have returned 500.
    That check needs no credentials and is the fastest way to re-confirm it.
 6. Poster with QR.
-7. **Kidane Mihret's real crest** — still the placeholder KM monogram. The
-   spelling is settled; only the artwork is outstanding.
+7. ~~Kidane Mihret's real crest~~ **done, 25 August.** The club's own seal,
+   cropped to the cross and served at 224px. One thing still worth putting to
+   Adam: **the seal spells it "Kidane MEHRET"** while the app spells it
+   "Mihret", which he confirmed the day before the artwork arrived. Not
+   changed — his word is canonical — but he has not seen the two side by side.
 8. **The 2026 rules**, if the association issues any. 2025's are implemented.
 
 **Do not deploy during the tournament weekend.** Cloudflare's edge cache keys
