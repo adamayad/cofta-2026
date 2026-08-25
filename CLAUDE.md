@@ -290,31 +290,36 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
   with the real Hove club. **"Kidane Mihret" is the confirmed spelling**
   (organiser, 24 August) — it is what `teams.name` already held, so nothing
   changed, and it is now settled rather than provisional.
-- **The real Kidane Mihret crest landed 25 August**, replacing the KM
-  monogram, and like the Midlands diocese seal **it is served cropped**. The
-  artwork as supplied is a full seal: a Coptic cross on a cream disc inside a
-  blue ring of lettering reading *Debremedhánit · Kidane Mehret · Eritrean
-  Orthodox Tewahedo Church · London*. At the 22–62px a club crest is drawn at,
-  that ring is texture — the served file is the cross alone.
-  Geometry, so it can be redone: source centre of the **cross** is (1570, 1809),
-  which is 13px above the seal's own centre (1568, 1822) and is why a
-  seal-centred crop looked bottom-heavy. Circular mask at **r = 925** —
-  the cross tips reach 886, and the nearest lettering is "LONDON" on its own
-  inner arc at 971 from that centre, so 925 sits between them. Rendered at 4×
-  with a hard clip and downscaled, because GDI+ and canvas clipping are both
-  hard-edged and the downscale is what gives the alpha edge its
-  anti-aliasing.
-- **The gold rim on that crest is added, not cropped, and it has to be.**
-  Kidane Mihret's club colour is `#FFFFFF` and the cropped disc is cream, so
-  without an edge the crest dissolves into its own half of the match header.
-  The rim is the seal's own gold, sampled from the ring it replaces
-  (`#FAD016`, averaged over 947 pixels). Same rule as `smpk.webp`: separation
-  is fixed in the asset, never in CSS.
-  Measured against white it reads across **52% of the frame at 44px, 24px and
-  22px alike**, against 20.1% for the monogram it replaced.
-- **`source-art/km-seal.webp` keeps the uncropped seal** at 1024px, where the
-  lettering is still readable. The crop is a rendering decision for a small
-  slot, not a correction to the artwork.
+- **The real Kidane Mihret crest landed 25 August** and is served **WHOLE** —
+  the full badge, blue lettering ring and all. Circular mask at **r = 1484**
+  around centre (1568, 1822): the outer gold edge sits at 1479–1483 and the
+  soft drop shadow beyond it starts at ~1487, deliberately excluded because the
+  app draws its own shadow in CSS. Rendered at 4× with a hard clip and
+  downscaled, because GDI+ and canvas clipping are both hard-edged and the
+  downscale is what gives the alpha edge its anti-aliasing.
+- **IT WAS SHIPPED CROPPED FIRST, AND THAT WAS WRONG.** The reasoning was the
+  Midlands diocese seal's: the ring lettering is illegible below about 60px, so
+  crop to the emblem. **The precedent does not transfer, and three things said
+  so.**
+  - **The blue ring is the badge.** It is the club's dominant colour and the
+    thing that identifies it on a tile. Illegible text on a badge at 24px is
+    what every real football crest does; it is not a defect to remove.
+  - **The crop needed an invented gold rim to work at all.** The club colour is
+    `#FFFFFF` and the cropped disc is cream, so with the ring gone the crest
+    had no edge — a hairline had to be fabricated to replace the structure the
+    crop removed. Needing to invent a substitute for what you just deleted is
+    the tell.
+  - **And it measured worse.** Ink against white, whole vs cropped:
+    62/62/63/64% at 62/44/24/22px against 52%, and 20.1% for the monogram both
+    replaced. The whole badge is more visible at *every* size, not just large.
+
+  What made the Midlands case different: a fine-detailed coat of arms filling a
+  third of its frame, in a 24px-only slot. Here the emblem is a bold cross and
+  the largest slot is 62px. **Check whether a precedent's conditions actually
+  hold before borrowing its conclusion.**
+- **`source-art/km-seal.webp` keeps the supplied seal** at 1024px. Still worth
+  having: the served file is masked and downscaled, and anything needing the
+  original geometry should start from that rather than from `web/`.
 - **THE SEAL SPELLS IT "KIDANE MEHRET", THE APP SPELLS IT "KIDANE MIHRET",
   and the app is not being changed.** Adam confirmed the `i` spelling on
   24 August, a day before the crest arrived; the organiser's word is canonical

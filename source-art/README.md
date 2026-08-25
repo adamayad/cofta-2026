@@ -53,43 +53,42 @@ emblem on screen — dark pixels in a 24×24 render go from 86 to 158, against
 is a rendering decision for one small slot, not a correction to the artwork;
 anything that needs the full seal at a legible size takes it from this file.
 
-## km-seal is also cropped, for the same reason as diocese-midlands
+## km is served WHOLE, and the diocese-midlands rule did NOT transfer
 
-The Kidane Mihret crest as supplied is a full seal: a Coptic cross on a cream
-disc inside a blue ring reading *Debremedhánit · Kidane Mehret · Eritrean
-Orthodox Tewahedo Church · London*. A club crest is drawn at 22–62px, where
-that ring is texture rather than words.
+The Kidane Mihret badge is a Coptic cross on a cream disc inside a blue ring
+reading *Debremedhánit · Kidane Mehret · Eritrean Orthodox Tewahedo Church ·
+London*. `web/crests/km.webp` is all of it: circular mask at **r = 1484**
+around centre **(1568, 1822)**, output 224×224 webp at quality 0.92, 26 KB.
+The outer gold edge sits at 1479-1483 and the soft drop shadow beyond it starts
+at ~1487 - excluded on purpose, because the app applies its own shadow in CSS.
 
-`web/crests/km.webp` is the cross alone. The geometry, so it can be redone:
+**It was shipped cropped to the cross first, and that was a mistake.** The
+reasoning borrowed from diocese-midlands above: ring lettering is illegible at
+small sizes, so crop to the emblem. Three things said the precedent did not
+transfer.
 
-| | |
-|---|---|
-| source | the supplied 3210×3736 JPEG (12 MP) |
-| centre | **(1570, 1809)** — the centre of the CROSS |
-| radius | **925**, circular mask |
-| output | 224×224 webp, quality 0.92, 21 KB |
+1. **The blue ring is the badge.** It is the club's dominant colour and what
+   identifies it on a 24px tile. Unreadable text on a crest at that size is
+   what every real football badge does.
+2. **The crop needed an invented gold rim.** The club colour is `#FFFFFF` and
+   the cropped disc is cream, so removing the ring left the crest with no edge
+   and a hairline had to be fabricated to replace it. Having to invent a
+   substitute for what you just deleted is the tell.
+3. **It measured worse at every size.** Ink against white, whole vs cropped:
 
-The cross sits **13px above the seal's own centre** (1568, 1822), which is why
-a seal-centred crop looks bottom-heavy — the first attempt clipped the lower
-point. The radius is bounded on both sides: the cross tips reach 886, and the
-nearest lettering is "LONDON", set on its own inner arc at 971 from the cross
-centre. 925 sits between them.
+   | | 62px | 44px | 24px | 22px |
+   |---|---|---|---|---|
+   | whole badge | 61.9% | 61.5% | 62.7% | 64.3% |
+   | cropped | 51.9% | 51.9% | 52.4% | 51.7% |
+   | old KM monogram | - | 20.1% | - | - |
 
-Rendered at 4× with a hard clip and then downscaled. Both GDI+ and canvas
-clipping are hard-edged; the downscale is what gives the alpha edge its
-anti-aliasing.
+What made diocese-midlands different: a fine-detailed coat of arms filling a
+third of its frame, in a slot only ever drawn at 24px. Here the emblem is a
+bold cross and the largest slot is 62px. Check that a precedent's conditions
+hold before borrowing its conclusion.
 
-**The gold rim is added, not cropped.** The club colour is `#FFFFFF` and the
-cropped disc is cream, so without an edge the crest dissolves into its own half
-of the match header. It is the seal's own gold — `#FAD016`, averaged over 947
-pixels of the ring it replaces — drawn 24px wide at 4×. Same rule as
-`smpk.webp`: separation is fixed in the asset, never in CSS.
-
-Measured against white it reads across 52% of the frame at 44, 24 and 22px
-alike; the KM monogram it replaced managed 20.1%.
-
-**`km-seal.webp` here is the uncropped seal at 1024px**, where the lettering is
-still readable, and must stay that way.
+**`km-seal.webp` is the supplied seal at 1024px.** The served file is masked
+and downscaled; anything needing the original geometry starts here.
 
 ## There IS one piece of image tooling after all
 
