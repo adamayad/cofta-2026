@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v92`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v93`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -366,10 +366,30 @@ deciding it explicitly.
   already blocks AI training crawlers and lets search engines through, which is
   exactly what this needs — **we ship no robots.txt of our own on purpose.**
   `web/_headers` does nothing here, so the meta tag is the only mechanism.
-- **Still outstanding, and not a code question:** there is no privacy notice,
-  no named contact, and no stated route for a parent to ask that a name be
-  removed. `players.active = false` hides a player, so the mechanism exists;
-  what is missing is telling anyone it does.
+- **There is a notice now** — `privacySection()`, in the alerts panel and linked
+  from the foot of the **Squads tab**, because a notice about publishing names
+  is no use filed behind an icon a player would never open. It says what is
+  shown, that anyone with the link can see it, that no photographs or contact
+  details are held, that results are permanent, and that a name can be removed
+  on request. `players.active = false` already performs that removal across
+  every surface including past matches; what was missing was telling anyone.
+- **`SAFEGUARDING_CONTACT` is deliberately `null`** until the association
+  supplies one — left empty rather than filled with a plausible-looking
+  address, because a notice naming a mailbox nobody reads is worse than one
+  that sends people to a human at the venue, which is what it says meanwhile.
+  **The diocesan policy already names a Diocesan Safeguarding Lead and a role
+  address**; whether the app should point at that or at a COFTA contact is the
+  association's call, not a default to take.
+- **The diocesan policy's photography clause is the one that bites, and it is
+  about IMAGES.** It classes photographs and video of children as sensitive
+  personal data under the DPA 2018 and UK GDPR, requiring consent — from
+  parents under 13, from parents *and* the child at 13–16, and from the child
+  alone at 17 — and requires that people be told "where and in what context an
+  image may be used, for example on a public website". **This app publishes no
+  images of anyone, which is why that clause is satisfied by construction. Do
+  not add player photos**; doing so would pull the whole consent regime in.
+  The "tell them where and in what context" principle is what the notice
+  above is discharging for names.
 - **Only the association can answer** what players and parents were told,
   whether consent was obtained, and what the Diocese of London's policy
   requires. Those decide compliance; the code cannot.

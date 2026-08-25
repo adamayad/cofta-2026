@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v92';
-import * as api from './api.js?b=cofta-v92';
-import * as M from './model.js?b=cofta-v92';
-import { WriteQueue } from './queue.js?b=cofta-v92';
+import { CREST } from './crests.js?b=cofta-v93';
+import * as api from './api.js?b=cofta-v93';
+import * as M from './model.js?b=cofta-v93';
+import { WriteQueue } from './queue.js?b=cofta-v93';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -1159,9 +1159,14 @@ function viewSquads() {
         <span class="who"><b>${esc(t.name)}</b><i>${esc(t.city)}</i></span></span></span>
       <span class="r tnum"><span class="rsc" style="font-size:14px;color:var(--dim)">${squadOf(t.id).length}</span>
         <span class="st">players</span></span></button>`).join('');
+  // THE POINTER SITS WHERE THE NAMES ARE. A notice about publishing players'
+  // names is no use filed behind a bell icon a player would never open —
+  // this is the page they and their parents actually look at.
   return `<div class="sect">Clubs</div>${cards}
     <p class="note">Every goal, card and award is attributed live, so each player's
-      tournament record builds itself as the weekend goes on.</p>`;
+      tournament record builds itself as the weekend goes on.</p>
+    <button class="act ghost" data-view="admin" style="margin-top:2px">
+      How players’ names are used on this site</button>`;
 }
 
 /* ── stats ───────────────────────────────────────────────── */
@@ -1471,6 +1476,61 @@ function appearanceSection() {
     <div class="themes">${btns}</div>`;
 }
 
+/**
+ * Who to ask about a player's name on this site.
+ *
+ * ⟨FILL THIS IN⟩ — set it to the association's safeguarding or data contact
+ * once Adam supplies one, e.g.
+ *   const SAFEGUARDING_CONTACT = { name: 'COFTA safeguarding lead',
+ *                                  email: 'safeguarding@example.org' };
+ *
+ * Left null deliberately rather than filled with a plausible-looking address:
+ * a privacy notice naming a mailbox nobody reads is worse than one that sends
+ * people to a human who is actually at the venue. The notice below reads
+ * correctly either way.
+ */
+const SAFEGUARDING_CONTACT = null;
+
+/**
+ * WHAT THIS SITE PUBLISHES ABOUT PLAYERS, said plainly to the people it is
+ * about rather than buried in a policy nobody opens.
+ *
+ * The tournament is 16+, so some players are children in UK safeguarding
+ * terms — a child is anyone under 18, whatever else a 16-year-old may consent
+ * to. The site names them, alongside their club and the venue and time they
+ * will be there, so it owes them a straight account of that and a way to ask
+ * to be taken off it.
+ *
+ * `players.active = false` already removes a player from every surface,
+ * including past results. The mechanism existed; what was missing was telling
+ * anybody it did.
+ */
+function privacySection() {
+  const ask = SAFEGUARDING_CONTACT
+    ? `<b>${esc(SAFEGUARDING_CONTACT.name)}</b>${SAFEGUARDING_CONTACT.email
+        ? ` — <a href="mailto:${esc(SAFEGUARDING_CONTACT.email)}">${esc(SAFEGUARDING_CONTACT.email)}</a>` : ''}`
+    : 'your club’s team contact, or any organiser at the venue';
+
+  return `<div class="sect">Players’ names on this site</div>
+    <p class="note" style="padding-top:0">This site shows each player’s
+      <b>name, shirt number and club</b>, and the goals, cards and awards recorded
+      against them during the tournament. It is there so spectators can follow the
+      matches.</p>
+    <ul class="plist">
+      <li><b>Anyone with the link can see it.</b> There is no sign-in for
+        spectators. It is kept out of Google and other search engines.</li>
+      <li><b>No photographs</b>, dates of birth, addresses, phone numbers or email
+        addresses are collected about any player, and players have no accounts.</li>
+      <li><b>Results are kept as a permanent record</b> of the tournament, the way
+        a printed programme would be.</li>
+      <li><b>You can ask not to be listed.</b> A player removed at their own or a
+        parent’s request disappears from the squad list, the match reports and
+        the leaderboards, including past matches.</li>
+    </ul>
+    <p class="note" style="padding-top:2px">To ask for a name to be removed, or
+      about anything on this page, speak to ${ask}.</p>`;
+}
+
 function viewAdmin() {
   if (state.admin) {
     const resetSection = state.role === 'organiser' ? `
@@ -1485,9 +1545,9 @@ function viewAdmin() {
         : 'Pitch account: run matches, log events, enter shoot-outs.'}
         Open any match and the controls appear inline.</p>
       <button class="act ghost" id="signout">Sign out</button>
-      ${notifySection()}${appearanceSection()}${squadSection()}${resetSection}`;
+      ${notifySection()}${appearanceSection()}${squadSection()}${resetSection}${privacySection()}`;
   }
-  return `${notifySection()}
+  return `${notifySection()}${privacySection()}
     <div class="sect">Organiser sign in</div>
     <p class="note" style="padding-top:0">Spectators never need this. Sign in with the username
       and password you were given \u2014 one account per pitch.</p>

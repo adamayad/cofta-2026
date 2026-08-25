@@ -72,6 +72,15 @@ img{display:block}
 .sect::after{content:"";flex:1;height:1px;background:var(--gold)}
 .note{font-size:12px;color:var(--dim);font-style:italic;padding:14px 0 4px;
   max-width:60ch;line-height:1.65}
+/* The privacy notice's points. Upright, not `.note`'s italic: these are four
+   things a player or parent is meant to read and act on, not an aside, and
+   the same reasoning as `.howto` — the one block on a page that asks
+   something of the reader should not be the quietest thing on it. */
+.plist{margin:2px 0 0;padding:0 0 0 17px;max-width:60ch;
+  display:flex;flex-direction:column;gap:7px}
+.plist li{font-size:12.5px;line-height:1.55;color:var(--fg2)}
+.plist li::marker{color:var(--dim)}
+.plist b{font-weight:600;color:var(--fg)}
 
 .daysel{display:flex;gap:16px;padding:16px 0 6px}
 .daysel button{font-size:12.5px;color:var(--dim);padding-bottom:4px;
