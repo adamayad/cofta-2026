@@ -247,7 +247,7 @@ export async function firePush(matchId, kind, opts = {}) {
  * crests — the files and the database were both right, and devices still
  * drew monograms.
  */
-const ARCHIVE_V = 'v15';   // v15: 0051 renamed the COFTA 2017 joint side to its short form
+const ARCHIVE_V = 'v16';   // v16: 0053 shortened two COSA 2026 player names
 const cacheKey = (what) => `cofta.archive.${ARCHIVE_V}.${what}`;
 
 /** Bumping the version orphans the previous one, and localStorage is a small

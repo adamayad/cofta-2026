@@ -4646,17 +4646,17 @@
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
@@ -4682,7 +4682,7 @@
           ],
           "award": {
             "type": "WOTM",
-            "player": "Mariam Makkar"
+            "player": "Mariam M"
           },
           "gap_note": "The supplied assist sequence listed three entries for four SMPK goals; per confirmation the fourth goal is recorded as having no assist."
         },
@@ -4700,12 +4700,12 @@
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
@@ -4721,12 +4721,12 @@
           "assists_in_goal_order": [
             "Jolie Meawad",
             null,
-            "Mariam Makkar",
+            "Mariam M",
             "Mariam Salib"
           ],
           "award": {
             "type": "WOTM",
-            "player": "Mariam Makkar"
+            "player": "Mariam M"
           }
         },
         {
@@ -4759,7 +4759,7 @@
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
@@ -4805,12 +4805,12 @@
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
@@ -4869,22 +4869,22 @@
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
               "team": "SMPK",
-              "player": "Mariam Makkar"
+              "player": "Mariam M"
             },
             {
               "type": "goal",
@@ -4901,13 +4901,13 @@
           ],
           "award": {
             "type": "WOTM",
-            "player": "Mariam Makkar"
+            "player": "Mariam M"
           }
         }
       ],
       "goalscorers": [
         {
-          "player": "Mariam Makkar",
+          "player": "Mariam M",
           "team": "SMPK",
           "goals": 12
         },
@@ -4948,14 +4948,14 @@
         }
       ],
       "awards": {
-        "player_of_the_tournament": "Mariam Makkar",
+        "player_of_the_tournament": "Mariam M",
         "top_scorer": {
-          "player": "Mariam Makkar",
+          "player": "Mariam M",
           "goals": 12
         },
         "wotm_summary_as_published": [
           {
-            "player": "Mariam Makkar",
+            "player": "Mariam M",
             "team": "SMPK",
             "wotm": 4
           },
@@ -4980,7 +4980,7 @@
             "wotm": 1
           }
         ],
-        "wotm_conflict": "CONFLICT: the published WOTM table gives Mariam Makkar 4 awards and totals 8 awards across 7 matches. The per-match records show Makkar winning 3 (Games 1, 2 and the Final). Do not silently pick one; store the per-match awards as the match data and flag the summary."
+        "wotm_conflict": "CONFLICT: the published WOTM table gives Mariam M 4 awards and totals 8 awards across 7 matches. The per-match records show Mariam M winning 3 (Games 1, 2 and the Final). Do not silently pick one; store the per-match awards as the match data and flag the summary."
       },
       "known_gaps": [
         "Venue not recorded.",
@@ -7161,7 +7161,7 @@
         "severity": "high",
         "scope": "cosa-2026",
         "issue": "WOTM totals do not reconcile.",
-        "detail": "The published table gives Mariam Makkar 4 WOTM and totals 8 awards across 7 matches. Per-match records give Makkar 3 (Games 1, 2, Final).",
+        "detail": "The published table gives Mariam M 4 WOTM and totals 8 awards across 7 matches. Per-match records give Mariam M 3 (Games 1, 2, Final).",
         "resolution": "Store per-match awards as primary; store the published table flagged."
       },
       {

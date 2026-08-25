@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v93`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v94`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0052`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0053`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -1717,8 +1717,30 @@ to the `hove` → `km` rename in 0020.
 - **Q11 (partial)** — Kiro Khir and Kyrelos Khir are the same St Mark player
   (canonical *Kyrelos Khir*); Fady Khir stays separate; the Rizkalla /
   Rizkallah pair stays held back as two players.
-- **"Myven" is Myven Gaied.** The published string is preserved as
-  `player_name`; the canonical carries the surname.
+- ~~"Myven" is Myven Gaied~~ **— superseded 25 August. Myven is just
+  "Myven", and COSA 2026's "Mariam Makkar" is now "Mariam M"** (`0053`).
+  Organiser instruction; shortening an identifier is his call, not a data
+  correction. Both are women named in an archive anyone with the link can
+  read, and the change follows the safeguarding pass above.
+  **It overwrites `player_name`, which is normally sacred**, and that is
+  deliberate: that column exists to preserve what a source printed, but the
+  whole point here is to stop holding the surname — and match pages render
+  `player_name`, so preserving it would have left the name on screen and
+  defeated the instruction. Recorded as a deviation rather than done quietly.
+  **Nothing was un-merged**: every row still shares one canonical per player,
+  and `0053` asserts it.
+- **A NAME RENAME MUST SWEEP THE FREE TEXT, NOT JUST THE NAME COLUMNS.**
+  Updating the player columns alone would have left "Mariam Makkar" fully
+  readable in two places, and both were found only by looking:
+  - `archive_matches.notes` for `COSA26-G2` carries an
+    `assists_in_goal_order` array with the name **inside the jsonb**.
+  - `archive_conflicts` D3 spells it out three times in prose. **Conflict
+    flags are organiser-only in the UI but the table is public-read through
+    PostgREST** — confirmed with the publishable key alone. "Only organisers
+    see it" was never true of the data, only of the screen.
+  `0053` ends by scanning every archive table, including `note`, `gap_note`,
+  `notes` and the conflict register, and fails if either surname survives
+  anywhere. Verified afterwards against the live REST API: zero hits.
 - **Q13 — Mina Muharib is ONE MAN**, 24 August 2026. Brighton's 2014
   semi-final scorer and Brighton's 2016 top scorer are the same person.
   **Two corrections came out of asking:**
