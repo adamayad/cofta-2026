@@ -50,7 +50,7 @@ grant select on public.schedule_events to anon, authenticated;
 
 insert into public.schedule_events (id, day, at_time, title, detail, location) values
   ('vespers-sat', 1, '17:30', 'Vespers', 'All players', 'St George Cathedral'),
-  ('liturgy-sun', 2, '09:30', 'Liturgy', 'All players, arrive 09:30', 'St George Cathedral')
+  ('liturgy-sun', 2, '09:30', 'Liturgy', 'All players, arrive before 09:30', 'St George Cathedral')
 on conflict (id) do update
   set day = excluded.day, at_time = excluded.at_time, title = excluded.title,
       detail = excluded.detail, location = excluded.location;

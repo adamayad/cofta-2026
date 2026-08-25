@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v88`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v89`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0051`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0052`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -461,16 +461,22 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
      `update public.players set active=false where true;` and clear the
      managers. Forgetting this is the likely failure mode, because step 1
      makes the site *look* clean.
-- **KIDANE MIHRET ARE IN WHITE.** They were reported to have changed to dark
-  royal blue on 24 August (`0047`) and the report was withdrawn as a false
-  alarm the same afternoon (`0048`). Both migrations stand: 0047 had been
-  applied to the live database, and a migration that has run is a fact about
-  the world — deleting the file would leave environments disagreeing about
-  what happened. **Two clubs in Group A therefore play in white and do meet**,
-  and their notification circles are both ⚪. That is fine and is not a bug to
-  fix: the circle sits at the *scoring end* of the scoreline, so `⚪ Kidane
-  Mihret 1–0 Pope Kyrillos VI` and `Kidane Mihret 1–0 Pope Kyrillos VI ⚪` are
-  different sentences. Position carries the meaning; colour is the flavour.
+- **KIDANE MIHRET PLAY IN DARK ROYAL BLUE**, `#1E3A8A` with white ink, from
+  25 August (`0052`). **Read the migration trail before assuming a mistake:**
+  `0047` set exactly this on the 24th, `0048` reverted it the same afternoon as
+  a false alarm, and `0052` reinstates it once confirmed. All three stand,
+  because an applied migration is a fact about the world and deleting one
+  leaves environments disagreeing about what happened.
+  It also un-collides Group A: Kidane Mihret and Pope Kyrillos VI both played
+  in white and they meet, so their notification circles were identical. One is
+  blue now.
+  **The crest loses its own outer ring against it, by measurement.** The badge
+  is a blue roundel whose ring is `#123496` — 1.04:1 against the jersey, the
+  same colour to any eye — so the crest's readable area drops from 62.9% of its
+  frame on white to 42% on this blue. It is fine because the badge carries its
+  own gold outer rim, which is what still separates it, and it is one more
+  reason the whole badge is served rather than a crop. If it ever needs more,
+  that is fixed in the asset, never in CSS.
 - **THE REAL SQUADS AND MANAGERS ARE STILL NOT IN** — the association has not
   submitted them, and what is loaded today is the dry-run fakes above. This is
   the last substantial thing outstanding, and it is a paste-in job: Organiser →
@@ -695,7 +701,7 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   closest to the dark grey circle, while being obviously green and blue to
   anyone looking at the shirt. Hue matching keeps dark green green and navy
   blue, and the whole current mapping is:
-  **🟢 Archangel Michael · ⚪ Kidane Mihret · ⚪ Pope Kyrillos VI ·
+  **🟢 Archangel Michael · 🔵 Kidane Mihret · ⚪ Pope Kyrillos VI ·
   🔴 St George · 🟡 Anba Abraam · 🔵 St Shenouda · 🔵 St Anthony.**
 - **NAVY IS BLUE AND THE COLLISION IS TOLERATED.** Unicode has one blue circle,
   so Croydon's light blue and Rotherham's navy are both 🔵 — and those two meet
@@ -798,6 +804,11 @@ answer is `hasStarted(m)`, never the clock.
 not fixtures — Vespers on the Saturday, Liturgy on the Sunday, both at St
 George Cathedral.
 
+- **The Liturgy says "arrive BEFORE 09:30"**, changed 25 August. It read
+  "arrive 09:30", which tells someone to turn up at half nine rather than to be
+  there by then — one word, and the whole point of the line. Changed by a
+  direct `UPDATE`, which is the intended route for this table; `0043`'s seed
+  was edited to match so a fresh environment gets the same wording.
 - **They are NOT matches, deliberately.** A match row for Vespers would carry
   two empty team slots, a 0-0, a kick-off time, a tappable match page, and
   would be counted by every assertion that says "twelve group matches".
