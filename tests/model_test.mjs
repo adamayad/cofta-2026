@@ -896,6 +896,66 @@ test('teamRoster on an unknown club is empty rather than throwing', () => {
   eq(M.teamRoster(null, {}), [], 'no club, no roster');
   eq(roster('nobody'), [], 'a club with no records at all');
 });
+/* ── titles by competition ───────────────────────────────── */
+const TB_EDS = [
+  // COFTA: three editions, the oldest competition here
+  { id: 'c05', competition: 'COFTA',  category: 'men',   year: 2005, champion_team_id: 'A' },
+  { id: 'c06', competition: 'COFTA',  category: 'men',   year: 2006, champion_team_id: 'B' },
+  { id: 'c07', competition: 'COFTA',  category: 'men',   year: 2007, champion_team_id: 'A' },
+  // CONAFA: two, and A has never won it
+  { id: 'n14', competition: 'CONAFA', category: 'men',   year: 2014, champion_team_id: 'B' },
+  { id: 'n15', competition: 'CONAFA', category: 'men',   year: 2015, champion_team_id: 'C' },
+  // Ark Cup: one
+  { id: 'k26', competition: 'Ark Cup', category: 'men',  year: 2026, champion_team_id: 'A' },
+  // and a women's competition, which must never leak into a men's tally
+  { id: 's26', competition: 'COSA',   category: 'women', year: 2026, champion_team_id: 'A' },
+];
+const tb = (id, cat) => M.titlesByCompetition(id, { editions: TB_EDS, category: cat });
+
+test('titlesByCompetition counts a club per competition', () => {
+  const rows = tb('A', 'men');
+  eq(rows.map(r => [r.competition, r.titles]),
+     [['COFTA', 2], ['CONAFA', 0], ['Ark Cup', 1]],
+     'two COFTA, none in CONAFA, one Ark Cup');
+});
+
+test('THE ZEROS ARE RETURNED - that is the point of it', () => {
+  const conafa = tb('A', 'men').find(r => r.competition === 'CONAFA');
+  eq(!!conafa, true, 'CONAFA appears even though A never won it');
+  eq(conafa.titles, 0, 'and reads zero rather than being absent');
+});
+
+test('ordered by how seasoned the competition is, like the History index', () => {
+  eq(tb('A', 'men').map(r => r.competition), ['COFTA', 'CONAFA', 'Ark Cup'],
+     'most editions first, then the older competition');
+});
+
+test('a category never leaks into the other', () => {
+  eq(tb('A', 'men').map(r => r.competition).includes('COSA'), false,
+     'COSA is a women\'s competition and must not appear in a men\'s tally');
+  eq(tb('A', 'women').map(r => [r.competition, r.titles]), [['COSA', 1]],
+     'and the women\'s tally is only ever hers');
+});
+
+test('a club that has won nothing still sees the competitions', () => {
+  eq(tb('Z', 'men').map(r => [r.competition, r.titles]),
+     [['COFTA', 0], ['CONAFA', 0], ['Ark Cup', 0]],
+     'all zeros, not an empty list');
+});
+
+test('the winning years come back newest first', () => {
+  eq(tb('A', 'men').find(r => r.competition === 'COFTA').years, [2007, 2005],
+     'years descending');
+});
+
+test('titlesByCompetition tolerates junk', () => {
+  eq(M.titlesByCompetition('A', {}), [], 'no editions at all');
+  eq(M.titlesByCompetition(null, { editions: TB_EDS, category: 'men' })
+      .map(r => r.titles), [0, 0, 0], 'no club: every competition, no titles');
+  eq(M.titlesByCompetition('A', { editions: [{ year: 2020 }] }), [],
+     'an edition with no competition name is skipped, not crashed on');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

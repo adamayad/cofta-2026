@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v94`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v95`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -1511,6 +1511,29 @@ record: finals won and lost newest first, the individual honours its players
 took grouped by edition, and an "Also competed" line so a cabinet is quiet
 about a barren year rather than silent about the club's history.
 `M.trophyCabinet()` is the pure aggregation and is tested.
+
+**Titles are broken down by competition** — "12 COFTA · 5 CONAFA · 4 COSTA ·
+0 The Ark Cup" — under a **Trophies** heading above the finals list.
+`M.titlesByCompetition()` is the pure part and is tested (7 cases).
+
+- **THE ZEROS ARE THE POINT, not an oversight.** A cabinet listing only what a
+  club has won says nothing about what it has not, and in a tournament whose
+  clubs meet each other every year the gaps are half the record. A zero row is
+  a fact; an absent row is silence. They render at `.55` opacity with a dim
+  numeral so a cabinet of noughts never reads like a cabinet of trophies.
+- **The competition list comes from the editions, not from `COMPS`.** A
+  competition added to the archive appears without touching the function, and
+  one with no editions in that category never shows up as a phantom zero.
+- **Ordered by the same "how seasoned" rule as the History index** — most
+  editions first, ties to the older competition, then name. The rule lives in
+  `titlesByCompetition` so the club page and the index cannot disagree about it.
+- **Scoped by category like everything else in the cabinet.** SMPK's men's tally
+  shows the four men's competitions and their Ark Cup; the women's toggle
+  switches it to Ladies COFTA and COSA. Verified on that club specifically,
+  because it is the one that fields both.
+- Each chip is a real `<button>` through to that competition, and carries an
+  `aria-label` that reads as a sentence — "No Ark Cup titles won", not
+  "0 The Ark Cups".
 
 **Where it opens depends on whether the club still competes.**
 

@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v94';
-import * as api from './api.js?b=cofta-v94';
-import * as M from './model.js?b=cofta-v94';
-import { WriteQueue } from './queue.js?b=cofta-v94';
+import { CREST } from './crests.js?b=cofta-v95';
+import * as api from './api.js?b=cofta-v95';
+import * as M from './model.js?b=cofta-v95';
+import { WriteQueue } from './queue.js?b=cofta-v95';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -2645,6 +2645,28 @@ function cabinetBody(archTeamId) {
     <div class="stat"><i>Entered</i><b class="tnum">${cab.entered}</b></div>
   </div>`;
 
+  // WHICH trophies, not just how many — and the zeros stay. A club that has
+  // won two COFTAs and no CONAFA is telling you something with both numbers,
+  // and in a tournament whose clubs meet every year the gaps are half the
+  // record. Ordered by `titlesByCompetition`, which uses the same "how
+  // seasoned" rule as the History index so the two cannot disagree.
+  const perComp = M.titlesByCompetition(archTeamId, {
+    editions: state.archive.editions, category: cat,
+  });
+  const byComp = !perComp.length ? '' : `<div class="sect">Trophies</div>
+    <div class="cabcomps">${perComp.map(r => {
+      const slug = COMP_SLUG[r.competition] ?? '';
+      return `<button class="ccomp${r.titles ? ' won' : ''}"
+          data-histcomp="${esc(slug)}" data-comp="${esc(slug)}"
+          aria-label="${r.titles
+            ? `${r.titles} ${esc(r.competition)} title${r.titles === 1 ? '' : 's'} won`
+            : `No ${esc(r.competition)} titles won`}">
+        ${compLogo(slug, 20)}
+        <b class="tnum">${r.titles}</b>
+        <span>${esc(r.competition)}</span>
+      </button>`;
+    }).join('')}</div>`;
+
   const finals = cab.finals.length
     ? `<div class="sect">Finals</div>
        <div class="cabrows">${cab.finals.map(f => `
@@ -2690,7 +2712,7 @@ function cabinetBody(archTeamId) {
     ? `<p class="empty">No ${cat === 'women' ? "women's" : "men's"} record for this
          club in the 2022&ndash;2026 archive.</p>` : '';
 
-  return toggle + tally + finals + honours + also + players + nothing;
+  return toggle + tally + byComp + finals + honours + also + players + nothing;
 }
 
 /**

@@ -753,6 +753,47 @@ export function champions(editions = []) {
 }
 
 /**
+ * A club's titles broken down by competition — "1 COFTA, 0 CONAFA, 1 Ark Cup".
+ *
+ * EVERY COMPETITION IN SCOPE IS RETURNED, INCLUDING THE ZEROS, and that is the
+ * point of the function rather than an accident of it. A cabinet listing only
+ * what a club has won says nothing about what it has not, and for a tournament
+ * whose clubs meet each other every year the gaps are half the story. A zero is
+ * a fact; an absent row is silence.
+ *
+ * The list comes from the editions themselves, not from a hard-coded set of
+ * competitions, so a competition added to the archive appears here without this
+ * function being touched — and one that has no editions in the category never
+ * shows up as a phantom zero.
+ *
+ * Ordered the same way the History index orders competitions: most editions
+ * first, ties to the older competition, then by name. That rule is "how
+ * seasoned is it", and the club page and the index must not disagree about it.
+ */
+export function titlesByCompetition(teamId, { editions = [], category = null } = {}) {
+  const inScope = (editions || []).filter(e =>
+    e?.competition && (!category || e.category === category));
+
+  const by = new Map();
+  for (const e of inScope) {
+    const row = by.get(e.competition)
+      ?? { competition: e.competition, titles: 0, years: [], played: 0, firstYear: Infinity };
+    row.played++;
+    if (Number.isFinite(e.year) && e.year < row.firstYear) row.firstYear = e.year;
+    if (teamId && e.champion_team_id === teamId) { row.titles++; row.years.push(e.year); }
+    by.set(e.competition, row);
+  }
+
+  const rows = [...by.values()];
+  for (const r of rows) r.years.sort((a, b) => b - a);
+  rows.sort((a, b) =>
+    (b.played - a.played)
+    || (a.firstYear - b.firstYear)
+    || String(a.competition).localeCompare(String(b.competition)));
+  return rows;
+}
+
+/**
  * Who currently holds a competition — the champion of its most recent
  * edition. They hold it until the next one is played, which is why this is
  * the reigning champion rather than merely the last winner.
