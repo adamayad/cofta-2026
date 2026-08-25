@@ -184,6 +184,37 @@ window.addEventListener('load', async () => {
         check('a second squad member was available to pick', false, opts.length);
       }
     }
+
+    // ── Undo asks first, and says what it costs ────────────────────────
+    //
+    // confirm() is STUBBED TO REFUSE, so the drill can read the message
+    // without ever voiding a goal on the live data. That also proves the
+    // refusal path: saying no must send nothing.
+    // RE-QUERY. `goalLi` was captured before the assist tap, and render()
+    // has replaced the timeline since — a click on a detached node never
+    // reaches the delegated handler, and the failure looks exactly like the
+    // feature not working. This is the drill trap CLAUDE.md already names.
+    const undoLi = document.querySelector('.tl li .mk.goal')?.closest('li');
+    const undo = undoLi?.querySelector('[data-void]');
+    check('the goal row still offers Undo', !!undo && document.contains(undo));
+    if (undo) {
+      const realConfirm = window.confirm;
+      let asked = null;
+      window.confirm = (msg) => { asked = msg; return false; };
+      const n = sent.length;
+      undo.click(); await wait(400);
+      window.confirm = realConfirm;
+
+      check('Undo asks before it does anything', typeof asked === 'string', asked);
+      check('saying no sends NOTHING', sent.length === n, { before: n, after: sent.length });
+      check('the goal is still on the report', !!document.querySelector('.tl li .mk.goal'));
+      check('the warning names the score it would go back to',
+        /score goes back to/i.test(asked || ''), asked);
+      check('and is specific about the notification, either way',
+        /already gone out|not been announced/i.test(asked || ''), asked);
+      check('the row was not left in a half-undone state',
+        !document.querySelector('.tl li.pending'));
+    }
   }
 
   const summary = { total: results.length, failures: results.filter(r => !r.ok).length, results, sent };

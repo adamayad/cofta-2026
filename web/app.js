@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v90';
-import * as api from './api.js?b=cofta-v90';
-import * as M from './model.js?b=cofta-v90';
-import { WriteQueue } from './queue.js?b=cofta-v90';
+import { CREST } from './crests.js?b=cofta-v91';
+import * as api from './api.js?b=cofta-v91';
+import * as M from './model.js?b=cofta-v91';
+import { WriteQueue } from './queue.js?b=cofta-v91';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -571,6 +571,61 @@ function eventText(x, m) {
  * the failure would be invisible from this screen — the row would simply lose
  * its scorer. `tests/assist_drill.html` guards exactly this.
  */
+/**
+ * What undoing this event actually costs, put to the organiser before it
+ * happens. Returns false to abandon.
+ *
+ * Written per event type rather than as one general warning, because the
+ * consequences are genuinely different and a warning that says nothing
+ * specific is one people learn to tap through. A goal moves the score and may
+ * already have buzzed several hundred phones; a card feeds the suspension
+ * rules and can change who is available on Sunday.
+ */
+function confirmVoid(id, m) {
+  const ev = state.events.find(x => x.id === id);
+  if (!ev) return true;                       // nothing known to warn about
+  const who = ev.p ? playerName(ev.p) : null;
+  const club = nameOf(ev.s === 'home' ? m.home : m.away);
+
+  if (ev.t === 'goal' || ev.t === 'own_goal') {
+    // The scoring side loses one. Own goals are logged against the side they
+    // COUNT FOR, so this is the same arithmetic either way.
+    // Queued-but-unsent goals count too, exactly as the header's score does —
+    // `pendingGoals` there is a closure inside matchView, so the same rule is
+    // spelled out again rather than reached for.
+    const pending = (sideKey) => queue.pendingFor(m.id)
+      .filter(w => w.args.p_type === 'goal' && w.args.p_side === sideKey).length;
+    const hs = m.hs + pending('home') - (ev.s === 'home' ? 1 : 0);
+    const as = m.as + pending('away') - (ev.s === 'away' ? 1 : 0);
+    const what = ev.t === 'own_goal' ? 'this own goal'
+               : who ? `${who}'s goal` : `this goal for ${club}`;
+    // Still in the window means the push has not left. Anything else means it
+    // has, and no undo can call it back.
+    const announced = !pendingGoalPush.has(id);
+    return confirm(
+      `Undo ${what}?\n\n`
+      + `The score goes back to ${nameOf(m.home)} ${hs}–${as} ${nameOf(m.away)}.\n\n`
+      + (announced
+          ? 'A notification for this goal has already gone out. Undoing it here '
+            + 'does NOT recall the one people have already seen.'
+          : 'It has not been announced yet, so nobody will be told about it.'));
+  }
+
+  if (ev.t === 'yellow' || ev.t === 'red') {
+    const card = ev.t === 'red' ? 'red card' : 'yellow card';
+    return confirm(
+      `Undo this ${card}${who ? ` for ${who}` : ''}?\n\n`
+      + 'Suspensions are worked out from cards, so this can change who is '
+      + 'available for their next match.');
+  }
+
+  if (ev.t === 'motm') {
+    return confirm(`Undo man of the match${who ? ` for ${who}` : ''}?`);
+  }
+
+  return confirm('Undo this entry from the match report?');
+}
+
 function assistPanel(m) {
   const ev = state.events.find(x => x.id === state.assistFor);
   if (!ev || ev.t !== 'goal' || !ev.p) { state.assistFor = null; return ''; }
@@ -3247,6 +3302,19 @@ document.addEventListener('click', async (ev) => {
   }
 
   if (t.dataset.void) {
+    // UNDO ASKS FIRST, and says what it is about to cost.
+    //
+    // It sits in a row of small labels beside a button an organiser presses
+    // often, on a touchline, and it takes a goal off the board. The one thing
+    // it genuinely cannot take back is a notification that has already gone
+    // out, so the message says which case this is rather than warning in
+    // general terms — `pendingGoalPush` still holding the id means the
+    // announcement is still waiting and nobody will ever hear about it.
+    //
+    // A native confirm(), matching forfeit and reset: it is the established
+    // shape for a destructive act here, and unlike an inline button it cannot
+    // be dismissed by the same mis-tap that opened it.
+    if (m && !confirmVoid(t.dataset.void, m)) return;
     // If this goal is still inside its announcement window, it is now never
     // announced. A correction made within seconds should cost nobody a buzz.
     cancelGoalPush(t.dataset.void);

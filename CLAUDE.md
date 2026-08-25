@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v90`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v91`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -861,6 +861,28 @@ adding a second question to it.
   acceptable with a third button beside them, one of which voids a goal. A
   `::after` box grows each to ~37px without moving a pixel, and stays inside
   the row's 12px gap so neighbouring targets cannot overlap.
+
+### Undo asks first, and says what it costs
+
+`confirmVoid()`. A native `confirm()`, matching forfeit and reset — the
+established shape for a destructive act here, and unlike an inline button it
+cannot be dismissed by the same mis-tap that opened it.
+
+- **The message is written per event type**, because the consequences really
+  are different and a warning that says nothing specific is one people learn to
+  tap straight through.
+  - **A goal** names the score it would go back to, computed the same way the
+    header computes it — queued-but-unsent goals included.
+  - **A card** says suspensions are worked out from cards, so this can change
+    who is available for their next match.
+  - **Man of the match** just names the player.
+- **AND IT SAYS WHICH NOTIFICATION CASE THIS IS, which is the only part that
+  is genuinely irreversible.** If `pendingGoalPush` still holds the id the
+  announcement has not left and nobody will ever hear about the goal; otherwise
+  it has gone, and no undo recalls it from a few hundred lock screens. The
+  message states whichever is true rather than warning in general terms.
+- The drill stubs `confirm()` to **refuse**, so it reads the wording without
+  ever voiding a goal on live data — and proves the refusal path sends nothing.
 
 - **`edit_event` is a FULL REPLACE.** The client therefore sends the assist it
   is currently showing on *every* edit, or correcting a minute would silently
@@ -1762,7 +1784,16 @@ Edit panel and the one-tap `+ Assist` button — and captures the edit_event
 payload instead of sending it, which is the only way to prove the full-replace
 rule holds. **The assertions are about the payload, not about what the row
 looks like afterwards**, because a tap that sent only the assist would blank
-the scorer and the screen would look fine. 22/22. Read `__assistSummary`.
+the scorer and the screen would look fine. It also covers **Undo's
+confirmation**, with `confirm()` stubbed to REFUSE — so it reads the wording
+without voiding anything on live data, and proves that saying no sends nothing.
+29/29. Read `__assistSummary`.
+
+**And it re-queries the goal row before the Undo step.** It had held the row
+from before the assist tap; `render()` had replaced it, the click on a detached
+node never reached the delegated handler, and the result looked exactly like
+Undo failing to ask. Same trap as the fixture-row one below — worth noticing
+that it caught a second drill months apart.
 
 What every drill here has had to learn, and all of it applies to any drill that navigates:
 
