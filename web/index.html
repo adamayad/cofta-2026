@@ -5,6 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>COFTA 2026 — Live Scores</title>
 <meta name="description" content="Live scores, fixtures and tables for the Coptic Orthodox Football Tournament Association 2026, 12–13 September.">
+<!-- KEEP PLAYERS' NAMES OUT OF SEARCH ENGINES.
+     The Squads tab and every match report name real people, alongside the
+     church they play for and the venue and time they will be there. The
+     tournament is 16+, so some players are 16 or 17 — children in UK
+     safeguarding terms, whatever they can otherwise consent to. Nothing about
+     a weekend tournament needs those names to be findable on Google, and the
+     site is reached by QR code and a short URL, not by search.
+
+     A robots.txt `Disallow` WOULD BE THE WRONG TOOL and would quietly do the
+     opposite of what it looks like: it stops a crawler fetching the page, so
+     the crawler never reads this tag, and a URL already known from a link can
+     stay listed with no way to say "drop it". noindex requires the crawl to
+     happen. Cloudflare's own robots.txt already blocks the AI training
+     crawlers and allows search engines through — which is exactly what this
+     needs, so we deliberately do NOT ship a robots.txt of our own.
+
+     `web/_headers` does nothing on this project (proven twice), so an
+     X-Robots-Tag header is not available and this tag is the mechanism.
+
+     To make the site findable later, delete this line. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
 <meta name="theme-color" content="#eef0f3">
 <meta property="og:title" content="COFTA 2026 — Live Scores">
 <meta property="og:description" content="Live scores, fixtures and tables. 12–13 September.">
@@ -13,9 +35,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
 <link rel="preload" href="./fonts/big-shoulders-display-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./fonts/saira-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="./fonts.css?b=cofta-v91">
-<link rel="stylesheet" href="./styles.css?b=cofta-v91">
-<link rel="stylesheet" href="./themes.css?b=cofta-v91">
+<link rel="stylesheet" href="./fonts.css?b=cofta-v92">
+<link rel="stylesheet" href="./styles.css?b=cofta-v92">
+<link rel="stylesheet" href="./themes.css?b=cofta-v92">
 </head>
 <body>
 <div class="app">
@@ -56,6 +78,6 @@
   </nav>
   <main class="scroll" id="body"><p class="empty">Loading&hellip;</p></main>
 </div>
-<script type="module" src="./app.js?b=cofta-v91"></script>
+<script type="module" src="./app.js?b=cofta-v92"></script>
 </body>
 </html>

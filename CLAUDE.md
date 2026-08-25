@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v91`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v92`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -337,6 +337,47 @@ against `getBoundingClientRect()`, at 375px and desktop, in every state
   to a circular mask; the maskable insets everything to a 13% margin and
   loses 0.12% — 51 pixels, the four corner tips of the frame. Never ship the
   standard file as the maskable one.
+
+## Safeguarding and what this site publishes
+
+**The tournament is 16+, which means some players are children.** In UK
+safeguarding law a child is anyone under 18 — the Children Acts, the diocese's
+policy and every sport safeguarding code use 18, not 16. A 16-year-old can
+consent to using an online service themselves (the UK GDPR age for that is 13),
+and that is a *different question* from whether an association should publish
+their name. Do not let the first fact answer the second.
+
+**What the site publishes to anyone, with no login:** every player's full name
+with their club and shirt number; cards and sendings-off against named
+individuals; manager names; ~600 historical player names back to 2005; and the
+venue with exact kick-off, Vespers and Liturgy times. The combination is the
+part that matters — name + church + venue + precise time.
+
+**What it deliberately does not hold**, and this should stay true: no
+photographs, no dates of birth, no addresses, phone numbers or emails, and no
+player accounts. That is real data minimisation and it is the main reason the
+exposure here is modest. **Do not add player photos** without the association
+deciding it explicitly.
+
+- **`noindex` is on, and a robots.txt `Disallow` is the wrong tool.** A
+  Disallow stops the crawler fetching the page, so it never reads the noindex,
+  and a URL already known from a link can stay listed with nothing able to
+  remove it. noindex needs the crawl to happen. Cloudflare's own robots.txt
+  already blocks AI training crawlers and lets search engines through, which is
+  exactly what this needs — **we ship no robots.txt of our own on purpose.**
+  `web/_headers` does nothing here, so the meta tag is the only mechanism.
+- **Still outstanding, and not a code question:** there is no privacy notice,
+  no named contact, and no stated route for a parent to ask that a name be
+  removed. `players.active = false` hides a player, so the mechanism exists;
+  what is missing is telling anyone it does.
+- **Only the association can answer** what players and parents were told,
+  whether consent was obtained, and what the Diocese of London's policy
+  requires. Those decide compliance; the code cannot.
+- **Nothing outside `web/` is deployed.** `/CLAUDE.md`, `/tests/…` and
+  `/supabase/…` all return 200 on production, which looks alarming and is not:
+  it is Cloudflare Pages' SPA fallback serving `index.html` for unknown paths.
+  Check the content-type before reporting it as a leak — this was checked and
+  is a false alarm.
 
 ## Accessibility
 
