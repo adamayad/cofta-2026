@@ -7120,19 +7120,28 @@
       "team_count": null,
       "match_count": null,
       "champion": "Brighton",
-      "runner_up": null,
-      "final_summary": null,
+      "runner_up": "St Mark",
+      "final_summary": "Brighton beat St Mark in the final",
       "final": null,
-      "teams": ["Brighton"],
-      "teams_note": "Only the champion is known. This is not the entrant list.",
+      "teams": ["Brighton", "St Mark"],
+      "teams_note": "The two finalists. This is not the entrant list.",
       "matches": [],
       "goalscorers": [],
-      "awards": {},
+      "awards": {
+        "player_of_the_tournament": {
+          "player_name": "Demas Ramsis",
+          "player_canonical": "Demas Ramsis",
+          "team": "Brighton",
+          "value": null,
+          "is_published_summary": false,
+          "note": "Organiser-confirmed, 26 August 2026, including that he played for Brighton. Given as 'Demas Ramses'; spelled here as 'Demas Ramsis' to match the thirty existing rows for the same player across COFTA 2024 and 2025, CONAFA 2026, the Ark Cup 2026 and COSTA 2025. Writing a second spelling for one man is exactly what player_canonical exists to prevent. FLAGGED: if Ramses is correct then all thirty of those rows are wrong, which is a rename of the whole record rather than of this one award."
+        }
+      },
       "known_gaps": [
-        "No runner-up, final or scoreline.",
+        "No final scoreline.",
         "No dates or venue.",
-        "No entrant list, group stage, standings or match data.",
-        "No goalscorers, awards or player data."
+        "No entrant list beyond the two finalists, and no group stage, standings or match data.",
+        "No goalscorers."
       ]
     }
   ],

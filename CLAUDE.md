@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v95`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v96`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -49,7 +49,7 @@ the bare domain).
   asset, and bump `VERSION` in the next commit.
 - Commit messages say what changed **and why**, one concern per commit.
 - Migrations live in `supabase/migrations/`, numbered, one concern each,
-  currently `0001` … `0053`. Apply to the live DB via the Supabase dashboard
+  currently `0001` … `0054`. Apply to the live DB via the Supabase dashboard
   SQL editor or the MCP connector. Note the connector records its own
   timestamped version strings (`20260817081714`), so a file numbered `0018`
   never "claims" 0018 in `supabase_migrations.schema_migrations`.
@@ -978,6 +978,28 @@ synthesised fixtures, no zero-filled stats, and `null` never rendered as `0`.
 migration follows it. Adam's word is canonical, published sources fill in
 around it and are cited on the row, and a published source that contradicts
 him goes to the conflict register rather than into the data.
+
+**COSTA 2023 grew a runner-up and an award** (`0054`, 26 August): St Mark,
+Kensington were beaten finalists and Demas Ramsis was player of the tournament,
+for Brighton. Three things in that are worth carrying forward.
+
+- **`known_gaps` is not write-once.** The edition still claimed "No runner-up,
+  final or scoreline" and "No goalscorers, awards or player data" after both
+  had been supplied. A stale gap is the archive lying about itself, so any
+  migration that fills a gap rewrites the line that named it.
+- **"St Mark" is ambiguous and was resolved from the competition, not the
+  name.** Three registry rows carry it — St Mark (Kensington), St Mark B, and
+  St Mary & St Mark (Birmingham). COSTA's own entrants in 2022 and 2025 are the
+  Kensington club; Birmingham is a Midlands club that has never played in
+  COSTA. Resolved by id, and asserted not to have landed on either of the
+  other two.
+- **THE SPELLING WAS FLAGGED, NOT DECIDED.** Adam gave the name as "Demas
+  **Ramses**"; all thirty existing rows for the same man spell it "Demas
+  **Ramsis**". It is written as Ramsis so the archive does not hold two
+  spellings of one player — the exact failure `player_canonical` exists to
+  prevent — and `0054` asserts that no row anywhere spells it Ramses. **If
+  Ramses is right, thirty rows are wrong**, and that is a rename of the whole
+  record rather than a side effect of adding one award. Still open.
 
 - **Two COFTA years have no tournament at all: 2013 and 2020**, and **CONAFA
   did not run for five years, 2018 to 2022.** There is no edition row for any
