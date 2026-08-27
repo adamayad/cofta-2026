@@ -6,8 +6,30 @@
  * every few seconds still gives a clock that never lags.
  */
 
+/**
+ * HALF LENGTH IS NOT ONE NUMBER. The 2026 rules give Group B shorter halves
+ * than everything else:
+ *
+ *   Group A            20 minutes   3 games  = 120 minutes
+ *   Group B            15 minutes   4 games  = 120 minutes
+ *   Semi-finals, final 20 minutes
+ *
+ * The two group formats are deliberately balanced to the same 120 minutes of
+ * football on the Saturday, which is the whole reason Group B is shorter —
+ * three clubs playing each other twice would otherwise play more football than
+ * four clubs playing each other once. It is a rule, not a rounding.
+ *
+ * `HALF_MIN`/`HALF_MS` remain the default for everything that is not Group B.
+ * ANYTHING THAT HAS A MATCH IN HAND SHOULD USE `halfMsFor(m)` INSTEAD: the
+ * minute label, added time, and the half length handed to `set_clock`, which
+ * banks it as the second half's starting total. A Group B second half started
+ * with 20 minutes would jump the clock straight to 20:00.
+ */
 export const HALF_MIN = 20;
 export const HALF_MS = HALF_MIN * 60 * 1000;
+export const HALF_MIN_B = 15;
+export const halfMinFor = (m) => (m && m.stage === 'B' ? HALF_MIN_B : HALF_MIN);
+export const halfMsFor = (m) => halfMinFor(m) * 60 * 1000;
 
 /* ── server time offset ──────────────────────────────────── */
 let offset = 0;
@@ -28,10 +50,12 @@ export function elapsedMs(m) {
 
 export function minuteLabel(m) {
   const e = elapsedMs(m);
-  if (m.status === 'first_half' && e > HALF_MS)
-    return `${HALF_MIN}+${Math.floor((e - HALF_MS) / 60000) + 1}`;
-  if (m.status === 'second_half' && e > 2 * HALF_MS)
-    return `${HALF_MIN * 2}+${Math.floor((e - 2 * HALF_MS) / 60000) + 1}`;
+  // Per match, not per tournament — a Group B game reads 15+2, not 20+2.
+  const hms = halfMsFor(m), hmin = halfMinFor(m);
+  if (m.status === 'first_half' && e > hms)
+    return `${hmin}+${Math.floor((e - hms) / 60000) + 1}`;
+  if (m.status === 'second_half' && e > 2 * hms)
+    return `${hmin * 2}+${Math.floor((e - 2 * hms) / 60000) + 1}`;
   return String(Math.floor(e / 60000) + 1);
 }
 

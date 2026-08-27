@@ -997,6 +997,47 @@ test('groupHeldOpenBy tolerates junk', () => {
   eq(M.groupHeldOpenBy(gb(['full_time']), 'A'), [], 'a group with no matches');
 });
 
+/* ── half length varies by stage (2026 rules) ────────────── */
+/* Group B plays 15-minute halves; Group A, the semi-finals and the final play
+   20. The two group formats are balanced to the same 120 minutes on the
+   Saturday, which is why. A stopped clock is used throughout — `run: false`
+   means elapsed is exactly `accum`, with no wall-clock in the way. */
+const at = (stage, status, minutes) =>
+  ({ stage, status, run: false, anchor: null, accum: minutes * 60000 });
+
+test('halfMinFor: Group B is 15, everything else 20', () => {
+  eq(M.halfMinFor({ stage: 'B' }), 15, 'Group B');
+  eq(M.halfMinFor({ stage: 'A' }), 20, 'Group A');
+  eq(M.halfMinFor({ stage: 'SF1' }), 20, 'semi-final');
+  eq(M.halfMinFor({ stage: 'FINAL' }), 20, 'final');
+  eq(M.halfMinFor(undefined), 20, 'no match at all falls back to the default');
+});
+
+test('halfMsFor returns milliseconds', () => {
+  eq(M.halfMsFor({ stage: 'B' }), 900000, '15 minutes');
+  eq(M.halfMsFor({ stage: 'A' }), 1200000, '20 minutes');
+  eq(M.halfMsFor({ stage: 'A' }), M.HALF_MS, 'and matches the default constant');
+});
+
+test('A GROUP B FIRST HALF GOES INTO ADDED TIME AT 15, NOT 20', () => {
+  eq(M.minuteLabel(at('B', 'first_half', 14)), '15', 'still in normal time at 14:00');
+  eq(M.minuteLabel(at('B', 'first_half', 15.5)), '15+1', 'added time at 15:30');
+  // the same clock reading in Group A is simply minute 16
+  eq(M.minuteLabel(at('A', 'first_half', 15.5)), '16', 'Group A is nowhere near added time');
+});
+
+test('and its second half counts from 15, not 20', () => {
+  eq(M.minuteLabel(at('B', 'second_half', 29)), '30', 'minute 30 of a 30-minute game');
+  eq(M.minuteLabel(at('B', 'second_half', 30.5)), '30+1', 'added time after 30');
+  eq(M.minuteLabel(at('A', 'second_half', 30.5)), '31', 'Group A still has nine minutes left');
+});
+
+test('Group A and the knockouts are unchanged', () => {
+  eq(M.minuteLabel(at('A', 'first_half', 20.5)), '20+1', 'Group A added time at 20');
+  eq(M.minuteLabel(at('SF1', 'first_half', 20.5)), '20+1', 'semi-final the same');
+  eq(M.minuteLabel(at('FINAL', 'second_half', 40.5)), '40+1', 'final the same');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

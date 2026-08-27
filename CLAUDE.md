@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v97`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v98`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -566,8 +566,8 @@ The fifth tab is **Stats** (the view id and `state.award` are still spelled
 - Feature-complete and load-tested: 1,000 concurrent spectators, 0 failures,
   p95 58ms. CDN layer deliberately not built (not needed).
 - 3 admin accounts exist.
-- Waiting on association: squads, managers, 2026 rules (2025 rules implemented
-  meanwhile).
+- Waiting on association: **squads and managers only**. The 2026 rules arrived
+  on 27 August and are implemented — see **Match length is not one number**.
 
 ## September checklist
 
@@ -602,7 +602,8 @@ association.
    Adam: **the seal spells it "Kidane MEHRET"** while the app spells it
    "Mihret", which he confirmed the day before the artwork arrived. Not
    changed — his word is canonical — but he has not seen the two side by side.
-8. **The 2026 rules**, if the association issues any. 2025's are implemented.
+8. ~~The 2026 rules~~ **received and checked, 27 August.** One mismatch found
+   and fixed (Group B's half length, below); everything else already matched.
 
 **Do not deploy during the tournament weekend.** Cloudflare's edge cache keys
 on the path and ignores `?b=`, so the first device to reach a given edge after
@@ -852,6 +853,43 @@ handler in `sw.js`, and `enablePush`/`notifySection` in `app.js`.
   accept good input and reject bad, and the key imports as a valid P-256 point.
   **The actual send is not verified**: it needs `VAPID_PRIVATE_KEY` set in
   Supabase and a real handset, neither of which exists here.
+
+## Match length is not one number
+
+The 2026 rules give **Group B shorter halves than everything else**, and the
+two group formats are deliberately balanced to the same 120 minutes of football
+on the Saturday:
+
+| | half | games | total |
+|---|---|---|---|
+| Group A | **20 min** | 3 | 120 |
+| Group B | **15 min** | 4 | 120 |
+| Semi-finals, final | **20 min** | — | — |
+
+Three clubs playing each other twice would otherwise play more football than
+four playing each other once. It is a rule, not a rounding.
+
+- **`halfMsFor(m)` / `halfMinFor(m)`, never the bare constant, anywhere a match
+  is in hand.** `HALF_MIN`/`HALF_MS` remain the 20-minute default for
+  everything that is not Group B, and are still correct for the knockouts.
+- **This is not only a label.** `set_clock` banks `p_half_ms` as the second
+  half's *starting total*, so passing 20 minutes to a Group B game does not
+  merely mislabel the clock — it starts the second half at 20:00 instead of
+  15:00. Three call sites matter: the minute label, the added-time strings, and
+  the `setClock` call itself.
+- **The goal editor's empty-minute fallback is `halfMinFor(m) * 2`**, not a
+  flat 40. On a Group B game 40 is ten minutes after the final whistle.
+- Checked against the rules PDF on 27 August. **Everything else already
+  matched** — the format, the A1 v B2 / B1 v A2 semi-final pairings, 3-1-0
+  points, the five tie-breaks in their exact order (points, head-to-head, goal
+  difference, goals scored, one-off shoot-out), the 23-man squad cap enforced
+  server-side, and all three trophy definitions. The suspension rule matched
+  including its subtle case: two group yellows carry into the semi-final, but a
+  group yellow plus a semi-final yellow does **not** ban a player from the
+  final — which is exactly what the per-phase sets already did.
+- **Deliberately not modelled**, organiser's call: guest players (max 2 per
+  squad), substitutions (5, no rolling), and player-level disqualification from
+  the whole tournament. The app has team DQ and "miss the next fixture" only.
 
 ## Nothing in this app is time-bombed, and it must stay that way
 
@@ -1924,6 +1962,8 @@ repo root and open it, plus `?mode=nosession`; read `__drillSummary`.
 a spectator seeing zero flags is easy to measure, so that drill stubs only
 the role check, leaves every other request going to the real database, and
 asserts an organiser does see them. Read `__flagSummary`.
+**It forces the Saturday tab before hunting for a goal.** The Fixtures tab opens on Sunday once the group stage is complete, and Sunday is three knockout rows that may hold no events at all - so the moment the rehearsal group stage was finished this drill opened an empty final and reported "no goal to edit", which reads exactly like the feature being broken. The goals live on day one.
+
 `tests/assist_drill.html` drives **both** assist paths as an organiser — the
 Edit panel and the one-tap `+ Assist` button — and captures the edit_event
 payload instead of sending it, which is the only way to prove the full-replace

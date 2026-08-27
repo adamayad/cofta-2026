@@ -76,10 +76,23 @@ window.addEventListener('load', async () => {
   // first fixture happened to hold a goal; when the rehearsal data moved its
   // goals to later matches the loop "searched" twelve rows without opening
   // any of them.
+  // FORCE SATURDAY FIRST. The Fixtures tab opens on Sunday once the group
+  // stage is complete, and Sunday is three knockout rows that may hold no
+  // events at all — so once the rehearsal group stage was finished this drill
+  // opened an empty final and reported "no goal to edit", which looks exactly
+  // like the feature being broken. The goals live on day one.
+  const toSaturday = async () => {
+    document.getElementById('nav-fixtures').click(); await wait(280);
+    const sat = [...document.querySelectorAll('[data-day]')]
+      .find(b => /sat/i.test(b.textContent));
+    if (sat && !sat.classList.contains('on')) { sat.click(); await wait(320); }
+  };
+
   let goalEdit = null;
+  await toSaturday();
   const count = document.querySelectorAll('[data-match]').length;
   for (let i = 0; i < Math.min(count, 20); i++) {
-    document.getElementById('nav-fixtures').click(); await wait(280);
+    await toSaturday();
     const row = document.querySelectorAll('[data-match]')[i];
     if (!row) continue;
     row.click(); await wait(420);

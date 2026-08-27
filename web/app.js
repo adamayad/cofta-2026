@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v97';
-import * as api from './api.js?b=cofta-v97';
-import * as M from './model.js?b=cofta-v97';
-import { WriteQueue } from './queue.js?b=cofta-v97';
+import { CREST } from './crests.js?b=cofta-v98';
+import * as api from './api.js?b=cofta-v98';
+import * as M from './model.js?b=cofta-v98';
+import { WriteQueue } from './queue.js?b=cofta-v98';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -422,8 +422,11 @@ function viewMatch() {
 
   const e = M.elapsedMs(m);
   let added = '';
-  if (m.status === 'first_half' && e > M.HALF_MS) added = 'Into added time at the end of the first half';
-  if (m.status === 'second_half' && e > 2 * M.HALF_MS) added = 'Into added time at the end of the second half';
+  // Group B plays 15-minute halves, so "added time" starts five minutes
+  // earlier there than anywhere else. Per match, never the tournament default.
+  const halfMs = M.halfMsFor(m);
+  if (m.status === 'first_half' && e > halfMs) added = 'Into added time at the end of the first half';
+  if (m.status === 'second_half' && e > 2 * halfMs) added = 'Into added time at the end of the second half';
 
   // Anything still queued is shown immediately, marked as unsent, so the
   // organiser sees their tap register even with no signal.
@@ -3221,7 +3224,9 @@ document.addEventListener('click', async (ev) => {
   const m = currentMatch();
 
   if (t.dataset.clock && m) return guard(async () => {
-    await api.setClock(m.id, t.dataset.clock, m.v, M.HALF_MS,
+    // set_clock banks this as the second half's starting total, so the wrong
+    // value does not merely mislabel the clock - it moves it.
+    await api.setClock(m.id, t.dataset.clock, m.v, M.halfMsFor(m),
       t.dataset.clock === 'start' ? m.home : null,
       t.dataset.clock === 'start' ? m.away : null);
     // Every clock action is announceable; who hears it is the subscriber's
@@ -3382,7 +3387,10 @@ document.addEventListener('click', async (ev) => {
     if (box && !/^\d{1,2}(\+\d{1,2})?$/.test(minute)) {
       alert('Minute should look like 12, or 20+2 for added time.'); return;
     }
-    if (!minute) minute = '40';
+    // An empty box means "no minute given", and the fallback is the last
+    // minute of THIS match — 30 in Group B, 40 everywhere else. It was a flat
+    // 40, which on a Group B game is ten minutes after the final whistle.
+    if (!minute) minute = String(M.halfMinFor(m) * 2);
     const ed = state.editor;
     const target = state.events.find(x => x.id === ed.id);
     // An assist belongs to a goal and to a named scorer. Anything else is
