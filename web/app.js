@@ -5,10 +5,10 @@
  * from timestamps, so it ticks smoothly at 60fps between polls and never
  * lags. Admins get the same views plus the write controls.
  */
-import { CREST } from './crests.js?b=cofta-v96';
-import * as api from './api.js?b=cofta-v96';
-import * as M from './model.js?b=cofta-v96';
-import { WriteQueue } from './queue.js?b=cofta-v96';
+import { CREST } from './crests.js?b=cofta-v97';
+import * as api from './api.js?b=cofta-v97';
+import * as M from './model.js?b=cofta-v97';
+import { WriteQueue } from './queue.js?b=cofta-v97';
 
 /** This build, read off our own module URL so it can never disagree with it. */
 const BUILD = new URL(import.meta.url).searchParams.get('b') ?? 'dev';
@@ -870,8 +870,24 @@ function viewTables() {
   const slot = (id, fb) => id ? esc(cityOf(id)) : fb;
   const s = M.resolveSlots(teamsArr, ms, state.slots, state.ties);
 
+  // WHY THE GROUP HAS NOT SENT ANYONE THROUGH, when its table says it has.
+  // The table counts a match from kick-off, so a game left at half time still
+  // reads "P 4" — while the knockout slots, quite rightly, wait for full time.
+  // Without this the two disagree silently and the page looks broken.
+  const holding = (g) => {
+    const open = M.groupHeldOpenBy(ms, g);
+    if (!open.length) return '';
+    const which = open.map(m =>
+      `${cityOf(m.home)} v ${cityOf(m.away)}`).join(', ');
+    return `<p class="note" style="padding-top:6px">This table is not final.
+      ${open.length === 1 ? 'One match has not finished' : `${open.length} matches have not finished`}
+      &mdash; <b>${esc(which)}</b>. The semi-finals are drawn once it does.</p>`;
+  };
+
   return `<div class="sect">Group A</div><table>${head}<tbody>${tbl('A')}</tbody></table>
+    ${holding('A')}
     <div class="sect">Group B</div><table>${head}<tbody>${tbl('B')}</tbody></table>
+    ${holding('B')}
     ${state.admin ? tieShootoutPanels(teamsArr, ms) : unresolvedNotice(teamsArr, ms)}
     <div class="sect">Sunday</div>
     <div class="ko"><span class="l">Semi-final 1</span>

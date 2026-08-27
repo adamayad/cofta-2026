@@ -32,7 +32,7 @@ the bare domain).
   network-first, since it is the document that names the current build.
   **Never bump `VERSION` by hand: run `tools/bump-build.sh`**, which moves all
   sixteen references together, and `tools/check-build.sh`, which fails if they
-  ever disagree. Currently `cofta-v96`. See **A deploy did not reach phones for
+  ever disagree. Currently `cofta-v97`. See **A deploy did not reach phones for
   four hours** below — the versioning is the fix, and it is not optional.
 
 ## Workflow
@@ -166,6 +166,23 @@ the bare domain).
 - One-off tie shoot-outs are records in `tie_shootouts` and act as the fifth
   tie-break in `standings()`. They are group-stage only and decide table
   order, never a match result. Slot overrides are only for disqualifications.
+- **THE TABLE COUNTS A MATCH FROM KICK-OFF; THE KNOCKOUT SLOTS WAIT FOR FULL
+  TIME.** `tallyInto` tallies anything `hasStarted`, so a game sitting at half
+  time contributes its current score and its clubs already read "P 4".
+  `groupComplete` is stricter, and rightly — a semi-final line-up must not be
+  drawn from a score that can still change. **Both are correct and they
+  disagree, which is the trap:** the group looks played out while the slots
+  refuse to resolve, with nothing connecting the two.
+  Reported from the dry run, 27 August: Group B read P 4 with full W/D/L and
+  points for all three clubs, and the semi-finals still said "Winner B". One
+  match had been left at **half time** since the rehearsal — the app was right
+  and the data was unfinished.
+  `M.groupHeldOpenBy()` now names the offending match under the table — "This
+  table is not final. One match has not finished — Brighton v Croydon." It
+  returns `[]` until **every** match in the group has kicked off, so it is
+  silent through normal Saturday play and speaks only once the table has
+  stopped admitting it is provisional. Same reasoning as the tie highlight
+  below: say it when it is surprising, not when it is obvious.
 - **A standings row is only marked level once a shoot-out is actually owed.**
   `r.unresolved` is true from the first kick-off — after one match most of a
   group is level on everything, because almost nothing has happened yet — so

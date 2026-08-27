@@ -956,6 +956,47 @@ test('titlesByCompetition tolerates junk', () => {
      'an edition with no competition name is skipped, not crashed on');
 });
 
+/* ── a group whose table looks finished but is not ───────── */
+/* The reported dry-run state: Group B's three clubs all read P 4, and the
+   semi-finals still said "Winner B", because one match sat at half time. */
+const gb = (statuses) => statuses.map((st, i) => ({
+  stage: 'B', id: 'b' + i, home: 'bri', away: 'cro', hs: 1, as: 0,
+  status: st, clock_anchor: st === 'scheduled' ? null : '2026-09-12T10:00:00+00:00',
+}));
+
+test('groupHeldOpenBy names the match still to finish', () => {
+  const open = M.groupHeldOpenBy(
+    gb(['full_time', 'full_time', 'half_time', 'full_time']), 'B');
+  eq(open.length, 1, 'one match holding the group open');
+  eq(open[0].status, 'half_time', 'and it is the unfinished one');
+});
+
+test('it stays SILENT while the group is visibly still being played', () => {
+  eq(M.groupHeldOpenBy(gb(['full_time', 'scheduled', 'scheduled']), 'B'), [],
+     'not every match has kicked off, so the table is obviously unfinished');
+});
+
+test('and silent once the group really is complete', () => {
+  eq(M.groupHeldOpenBy(gb(['full_time', 'full_time']), 'B'), [], 'nothing open');
+});
+
+test('a forfeit counts as finished', () => {
+  const ms = gb(['full_time', 'full_time']);
+  ms[1].status = 'first_half'; ms[1].ff = 'home';
+  eq(M.groupHeldOpenBy(ms, 'B'), [], 'a forfeited match does not hold the group open');
+});
+
+test('it reports every unfinished match, not just the first', () => {
+  eq(M.groupHeldOpenBy(gb(['half_time', 'second_half', 'full_time']), 'B').length, 2,
+     'both still to finish');
+});
+
+test('groupHeldOpenBy tolerates junk', () => {
+  eq(M.groupHeldOpenBy([], 'B'), [], 'no matches at all');
+  eq(M.groupHeldOpenBy(undefined, 'B'), [], 'undefined');
+  eq(M.groupHeldOpenBy(gb(['full_time']), 'A'), [], 'a group with no matches');
+});
+
 /* ── report ──────────────────────────────────────────────── */
 export function summary() {
   return { total: results.length, failures, results };

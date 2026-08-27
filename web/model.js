@@ -516,6 +516,32 @@ function groupComplete(matches, g) {
   return ms.length > 0 && ms.every(m => m.status === 'full_time' || !!m.ff);
 }
 
+/**
+ * The matches keeping a group open once its table already LOOKS finished.
+ *
+ * THE TABLE COUNTS A MATCH FROM KICK-OFF, NOT FROM FULL TIME. `tallyInto`
+ * tallies anything `hasStarted`, so a game sitting at half time contributes
+ * its current score and its clubs already read "P 4". `groupComplete` is
+ * stricter and quite rightly: a semi-final line-up must not be drawn from a
+ * score that can still change. The two disagreeing is correct, and it is also
+ * invisible — the group looks played out while the knockout slots refuse to
+ * resolve, with nothing on screen connecting the two.
+ *
+ * That exact state was reported from the dry run: Group B read P 4, W, D, L
+ * and points for all three clubs, and the semi-finals still said "Winner B".
+ * One match had been left at half time.
+ *
+ * Returns [] until EVERY match in the group has kicked off, because before
+ * that the table is visibly unfinished and saying so is noise — the same
+ * reasoning that keeps mid-group ties quiet. It speaks only when the table
+ * has stopped admitting that it is not final.
+ */
+export function groupHeldOpenBy(matches, group) {
+  const ms = (matches || []).filter(m => m.stage === group);
+  if (!ms.length || !ms.every(hasStarted)) return [];
+  return ms.filter(m => m.status !== 'full_time' && !m.ff);
+}
+
 /** Both groups played out. From this point Sunday is the day that matters,
  *  which is when the Fixtures tab should stop opening on Saturday. */
 export const groupStageComplete = (matches) =>
